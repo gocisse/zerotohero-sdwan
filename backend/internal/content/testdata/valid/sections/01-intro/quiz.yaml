@@ -1,0 +1,18 @@
+- id: q-single
+  topic: basics
+  difficulty: 1
+  type: single_choice
+  prompt: Pick **a**.
+  options:
+    - {id: a, text: A}
+    - {id: b, text: B, explanation: B is wrong because.}
+  correct: a
+  explanation: Because.
+  lesson_ref: first
+- id: q-tf
+  topic: basics
+  difficulty: 2
+  type: true_false
+  prompt: Is this true?
+  correct: true
+  explanation: Yes.

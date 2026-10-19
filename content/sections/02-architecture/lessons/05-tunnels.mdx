@@ -1,0 +1,112 @@
+---
+id: arch-tunnels
+title: Tunnel architecture
+summary: Which tunnels form between which components, always-on versus on-demand tunnels, branch-to-branch through a Gateway first and then directly, and hubs in concept.
+estimated_minutes: 12
+topics: [tunnel-architecture]
+---
+
+**By the end of this lesson you will be able to:**
+
+- list the tunnels that form between Edges, Gateways and Hubs;
+- explain which tunnels are permanent and which are built on demand;
+- describe how the first packets between two branches travel and when a direct tunnel appears and disappears;
+- explain what a NAT device can do to a direct tunnel and how to check whether one exists.
+
+## The tunnels, in a table
+
+| Tunnel | Between | Permanent or on demand |
+|---|---|---|
+| Edge to Gateway | each Edge and one or more Gateways | built by each Edge |
+| <Term id="branch-to-hub-vpn" /> | every Edge and the <Term id="hub">Hubs</Term> you choose | **permanent**: the Orchestrator tells all Edges to build them |
+| Branch to branch via a Gateway or Hub | two branch Edges, through a Gateway or Hub in the middle | uses the tunnels above; no new tunnel |
+| <Term id="dynamic-branch-to-branch" /> | two branch Edges directly | **on demand**: built when traffic needs it, removed after 180 seconds of silence |
+| Edge or Gateway to a <Term id="non-sd-wan-destination" /> | an Edge or Gateway and a site not running VeloCloud | an IPsec tunnel (high level only here) |
+
+Which of these exist is controlled by <Term id="cloud-vpn" />, a setting you switch on per segment in the device settings of a Profile. It
+has three options: Branch to Hub VPN, Branch to Branch VPN and Edge to Non SD-WAN via Gateway.
+
+## Hubs, in concept
+
+A Hub is an Edge you designate in the Profile's Hub settings; Arista describes it as an Edge deployed in a data center so branches can reach data center resources. Once you choose the Hubs, the Orchestrator notifies every Edge, and they all build secure tunnels to them. The
+tunnels are **permanent**: a branch always has a ready path to the data center.
+
+<Diagram id="arch-branch-to-hub" />
+
+The branches are the <Term id="spoke">spokes</Term>. If Branch to Branch VPN is set to use Hubs, traffic between branches can also be relayed by a Hub, so branches do
+not need tunnels to each other. (The other choice is to relay through Gateways, which may also carry other customers' traffic.)
+
+<Predict
+  prompt="Branch to Hub VPN is configured. What does the Orchestrator do?"
+  choices={["It tells all Edges to build secure tunnels to the Hubs", "It builds the tunnels itself and forwards the traffic", "It waits until a user sends traffic, then builds a tunnel", "It builds tunnels only between the Hubs"]}
+  answer={0}
+>
+  Once Hubs are chosen, the Orchestrator notifies all Edges and they build the secure overlay tunnels to the Hubs. The tunnels are
+  permanent. The Orchestrator is the management plane, and on-demand tunnel building is the *dynamic* branch-to-branch feature.
+</Predict>
+
+## Branch to branch, step by step
+
+Suppose two branches both have **Branch to Branch VPN** switched on, using Gateways. The first diagram shows the first packets.
+
+<Diagram id="arch-first-packet-gateway" />
+
+Each Edge already has a tunnel to the Gateway, so the very first packets between the two sites travel up one tunnel to the Gateway and down the
+other. With **Dynamic Branch to Branch** (the Orchestrator configures it for all Edges by default, according to the 7.0 Profile settings page) something else happens while this is going on: the Edge that started
+the conversation works out whether a direct tunnel is possible, and builds one if it is.
+
+<Diagram id="arch-dynamic-direct" />
+
+Once the direct tunnel exists, traffic goes straight from Edge to Edge. When there has been no traffic for **180 seconds** it is torn down, and the cycle starts
+again the next time the sites talk. Nobody configured a tunnel between these two sites. It exists only while it is useful.
+
+<Predict
+  prompt="Two branches with Dynamic Branch to Branch enabled have just started talking to each other for the first time. How does the first traffic travel?"
+  choices={["Directly between the two Edges", "Through the Orchestrator", "Through the Gateway or a Hub, and then directly if the initiating Edge can build a direct tunnel", "It cannot flow until an administrator creates a tunnel"]}
+  answer={2}
+>
+  The initial traffic goes through the Gateway or Hub. If the initiating Edge determines a secure tunnel is possible, it creates a direct
+  one. The Orchestrator is described as the management plane, and no administrator has to create the direct tunnel.
+</Predict>
+
+## When NAT gets in the way
+
+A direct tunnel needs one Edge to reach the other on UDP port 2426. Arista's Edge settings page says that if branch Edges are behind NAT devices on
+the WAN side, the direct VCMP tunnel on UDP 2426 will not likely come up for unconfigured NAT devices, because they block incoming tunnels from other Edges. Its
+suggestion for getting branch-to-branch tunnels is **Branch to Branch VPN**, that is, the Gateway or Hub path. There is also an Edge option,
+<Term id="nat-traversal">UDP hole punching</Term>, that tries to work around NAT devices blocking incoming connections: it is not applicable in all scenarios or with
+all types of NAT, because NAT behaviour is not standardized.
+
+<Callout variant="gotcha" title="No direct tunnel is not the same as no connectivity">
+  If a direct tunnel cannot come up, the Gateway or Hub path described above is still how branch-to-branch traffic is carried under Branch to Branch VPN.
+  The cost is the detour, not an outage. (The pages we read do not walk through every case, so confirm the behaviour in your release when you design
+  for it.)
+</Callout>
+
+## Checking what exists
+
+In the Orchestrator you do not have to guess whether a direct tunnel is up. **Remote Diagnostics > List Paths** checks the active tunnel paths between
+local WAN links and each peer, and the guide says to use it to check that one Edge has built a tunnel to another. The **VPN Test** shows branch-to-branch
+connectivity between Edges; run it when traffic between branches, or between a Hub and a spoke, is not bi-directional.
+
+<Predict
+  prompt="Two branch Edges both sit behind unconfigured NAT devices. Direct traffic between them is not working. What is the most likely reason, based on the guide?"
+  choices={["Incoming VCMP tunnels on UDP 2426 from the other Edge are blocked by the NAT device", "The Orchestrator has lost the Profile", "The Hub has run out of tunnels", "Jumbo frames are disabled"]}
+  answer={0}
+>
+  The guide says that with unconfigured NAT devices on the WAN side, the direct VCMP tunnel on UDP 2426 will not likely come up, because incoming tunnels
+  from other Edges are blocked.
+</Predict>
+
+## What you would see in the VCO
+
+- **Configure > Profiles**, then the device settings: the **Cloud VPN** section, per segment, with the Branch to Hub and Branch to Branch options and the
+  Dynamic Branch to Branch setting.
+- **Monitor > Edges > (an Edge) > Paths**: the paths to peers. A direct tunnel to another Edge should appear among the peers while it exists.
+- **Diagnostics > Remote Diagnostics**: **List Paths** and **VPN Test**.
+
+## Key takeaways
+
+- Each Edge builds tunnels to one or more Gateways, and to the Hubs when Branch to Hub VPN is on; Hub tunnels are permanent.
+- Dynamic branch-to-branch tunnels are built on demand, after first traffic via a Gateway or Hub, and removed after 180 seconds of silence.
+- NAT devices can block incoming direct tunnels on UDP 2426; the Gateway or Hub path is the fall-back, and List Paths tells you what exists.

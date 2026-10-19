@@ -1,0 +1,12 @@
+id: architecture
+title: "Architecture: the components, the tunnels and the wire"
+summary: What the Edge, the Orchestrator and the Gateway each do, how underlay and overlay fit together, which tunnels form between which components, what a firewall has to allow, and where the bytes go.
+estimated_minutes: 70
+lessons:
+  - arch-edge
+  - arch-orchestrator
+  - arch-gateway
+  - arch-underlay-overlay
+  - arch-tunnels
+  - arch-ports-firewall
+  - arch-mtu-overhead

@@ -1,0 +1,361 @@
+# Section 4 quiz. Correct answers use only VERIFIED rows in content/reference/{segments,profiles,edge-overrides,business-policy,firewall,applications-qos,vco-config-ui}.md.
+
+- id: cfg-q-inherit
+  topic: config-model
+  difficulty: 1
+  type: single_choice
+  prompt: "By default, where does an Edge get most of its Device-tab settings from?"
+  options:
+    - id: profile
+      text: "Its Profile, by inheritance"
+    - id: gateway
+      text: "The Gateway it connects to"
+      explanation: "The Gateway forwards and reflects routes; Edge settings come from the Orchestrator's configuration."
+    - id: manual
+      text: "Nothing: each Edge starts empty"
+      explanation: "An Edge assigned a Profile derives its settings from it unless overridden."
+    - id: carrier
+      text: "The WAN carrier"
+      explanation: "A carrier provides circuits, not Edge configuration."
+  correct: profile
+  explanation: "Edges inherit from the associated Profile; ticking Override changes a setting for one Edge."
+  lesson_ref: cfg-model
+
+- id: cfg-q-layers
+  topic: config-model
+  difficulty: 2
+  type: ordering
+  prompt: "Put the layers of an Edge's configuration in order, from the most general to the most specific."
+  options:
+    - id: blocks
+      text: "Building blocks: segments and network services"
+    - id: profile
+      text: "The Profile that composes them"
+    - id: override
+      text: "The Edge's own override"
+  correct: [blocks, profile, override]
+  explanation: "Segments and network services are composed into a Profile; Edges inherit from the Profile, and an Edge override changes one setting for one Edge."
+  lesson_ref: cfg-model
+
+- id: cfg-q-layer-of
+  topic: config-model
+  difficulty: 2
+  type: single_choice
+  prompt: "Scenario: You need a loopback interface on Branch X. At which layer can this setting live?"
+  options:
+    - id: edge
+      text: "Only on the Edge, because loopback interfaces do not support Profile-level configuration"
+    - id: profile
+      text: "In the Profile, then inherited"
+      explanation: "Loopback interfaces apply exclusively to Edges."
+    - id: both
+      text: "In either the Profile or the Edge"
+      explanation: "That is true of settings such as RADIUS, not of loopbacks."
+    - id: segment
+      text: "In the segment definition"
+      explanation: "A segment does not define interfaces; loopback IDs are just unique across segments within an Edge."
+  correct: edge
+  explanation: "The guide says loopback interfaces apply exclusively to Edges and do not support Profile-level configuration."
+  lesson_ref: cfg-model
+
+- id: cfg-q-private
+  topic: config-segments
+  difficulty: 2
+  type: single_choice
+  prompt: "Scenario: A guest segment is set to type **Private**. Business policy rules in that segment used the Internet Multipath network service. What does the Orchestrator do?"
+  options:
+    - id: direct
+      text: "It automatically changes those policies to Direct"
+    - id: nothing
+      text: "Nothing; rules are not affected by the segment type"
+      explanation: "For Private segments the Orchestrator overrides Internet Multipath policies."
+    - id: delete
+      text: "It deletes the rules"
+      explanation: "It changes them to Direct; it does not delete them."
+    - id: backhaul
+      text: "It changes them to Internet Backhaul"
+      explanation: "The documented change is to Direct."
+  correct: direct
+  explanation: "For Private segments, the Orchestrator automatically overrides all business policies set to Internet Multipath and changes them to Direct."
+  lesson_ref: cfg-segments
+
+- id: cfg-q-seg-delete
+  topic: config-segments
+  difficulty: 1
+  type: true_false
+  prompt: "**True or false:** A segment that a Profile uses cannot be deleted."
+  correct: true
+  explanation: "The guide says users cannot delete a segment used by a Profile; segments in use are also marked in the Profile's segment list."
+  lesson_ref: cfg-segments
+
+- id: cfg-q-seg-setup
+  topic: config-segments
+  difficulty: 2
+  type: single_choice
+  prompt: "Scenario: You want a new **guest** segment available to every Edge using Profile P. What are the steps?"
+  options:
+    - id: both
+      text: "Create it at Configure > Segments, then include it in Profile P with Change Profile Segments on the Device tab"
+    - id: edges
+      text: "Create it separately on each Edge's Device tab"
+      explanation: "Segments are Enterprise-level building blocks that a Profile includes."
+    - id: fw
+      text: "Create a firewall rule named guest"
+      explanation: "A firewall rule does not create a segment."
+    - id: gw
+      text: "Ask the Gateway to create it"
+      explanation: "Segments are configured in the Orchestrator, not on a Gateway."
+  correct: both
+  explanation: "Segments are created under Configure > Segments and chosen for a Profile with Change Profile Segments."
+  lesson_ref: cfg-segments
+
+- id: cfg-q-seg-facts
+  topic: config-segments
+  difficulty: 3
+  type: multi_choice
+  prompt: "Which statements about segments are supported by Arista's documentation? (Select all that apply.)"
+  options:
+    - id: max16
+      text: "The default maximum number of segments for an Enterprise is 16"
+    - id: vlan32
+      text: "An Edge can have up to 32 VLANs across 16 segments"
+    - id: allseg
+      text: "By default an interface's settings apply to all segments"
+    - id: abs
+      text: "Segments are guaranteed never to exchange traffic"
+      explanation: "The pages we read do not make that statement."
+    - id: modelno
+      text: "Every Edge model supports exactly the same number of segments"
+      explanation: "Per-model limits were not stated."
+  correct: [max16, vlan32, allseg]
+  explanation: "The Orchestrator Guide gives 16 as the default maximum; the Edge page gives 32 VLANs across 16 segments and says interface settings by default apply to all segments."
+  lesson_ref: cfg-segments
+
+- id: cfg-q-delprofile
+  topic: config-profiles
+  difficulty: 1
+  type: single_choice
+  prompt: "Several Edges use Profile P. What happens if you try to delete P?"
+  options:
+    - id: no
+      text: "You cannot delete a Profile that Edges are associated with"
+    - id: yes
+      text: "It is deleted and the Edges keep their last settings"
+      explanation: "The guide says a Profile with associated Edges cannot be deleted."
+    - id: quick
+      text: "Its Edges move to the Quick Start Profile"
+      explanation: "No such move is described."
+    - id: gw
+      text: "The Gateway confirms the deletion"
+      explanation: "The Gateway is not involved in Profile management."
+  correct: no
+  explanation: "A Profile that Edges use cannot be deleted; the Used By column shows how many do."
+  lesson_ref: cfg-profiles
+
+- id: cfg-q-quick
+  topic: config-profiles
+  difficulty: 1
+  type: true_false
+  prompt: "**True or false:** A default profile called the Quick Start Profile is available when the Orchestrator is installed."
+  correct: true
+  explanation: "The Profiles page says the Quick Start Profile is available after installation."
+  lesson_ref: cfg-profiles
+
+- id: cfg-q-edge-b
+  topic: config-profiles
+  difficulty: 2
+  type: single_choice
+  prompt: "Scenario: Edges A and B use Profile P. Edge A has the **Override** ticked on an interface setting; Edge B does not. An administrator changes that interface setting in P. What does the documentation say Edge B receives?"
+  options:
+    - id: new
+      text: "The new Profile value: a Profile's interface settings are applied automatically to its Edges"
+    - id: old
+      text: "Nothing, until someone edits Edge B"
+      explanation: "Interface settings of a Profile apply automatically to associated Edges."
+    - id: a
+      text: "Edge A's value"
+      explanation: "An Edge override is for that Edge only; it is not shared."
+    - id: restart
+      text: "Always a full hardware reboot"
+      explanation: "Some changes restart the Edge service, but not a hardware reboot, and not always."
+  correct: new
+  explanation: "Edge B inherits from P, so it receives the new value; Edge A's override is specific to Edge A."
+  lesson_ref: cfg-profiles
+
+- id: cfg-q-override
+  topic: config-overrides
+  difficulty: 1
+  type: single_choice
+  prompt: "Scenario: One branch needs a different ARP timeout than the Profile gives. Where do you change it?"
+  options:
+    - id: edge
+      text: "Configure > Edges > the Edge > Device tab, tick Override next to the setting and edit it"
+    - id: profile
+      text: "In the Profile, which also changes every other Edge"
+      explanation: "That would work but changes every Edge using the Profile, which is not what was asked."
+    - id: gw
+      text: "On the Gateway"
+      explanation: "The Gateway holds no Edge settings."
+    - id: seg
+      text: "In Configure > Segments"
+      explanation: "Segments do not hold ARP settings."
+  correct: edge
+  explanation: "Some Device-tab settings are inherited; to edit the inherited configuration for one Edge, select Override."
+  lesson_ref: cfg-overrides
+
+- id: cfg-q-override-facts
+  topic: config-overrides
+  difficulty: 3
+  type: multi_choice
+  prompt: "Which statements about Edge-level configuration are supported by Arista's documentation? (Select all that apply.)"
+  options:
+    - id: loop
+      text: "Loopback interfaces are configured only on Edges"
+    - id: vlanid
+      text: "The Profile VLAN name and ID cannot be overridden by the Edge"
+    - id: radius
+      text: "Some features, such as RADIUS, can be set at either the Profile or the Edge level"
+    - id: all
+      text: "Every setting in a Profile can be overridden"
+      explanation: "The guide states exceptions, such as the Profile VLAN name and ID."
+    - id: arp
+      text: "ARP settings are Edge-only"
+      explanation: "By default the Edge inherits ARP settings from its Profile."
+  correct: [loop, vlanid, radius]
+  explanation: "Loopbacks are Edge-only, the Profile VLAN name and ID cannot be overridden, and some features can be set at either level."
+  lesson_ref: cfg-overrides
+
+- id: cfg-q-wins
+  topic: config-business-policy
+  difficulty: 2
+  type: single_choice
+  prompt: "Scenario: The Profile has a business policy rule for voice. Branch X has a rule with the same match but a different action, created at the Edge. Which does Branch X use?"
+  options:
+    - id: edge
+      text: "The Edge-level rule, which supersedes the Profile configuration"
+    - id: profile
+      text: "The Profile rule, because Edges cannot override rules"
+      explanation: "Edges cannot edit Profile rules, but an identical Edge-level rule supersedes them."
+    - id: both
+      text: "Both are applied to every packet"
+      explanation: "The Edge rule supersedes; the pages do not describe applying both."
+    - id: gw
+      text: "The Gateway picks one"
+      explanation: "The Gateway is not asked to arbitrate."
+  correct: edge
+  explanation: "Edge-level configurations cannot update Profile rules; creating an identical rule at the Edge with new parameters supersedes the Profile configuration."
+  lesson_ref: cfg-business-policy
+
+- id: cfg-q-match
+  topic: config-business-policy
+  difficulty: 2
+  type: multi_choice
+  prompt: "Which of these can a business policy rule **match** on? (Select all that apply.)"
+  options:
+    - id: app
+      text: "An application"
+    - id: dom
+      text: "A destination domain name"
+    - id: ports
+      text: "Source or destination ports"
+    - id: dscp
+      text: "A DSCP value"
+    - id: reject
+      text: "A Reject verdict"
+      explanation: "Reject is a firewall action, not something you match."
+  correct: [app, dom, ports, dscp]
+  explanation: "The Match tab supports source, destination (including domain name, protocol and ports) and application, and an application match can include a DSCP value."
+  lesson_ref: cfg-business-policy
+
+- id: cfg-q-steer-level
+  topic: config-business-policy
+  difficulty: 3
+  type: true_false
+  prompt: "**True or false:** Interface and WAN Link link steering can only be set at the Edge override level, while Transport Group can be set at both Profile and Edge level."
+  correct: true
+  explanation: "The business policy page says Interface and WAN Link are allowed only at the Edge override level, and Transport Group at both."
+  lesson_ref: cfg-business-policy
+
+- id: cfg-q-fw-inbound
+  topic: config-firewall
+  difficulty: 2
+  type: single_choice
+  prompt: "Scenario: An outside server cannot reach a web server in the branch. No firewall rule or port forwarding exists for it. What does the documentation say is the default?"
+  options:
+    - id: block
+      text: "The Edge blocks all inbound traffic except self-destined traffic unless Port Forwarding or 1:1 NAT is configured"
+    - id: allow
+      text: "The Edge allows all inbound traffic by default"
+      explanation: "The default is to block inbound traffic."
+    - id: bp
+      text: "Business policy decides inbound access"
+      explanation: "Inbound access is a firewall (Inbound ACL) matter, not business policy."
+    - id: gw
+      text: "The Gateway opens the port"
+      explanation: "The Edge's firewall settings govern this."
+  correct: block
+  explanation: "Inbound traffic is blocked by default except self-destined traffic, unless Port Forwarding or 1:1 NAT rules are configured."
+  lesson_ref: cfg-firewall
+
+- id: cfg-q-reject
+  topic: config-firewall
+  difficulty: 2
+  type: single_choice
+  prompt: "Scenario: You want a firewall rule that drops traffic **and** notifies the source with a reset. Which action, and what must be on?"
+  options:
+    - id: reject
+      text: "Reject, which needs Stateful Firewall activated"
+    - id: drop
+      text: "Drop, with no requirements"
+      explanation: "Drop discards silently, with no notification."
+    - id: allow
+      text: "Allow"
+      explanation: "Allow permits the packets."
+    - id: skip
+      text: "Skip, which needs nothing"
+      explanation: "Skip moves on to the next rule and, like Reject, needs Stateful Firewall."
+  correct: reject
+  explanation: "Reject drops and sends an explicit reset; Reject and Skip are configurable only when Stateful Firewall is activated."
+  lesson_ref: cfg-firewall
+
+- id: cfg-q-svcclass
+  topic: config-apps-qos
+  difficulty: 2
+  type: single_choice
+  prompt: "Which statement about an application's service class is supported by the documentation?"
+  options:
+    - id: custom
+      text: "You cannot change it for default applications, but you can set it for your own custom applications"
+    - id: any
+      text: "You can change it for every application"
+      explanation: "Default applications keep their service class."
+    - id: never
+      text: "It can never be set"
+      explanation: "It can be set for custom applications."
+    - id: link
+      text: "It chooses which WAN link is used"
+      explanation: "Service class determines how DMPO handles the traffic; link steering chooses the link."
+  correct: custom
+  explanation: "Each application has a service class (Real-time, Transactional, Bulk); it is fixed for default applications and settable for custom ones."
+  lesson_ref: cfg-apps-qos
+
+- id: cfg-q-netflix
+  topic: config-diagnosis
+  difficulty: 2
+  type: single_choice
+  prompt: "Scenario: Branch X sends a streaming application over MPLS and you do not know why. Which screen do you open first?"
+  options:
+    - id: bp
+      text: "The Edge's Business Policy tab, choosing the right segment, then looking at Rules From Profile and Edge Overrides"
+    - id: logs
+      text: "Monitor > Firewall Logs"
+      explanation: "Firewall logs show allowed and dropped traffic; link choice is a business policy matter."
+    - id: seg
+      text: "Configure > Segments, to delete the segment"
+      explanation: "Deleting a segment is not a diagnostic step."
+    - id: new
+      text: "Provision a new Edge"
+      explanation: "A new Edge answers nothing about this one."
+  correct: bp
+  explanation: "Link choice is set by business policy rules; the Edge's Business Policy tab shows which rules are inherited from the Profile and which are Edge overrides, per segment."
+  lesson_ref: cfg-diagnosis

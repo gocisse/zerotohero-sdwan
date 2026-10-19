@@ -1,0 +1,76 @@
+---
+id: cfg-segments
+title: Segments
+summary: What segments are and why you use them, the Global Segment, how traffic stays isolated, and how segments touch interfaces, VLANs and policy.
+estimated_minutes: 10
+topics: [config-segments]
+---
+
+**By the end of this lesson you will be able to:**
+
+- explain what a <Term id="segment" /> is and give examples of why you would use several;
+- say what the <Term id="global-segment" /> is and what a <Term id="private-segment">Private segment</Term> does;
+- describe where segments are created and how a Profile includes them;
+- say where in the configuration you will meet the Segment drop-down.
+
+## What and why
+
+Arista describes network segmentation as partitioning a network into distinct logical sub-networks, isolating traffic by organization or data type. In a branch that usually means keeping groups apart: a corporate segment, a guest segment, a segment for devices such as cameras. The names are yours, and the three here are **examples**.
+
+<Diagram id="cfg-segments" />
+
+## The Global Segment
+
+Every Enterprise has a **Global Segment**. Its type can be set to **Regular** or **Private**. Pages that have a Segment drop-down, business policy for example, show the Global Segment [Regular] by default.
+
+<Callout variant="gotcha" title="Private segments change business policy">
+  For Private segments the Orchestrator automatically overrides all business policies set to Internet Multipath and changes them to Direct. If traffic in a Private segment behaves unlike a rule you wrote, look at the segment type.
+</Callout>
+
+## Creating and including segments
+
+- Segments are created under **Configure > Segments**: Add, fill in the fields (including a service VLAN identifier), Save Changes.
+- A **Profile** includes segments: on the Profile's **Device** tab, open the **Segment** menu and choose **Change Profile Segments**. Segments in use show a lock symbol and cannot be removed from the Profile.
+- A segment that a Profile uses cannot be deleted.
+
+<Predict
+  prompt="You want guest traffic kept separate from corporate traffic on every branch. What do you do first?"
+  choices={["Create the segment under Configure > Segments, then include it in the Profile", "Edit each Edge's Gateway", "Delete the Global Segment", "Turn on Stateful Firewall"]}
+  answer={0}
+>
+  Segments are building blocks created at Configure > Segments and then included in a Profile through Change Profile Segments.
+</Predict>
+
+## How segments touch other settings
+
+- **Interfaces**: by default an interface's settings apply to all segments, and an interface setting has a Segments field.
+- **VLANs**: an Edge can have up to 32 VLANs across 16 segments.
+- **Business policy**: rules are segment aware. A Segment drop-down at the top of the page picks which segment's rules you are editing.
+- **Firewall**: Port Forwarding and 1:1 NAT rules pick the segment the LAN IP belongs to, and the syslog collector is set per segment.
+- **Limits**: the default maximum number of segments for an Enterprise is 16, and the system maximum can be raised (the guide mentions 128).
+- **Diagnostics**: ping, traceroute and route views take a Segment selector.
+
+Some Device settings are *segment aware* (they apply to multiple segments) and others *segment agnostic* (they apply only to the segment you pick in the Segment menu).
+
+<Callout variant="warning" title="What we could not confirm">
+  Whether traffic can pass between two segments and how, whether general firewall rules are scoped by segment, and the segment limits for each Edge model were not stated in the pages we read. Do not assume isolation between segments is absolute without checking your design.
+</Callout>
+
+## What you would see in the VCO
+
+- **Configure > Segments**: the list of segments, Add and Delete.
+- A **Segment** menu or drop-down on the Profile Device tab and on the business policy page.
+- A **Segments** field on an interface.
+
+## Key takeaways
+
+- A segment is a logical sub-network that keeps traffic groups isolated.
+- The Global Segment always exists and can be Regular or Private; Private changes Internet Multipath rules to Direct.
+- Segments are created at Configure > Segments and included in a Profile with Change Profile Segments.
+- Many settings are per segment, so always ask which segment.
+
+## What would you look for in the VCO
+
+- Which segments does this Edge's Profile include?
+- Which segment is the Segment drop-down showing?
+- Is the segment Regular or Private?

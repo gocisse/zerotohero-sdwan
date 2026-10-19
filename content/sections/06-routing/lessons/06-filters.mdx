@@ -1,0 +1,78 @@
+---
+id: rt-filters
+title: Filters, route maps and attributes
+summary: Controlling what is accepted and advertised with BGP filters and OSPF route filters, setting local preference, MED and AS-path prepend, and a worked example of making site A the preferred exit.
+estimated_minutes: 10
+topics: [rt-filters]
+---
+
+**By the end of this lesson you will be able to:**
+
+- say how a <Term id="bgp-filter">filter</Term> is built and where it is attached;
+- say what local preference, metric (<Term id="med" />) and <Term id="as-path-prepend" /> do;
+- explain why "route map" is a general term and the VCO says "filter";
+- work through "make site A the preferred exit" and say which parts are documented.
+
+## Filters, not route maps
+
+Many routers use a *route map*: a list of match-and-set statements. The VCO's equivalent for BGP is a **Filter List** under the BGP settings. You build a filter, then attach it to a neighbor as its **Inbound Filter** (what you accept) or **Outbound Filter** (what you advertise). The word "route map" does not appear in the pages we read. OSPF has simpler **route filters**: inbound controls what OSPF-learned routes are installed into Overlay Flow Control, outbound controls what is redistributed into OSPF.
+
+A BGP filter rule has:
+
+| part | options |
+|---|---|
+| Match type | Prefix (IPv4 or IPv6), Community, AS Path (regular expression), Metric (the MED value), Local preference |
+| Exact Match | on by default |
+| Action type | Permit or Deny |
+| Action set | None, Local Preference, Community (with Additive), Metric, As-Path-Prepend, As-Path-Exclude |
+
+The limit is 512 BGPv4 match/set rules (256 inbound, 256 outbound). The 6.4 text we read mentions As-Path-Prepend only in the NSD and Gateway sections, and the enhanced options only apply from Edge 7.0, so check your release.
+
+## The attributes
+
+<Diagram id="rt-bgp-attributes" />
+
+- <Term id="local-preference" />: the diagnostics say that between two BGP routes the one with the **higher** local preference wins.
+- **AS-path length**: the route with the **shorter** AS path wins; <Term id="as-path-prepend" /> makes your path look longer, so it makes a route less attractive. As-Path-Exclude removes listed AS numbers.
+- **Metric (MED)**: the **lower** metric wins.
+- <Term id="community" />: a tag you attach or match on; **Uplink Community** marks routes that arrive over an uplink.
+
+The diagnostics name all three comparisons but do not give the order in which the Edge applies them; standard BGP applies local preference, then AS-path length, then MED, and we treat that as a general assumption. For iBGP to a Non SD-WAN site, local preference cannot be set by an outbound filter; use Metric or AS-path prepend.
+
+<Predict
+  prompt="Two BGP neighbors advertise the same prefix to one Edge. Neighbor 1's routes are given a higher local preference by an inbound filter. Which route does the Edge use?"
+  choices={["Neighbor 1's route", "Neighbor 2's route", "Both, always", "Neither until the Orchestrator picks"]}
+  answer={0}
+>
+  Higher local preference wins between two BGP routes (the diagnostic reason LR_BGP_LOCAL_PREF).
+</Predict>
+
+## Worked example: make site A the preferred exit
+
+Branches B and C reach a data center prefix 10.30.0.0/24 (illustrative) that sites A and D both connect to. You want A to be the exit.
+
+1. **Inside one Edge**, if two BGP neighbors offer the prefix, add an inbound filter on the neighbor towards A: Match Prefix, Action Permit, Action set Local Preference with a higher number. That makes this Edge prefer A's neighbor.
+2. **Between Edges**, the guides say you can steer the outcome with **route pinning**, BGP local preference or OSPF costs, and the OFC **Preferred VPN Exits** list lets you reorder exits for a particular subnet (lesson 7). Reordering is the most direct documented control.
+3. **Verify** with **Show BGP Routes per Prefix** (the best path and the attributes compared) and **List Routes per Prefix** on a remote Edge: the first entry is the best path.
+
+<Callout variant="warning" title="What we cannot promise">
+  The pages do not state how a local preference set at A is carried to B and C across the overlay, nor the order the Edge applies attributes in. Use step 2 and step 3 to confirm in your VCO instead of assuming step 1 is enough.
+</Callout>
+
+## What you would see in the VCO
+
+- **Configure > Edges or Profiles > Device > Routing & NAT > BGP > Filter List**, then the neighbor's Inbound and Outbound filter drop-downs.
+- **Show BGP Neighbor Details** lists attached filters and the prefixes accepted after the inbound filter.
+- **Configure > Overlay Flow Control > Preferred VPN Exits**.
+
+## Key takeaways
+
+- A filter is match plus action, attached inbound or outbound on a neighbor.
+- Higher local preference, shorter AS path and lower metric win.
+- Prepend makes a route worse; there is no route-map object in the VCO.
+
+## What would you look for in the VCO
+
+- Which filter is on this neighbor, inbound and outbound?
+- What did Show BGP Routes per Prefix say won, and on which attribute?
+- Did you check the remote Edge, not just the one you changed?

@@ -1,0 +1,51 @@
+# Section 2, lesson 5: with Branch to Branch VPN enabled, the first packets between two branches go via a Gateway.
+id: arch-first-packet-gateway
+title: Branch to branch, the first packets via a Gateway
+alt: >-
+  Two branch sites, each with a user and an Edge, are both connected by tunnels to a Gateway in the middle. The first
+  packets from a user at site A to a user at site B travel from site A's Edge to the Gateway and on to site B's Edge.
+width: 900
+height: 520
+
+groups:
+  - { id: site-a, label: Site A, nodes: [host-a, edge-a] }
+  - { id: site-b, label: Site B, nodes: [host-b, edge-b] }
+
+nodes:
+  - { id: host-a, label: Site A user, kind: host, x: 70, y: 140 }
+  - { id: edge-a, label: Site A Edge, kind: vce, x: 220, y: 140 }
+  - { id: host-b, label: Site B user, kind: host, x: 70, y: 400 }
+  - { id: edge-b, label: Site B Edge, kind: vce, x: 220, y: 400 }
+  - { id: gw, label: Gateway, kind: vcg, x: 600, y: 270 }
+
+links:
+  - { id: lan-a, from: host-a, to: edge-a, style: lan }
+  - { id: lan-b, from: host-b, to: edge-b, style: lan }
+  - { id: tun-a, from: edge-a, to: gw, style: overlay-tunnel, label: tunnel to Gateway }
+  - { id: tun-b, from: edge-b, to: gw, style: overlay-tunnel, label: tunnel to Gateway }
+
+steps:
+  - title: Two sites, both with Branch to Branch VPN
+    narration: >-
+      Both sites have Cloud VPN with **Branch to Branch VPN** enabled, using the Gateway option. Each Edge already has a tunnel
+      to the Gateway. There is no tunnel between the two sites yet.
+    highlight: [edge-a, edge-b, tun-a, tun-b, gw]
+
+  - title: The first packets go via the Gateway
+    narration: >-
+      A user at site A sends traffic to a user at site B for the first time. The packets travel from site A's Edge up its
+      tunnel to the Gateway, and from the Gateway down the tunnel to site B's Edge.
+    highlight: [host-a, lan-a, edge-a, tun-a, gw, tun-b, edge-b, lan-b, host-b]
+    packets:
+      - { path: [host-a, edge-a, tun-a, gw, tun-b, edge-b, host-b], label: first packets, color_style: overlay-tunnel }
+
+  - title: Meanwhile, the Edge decides
+    narration: >-
+      While traffic flows this way, the Edge that started the conversation works out whether a secure direct tunnel to the other
+      Edge is possible. If it is, it builds one; the next diagram shows that. If it is not, for example because a NAT device in
+      front of the other Edge blocks incoming tunnels, the traffic can keep using the Gateway path.
+    highlight: [edge-a, edge-b, gw]
+    packets:
+      - { path: [host-b, edge-b, tun-b, gw, tun-a, edge-a, host-a], label: reply, color_style: overlay-tunnel }
+    callouts:
+      - { target: edge-a, text: "The initiating Edge checks whether a direct tunnel is possible." }

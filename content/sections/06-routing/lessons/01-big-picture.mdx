@@ -1,0 +1,86 @@
+---
+id: rt-big-picture
+title: How routing works in VeloCloud
+summary: Routes in from the LAN, the overlay between sites, routes out to the LAN - the routing table, route types, where each route can come from, and how segments scope it all.
+estimated_minutes: 9
+topics: [rt-model]
+---
+
+**By the end of this lesson you will be able to:**
+
+- describe the three stages a prefix goes through: learned locally, carried across the overlay, handed to a remote LAN;
+- list the places a route can come from, and tell local routes from remote ones;
+- say what the <Term id="routing-table" /> view in the VCO shows and which column answers "why this route?";
+- say how <Term id="segment">segments</Term> scope routing.
+
+## Three stages
+
+A <Term id="prefix" /> such as a branch LAN reaches another site in three stages.
+
+<Diagram id="rt-lan-to-lan" />
+
+1. **Learned locally.** The Edge gets the prefix from a directly connected interface, from a static route you configured, or from a dynamic protocol (OSPF or BGP) with a LAN router. Arista calls these *local routes*.
+2. **Carried across the overlay.** The Edge sends its locally learned routes to the Gateway, according to its configuration. The Gateway acts as a route reflector, so every Edge learns the routes without a full mesh of tunnels. The overlay's routing protocol is <Term id="vcrp" />.
+3. **Handed to the remote LAN.** A remote Edge installs the route as a *remote route* learned through VCRP and, if you enable it, redistributes it to its own LAN routers.
+
+Each stage is a separate switch. A prefix can be perfectly healthy in stage 1 and still never reach stage 3: this section is about finding which stage stopped it.
+
+## The routing table
+
+Each Edge builds a <Term id="routing-table">routing table</Term> (the guides use RIB and FIB). In Diagnostics, **Route Table Dump** lists the table for one segment or all, one prefix or all, and either every route or only the **preferred** route per prefix: the one used for forwarding. The columns worth knowing:
+
+| column | what it tells you |
+|---|---|
+| Type | the <Term id="route-type" />, such as Cloud, Edge2Edge or any (underlay or connected) |
+| Cost, Preference, Order | the numbers used to compare routes |
+| Reachable | whether the route is currently usable, with a reason code |
+| Next Hop | the exit interface for local routes; for overlay routes the kind of next hop (Cloud gateway, Cloud VPN, edge to edge) |
+| Lost Reason | why a route lost to the next preferred one |
+
+<Callout variant="info" title="Route preference, not administrative distance">
+  Many routers rank route sources by an *administrative distance*. The Arista guides do not use that term. They use a fixed order of operations and a numeric <Term id="route-preference" />, where a lower value wins. Lesson 5 covers it.
+</Callout>
+
+## Where a route can come from
+
+- **Connected**: a subnet on an Edge interface.
+- **Static**: configured under the Edge's Static Route Settings (lesson 2).
+- **OSPF** and **BGP**: learned from LAN or WAN routers (lessons 3 and 4).
+- **Overlay (remote)**: learned from other Edges through the Gateway.
+- **Non SD-WAN Destination**: static and BGP routes for IPsec tunnels to third-party sites (Section 5).
+
+## Segments
+
+Diagnostics report routes per segment, and you can run Route Table Dump for one segment or all of them. BGP can be configured per segment, but the guides say to configure OSPF only on the Global Segment. How routes cross between segments is not described in the pages we read, so do not assume it.
+
+<Predict
+  prompt="An Edge learned 10.20.0.0/24 from a LAN router. Which of these is the Edge's next step, as documented?"
+  choices={["It sends the locally learned route to the Gateway, according to its configuration", "It waits for the Orchestrator to push the route to every other Edge", "It builds a tunnel to every Edge in the company first", "It drops the route unless it is a default route"]}
+  answer={0}
+>
+  Edges send their locally learned routes to the Gateway, which reflects them to the other Edges. The Orchestrator manages configuration; it is not the route reflector.
+</Predict>
+
+<Callout variant="warning" title="Not confirmed">
+  We could not confirm how routes move between segments, or whether static routes are configured per segment (the Static Route table we read has no Segment field). Check both in your own VCO.
+</Callout>
+
+## What you would see in the VCO
+
+- **Configure > Edges > (Edge) > Device > Routing & NAT**: Static Route Settings, OSPF, BGP, Overlay Route Control.
+- **Configure > Overlay Flow Control**: the overlay's route list and exits (lesson 7).
+- **Diagnostics > Remote Diagnostics > Route Table Dump** and **List Routes per Prefix**.
+- **Monitor > Routing**: BGP neighbor state and the Gateway route table.
+
+## Key takeaways
+
+- Three stages: learned locally, carried by VCRP through the Gateway, handed to a remote LAN.
+- Route Table Dump shows each route's type, preference, reachability and the reason it lost.
+- Arista uses route preference (lower wins), not administrative distance.
+- Segments scope routes; OSPF only on the Global Segment.
+
+## What would you look for in the VCO
+
+- Which stage did the prefix reach: is it in the Edge's table, in the overlay, in the remote Edge's table?
+- What is the route's Type and Preference, and does Lost Reason explain a missing route?
+- Which segment are you looking at?

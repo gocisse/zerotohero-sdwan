@@ -1,0 +1,51 @@
+# Section 6, lesson 2: Preferred versus Advertise. Facts: reference/static-routes.md.
+id: rt-static-flags
+title: Static route flags - Preferred and Advertise
+alt: >-
+  A device sits behind a LAN router at Branch A, which has a static route to it. With Advertise ticked the route is carried
+  through the Gateway to Branch B. Without it, only Branch A knows the route.
+width: 960
+height: 380
+
+nodes:
+  - { id: dev, label: Device on the LAN, kind: host, x: 80, y: 190 }
+  - { id: lan, label: LAN router, kind: router, x: 250, y: 190 }
+  - { id: edge-a, label: Branch A Edge, kind: vce, x: 430, y: 190 }
+  - { id: gw, label: Gateway, kind: vcg, x: 640, y: 190 }
+  - { id: edge-b, label: Branch B Edge, kind: vce, x: 850, y: 190 }
+
+links:
+  - { id: d-lan, from: dev, to: lan, style: lan }
+  - { id: lan-a, from: lan, to: edge-a, style: lan, label: next hop }
+  - { id: a-gw, from: edge-a, to: gw, style: overlay-tunnel }
+  - { id: gw-b, from: gw, to: edge-b, style: overlay-tunnel }
+
+steps:
+  - title: A static route
+    narration: >-
+      On Branch A, **Static Route Settings** holds the subnet, the next hop (the LAN router), a cost and an ICMP probe that checks the next hop.
+    highlight: [dev, d-lan, lan, lan-a, edge-a]
+    callouts:
+      - { target: edge-a, text: "Subnet + Next Hop IP + Cost + ICMP Probe" }
+
+  - title: Preferred is a local decision
+    narration: >-
+      **Preferred** makes Branch A use this static route before a route learned through the VPN, even if the VPN route has a lower cost. It changes nothing for other sites.
+    highlight: [edge-a, lan-a, lan]
+    callouts:
+      - { target: edge-a, text: "Preferred: local choice only" }
+
+  - title: Advertise reaches other sites
+    narration: >-
+      With **Advertise** ticked, the route is shared over VCRP. The Gateway reflects it and Branch B can reach the prefix.
+    highlight: [edge-a, a-gw, gw, gw-b, edge-b]
+    packets:
+      - { path: [edge-a, a-gw, gw, gw-b, edge-b], label: static route, color_style: overlay-tunnel }
+
+  - title: Advertise off keeps it local
+    narration: >-
+      Without Advertise the route stays on Branch A. Branch B has no route even though Branch A reaches the device perfectly.
+    hide: [a-gw, gw-b]
+    highlight: [edge-a, lan-a, lan, d-lan, dev]
+    callouts:
+      - { target: edge-b, text: "No route here" }

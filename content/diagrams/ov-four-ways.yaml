@@ -1,0 +1,62 @@
+# Section 5, lesson 1: four ways to reach another place. Facts: reference/cloud-vpn.md, hubs-and-branches.md, non-sdwan-destinations.md.
+id: ov-four-ways
+title: Four ways traffic can leave a branch
+alt: >-
+  Branch A can reach Branch B through a Gateway, directly over a dynamic tunnel, through a Hub, or reach a non SD-WAN
+  destination through an IPsec tunnel from a Gateway.
+width: 900
+height: 560
+
+nodes:
+  - { id: a, label: Branch A Edge, kind: vce, x: 120, y: 280 }
+  - { id: gw, label: Gateway, kind: vcg, x: 450, y: 90 }
+  - { id: hub, label: Hub Edge, kind: datacenter, x: 450, y: 480 }
+  - { id: b, label: Branch B Edge, kind: vce, x: 780, y: 280 }
+  - { id: nsd, label: Cloud provider (non SD-WAN), kind: cloud, x: 780, y: 90 }
+
+links:
+  - { id: a-gw, from: a, to: gw, style: overlay-tunnel }
+  - { id: gw-b, from: gw, to: b, style: overlay-tunnel }
+  - { id: a-b, from: a, to: b, style: overlay-tunnel, label: direct (dynamic) }
+  - { id: a-hub, from: a, to: hub, style: overlay-tunnel }
+  - { id: hub-b, from: hub, to: b, style: overlay-tunnel }
+  - { id: gw-nsd, from: gw, to: nsd, style: ipsec }
+
+steps:
+  - title: Start with two branches
+    narration: >-
+      Which path traffic takes between two sites is not one fixed thing. There are four ways it can go, and the Orchestrator settings decide which are available.
+    highlight: [a, b]
+    show: [gw, hub, nsd, a-gw, gw-b, a-b, a-hub, hub-b, gw-nsd]
+
+  - title: 1. Via a Gateway
+    narration: >-
+      With Branch to Branch VPN set to the **Cloud Gateways** option, each Edge has a tunnel to the closest Gateway and connections between Edges go through it.
+    show: [gw, a-gw, gw-b]
+    highlight: [a, a-gw, gw, gw-b, b]
+    packets:
+      - { path: [a, a-gw, gw, gw-b, b], label: via Gateway, color_style: overlay-tunnel }
+
+  - title: 2. Directly
+    narration: >-
+      With Dynamic Branch to Branch, the first packets go through a Gateway or Hub; if the initiating Edge decides a secure overlay tunnel is possible, a direct tunnel is built.
+    show: [a-b]
+    highlight: [a, a-b, b]
+    packets:
+      - { path: [a, a-b, b], label: direct, color_style: overlay-tunnel }
+
+  - title: 3. Via a Hub
+    narration: >-
+      With the **Hubs for VPN** option, connections between branch Edges go through a Hub. Branch to Hub tunnels are permanent.
+    show: [hub, a-hub, hub-b]
+    highlight: [a, a-hub, hub, hub-b, b]
+    packets:
+      - { path: [a, a-hub, hub, hub-b, b], label: via Hub, color_style: overlay-tunnel }
+
+  - title: 4. To a non SD-WAN destination
+    narration: >-
+      For a site or service that does not run VeloCloud, a Gateway (or an Edge) builds an **IPsec** tunnel to it. Reaching a cloud provider this way needs no SD-WAN device at the other end.
+    show: [nsd, gw-nsd]
+    highlight: [a, a-gw, gw, gw-nsd, nsd]
+    packets:
+      - { path: [a, a-gw, gw, gw-nsd, nsd], label: to NSD, color_style: ipsec }

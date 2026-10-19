@@ -1,0 +1,64 @@
+---
+id: cfg-diagnosis
+title: Reading an Edge's configuration in the VCO
+summary: A guided diagnostic from "why does Branch X send Netflix over the MPLS link?", through the screens to open, in what order, and how to tell whether a rule comes from the Profile or the Edge.
+estimated_minutes: 11
+topics: [config-diagnosis]
+---
+
+**By the end of this lesson you will be able to:**
+
+- turn a behaviour question into an ordered list of screens;
+- tell whether a rule comes from the Profile or the Edge;
+- recognise when a segment, a firewall rule or steering strictness is the real cause;
+- say what you cannot conclude from the screens.
+
+## The question
+
+"Why does Branch X send Netflix over the MPLS link and not the Internet link?" This is a <Term id="business-policy">business policy</Term> question (treatment and link), so start there, not in the firewall.
+
+## Step by step
+
+1. **Find the Edge and its <Term id="profile" />.** Configure > Edges, open Branch X; note its Profile. Configure > Profiles shows how many Edges share it.
+2. **Open the Edge's Business Policy tab.** Pick the right <Term id="segment">segment</Term> in the Segment drop-down first; rules are shown per segment.
+3. **Look at the two sections.** **Edge Overrides** are rules made at this Edge. **Rules From Profile** are inherited. The section tells you where the rule lives.
+4. **Find the rule that matches the application.** Rules are listed in order of highest precedence; look through the list for rules whose Match fits Netflix (Application) and whose source fits the traffic's segment or VLAN.
+5. **Read its Action.** Link Steering (Auto, Transport Group, Interface or WAN Link; Mandatory, Preferred or Available) and Network Service (Direct, Multi-Path, Internet Backhaul).
+6. **Check for a Private segment.** Private segments turn Internet Multipath rules into Direct.
+7. **Compare with the Profile.** Open the Profile's Business Policy tab: is the same rule there? If the Edge has a matching rule and the Profile has one too, the Edge-level rule supersedes.
+
+<Predict
+  prompt="You find a Netflix rule under Edge Overrides that steers to MPLS, and a different Netflix rule under Rules From Profile. Which applies at this Edge?"
+  choices={["The Profile's", "The Edge override's, which supersedes the Profile configuration", "Neither", "The firewall's"]}
+  answer={1}
+>
+  An Edge-level rule supersedes the Profile configuration; that is exactly why the Edge Overrides section exists.
+</Predict>
+
+## If the rule says "Mandatory" or "Direct"
+
+- **Mandatory on MPLS** pins the application to MPLS; if MPLS is down, packets are dropped (Section 3).
+- **Network Service Direct** is a different choice from Multi-Path; older VeloCloud material describes Direct traffic as bypassing the DMPO tunnels, which we could not confirm for 7.0.
+- Neither? Check Auto: DMPO then picks the link, and a brownout on the Internet link may be why MPLS was chosen. Use the Section 3 views (Monitor > Edges > Links and Paths).
+
+<Callout variant="warning" title="Do not over-read">
+  We could not confirm how rule order is evaluated when two rules match, what the default action is, or how the Orchestrator marks an overridden setting. If the screens do not settle it, try the flow in **Diagnostics** or Monitor > Edges > Flows (live mode) rather than assuming.
+</Callout>
+
+## What you would see in the VCO
+
+- **Configure > Edges > (Edge) > Business Policy**, the Segment drop-down, **Rules From Profile** and **Edge Overrides**.
+- **Configure > Profiles > (Profile) > Business Policy**.
+- **Monitor > Edges > (Edge) > Links, Paths, Flows**; **Monitor > Firewall Logs** if traffic seems blocked rather than steered.
+
+## Key takeaways
+
+- Behaviour about links and treatment: business policy first. Blocked traffic: firewall.
+- The section a rule is in shows its origin: Rules From Profile or Edge Overrides.
+- Check segment, steering strictness and network service before blaming the link.
+
+## What would you look for in the VCO
+
+- Which segment and which section is the matching rule in?
+- What are its Link Steering and Network Service?
+- Does a Profile rule exist with different parameters?

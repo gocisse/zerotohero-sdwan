@@ -1,0 +1,365 @@
+# Section 3 quiz. Correct answers use only VERIFIED rows in content/reference/dmpo*.md. Legacy 2017 white-paper facts are never a correct answer.
+
+- id: dmpo-q-detect
+  topic: dmpo-overview
+  difficulty: 1
+  type: true_false
+  prompt: "**True or false:** Arista says DMPO detects an SLA failure or an outage within 300 to 500 ms and steers the flow to a healthy link."
+  correct: true
+  explanation: "The overview gives 300 to 500 ms for detection."
+  lesson_ref: dmpo-overview
+
+- id: dmpo-q-where
+  topic: dmpo-overview
+  difficulty: 1
+  type: single_choice
+  prompt: "Which pair of components implements DMPO, so that it can measure and steer the traffic between them?"
+  options:
+    - id: edge-gw
+      text: "Edges and Gateways"
+    - id: host-host
+      text: "The user's PC and the application server"
+      explanation: "End hosts know nothing about DMPO; it is done by the SD-WAN components in the path."
+    - id: vco-only
+      text: "Only the Orchestrator, which steers every packet"
+      explanation: "The Orchestrator is where rules are defined; the Edges and Gateways carry and steer the traffic."
+    - id: isp
+      text: "The service provider's routers"
+      explanation: "DMPO is a VeloCloud function; the provider's routers are part of the underlay."
+  correct: edge-gw
+  explanation: "Arista's overview says Gateways implement DMPO, and Edges run it too. Together they form the endpoints of the tunnels DMPO measures."
+  lesson_ref: dmpo-overview
+
+- id: dmpo-q-probe
+  topic: dmpo-monitoring
+  difficulty: 1
+  type: single_choice
+  prompt: "A path currently carries **no user traffic**. How often does DMPO send an active probe on it?"
+  options:
+    - id: p100
+      text: "Every 100 ms"
+    - id: p1s
+      text: "Once a second"
+      explanation: "The documented interval is 100 ms (it becomes 500 ms only after five minutes without high-priority traffic)."
+    - id: p5m
+      text: "Once every five minutes"
+      explanation: "Five minutes is the time after which the interval lengthens to 500 ms, not the probe interval."
+    - id: never
+      text: "Never; it only measures links that carry traffic"
+      explanation: "Idle paths are probed so DMPO can still choose them."
+  correct: p100
+  explanation: "With no user traffic an active probe is sent every 100 ms; after five minutes with no high-priority traffic it becomes 500 ms."
+  lesson_ref: dmpo-monitoring
+
+- id: dmpo-q-header
+  topic: dmpo-monitoring
+  difficulty: 2
+  type: multi_choice
+  prompt: "While user traffic flows, DMPO adds information to the tunnel header so the receiver can measure the path. Which items are added? (Select all that apply.)"
+  options:
+    - id: seq
+      text: "A sequence number"
+    - id: ts
+      text: "A timestamp"
+    - id: sla
+      text: "The application's SLA values"
+      explanation: "SLA values are policy; the header carries measurement data."
+    - id: copy
+      text: "A second copy of the payload"
+      explanation: "Duplication is FEC, a remediation that is used only on demand."
+  correct: [seq, ts]
+  explanation: "The sequence number lets the receiver spot lost and out-of-order packets; the timestamp lets it compute latency and jitter."
+  lesson_ref: dmpo-monitoring
+
+- id: dmpo-q-500
+  topic: dmpo-monitoring
+  difficulty: 2
+  type: true_false
+  prompt: "**True or false:** After five minutes with no high-priority user traffic on a path, DMPO's probe interval on it changes from 100 ms to 500 ms."
+  correct: true
+  explanation: "Probing continues, but less often, once there has been no high-priority user traffic for five minutes."
+  lesson_ref: dmpo-monitoring
+
+- id: dmpo-q-modes
+  topic: dmpo-steering
+  difficulty: 1
+  type: multi_choice
+  prompt: "Which of these are link-steering modes in a business-policy rule? (Select all that apply.)"
+  options:
+    - id: auto
+      text: "Auto"
+    - id: tg
+      text: "Transport Group"
+    - id: iface
+      text: "Interface"
+    - id: wan
+      text: "WAN Link"
+    - id: hub
+      text: "Hub"
+      explanation: "A Hub is a kind of Edge, not a steering mode."
+  correct: [auto, tg, iface, wan]
+  explanation: "Link Steering has four modes: Auto (the default for applications), Transport Group, Interface and WAN Link."
+  lesson_ref: dmpo-steering
+
+- id: dmpo-q-auto
+  topic: dmpo-steering
+  difficulty: 1
+  type: single_choice
+  prompt: "Scenario: An administrator creates no special rule for a new SaaS application. Which steering behaviour applies by default?"
+  options:
+    - id: auto
+      text: "Auto: DMPO picks the best links for the application type and turns on remediation when needed"
+    - id: mand
+      text: "Mandatory on the first link"
+      explanation: "No link is pinned unless a rule says so."
+    - id: drop
+      text: "The traffic is dropped until a rule exists"
+      explanation: "Applications have a default behaviour, which is Auto."
+    - id: avail
+      text: "Available on the cheapest link"
+      explanation: "Strictness applies only to Interface and WAN Link steering, and nothing chooses the cheapest link."
+  correct: auto
+  explanation: "Auto is the default link steering for applications."
+  lesson_ref: dmpo-steering
+
+- id: dmpo-q-mandatory
+  topic: dmpo-steering
+  difficulty: 2
+  type: single_choice
+  prompt: "Scenario: A payment application has a rule with **Mandatory** steering on the MPLS link. The MPLS circuit goes down completely. What does Arista's documentation say happens to that application's traffic?"
+  options:
+    - id: drop
+      text: "It does not steer away; the packets are dropped because the link is inactive"
+    - id: inet
+      text: "It moves to the Internet link within 300 to 500 ms"
+      explanation: "That is what Preferred or Auto might do. Mandatory never steers away, even in an outage."
+    - id: queue
+      text: "It waits in a queue until the Orchestrator reroutes it"
+      explanation: "The Orchestrator does not reroute packets; the policy decides."
+    - id: fec
+      text: "FEC repairs it"
+      explanation: "FEC copes with loss on a working link; it cannot carry traffic over a dead one."
+  correct: drop
+  explanation: "Mandatory pins traffic to the link; the business-policy table says the packet is dropped if the link or group is inactive."
+  lesson_ref: dmpo-steering
+
+- id: dmpo-q-preferred
+  topic: dmpo-steering
+  difficulty: 2
+  type: single_choice
+  prompt: "Scenario: Voice is set to **Preferred** on the MPLS link. MPLS stays up but its quality no longer meets the voice SLA, and an Internet link is healthy. What does DMPO do?"
+  options:
+    - id: move
+      text: "It moves the voice traffic to another public link, here the Internet link"
+    - id: stay
+      text: "It leaves the traffic on MPLS regardless of the SLA"
+      explanation: "That is Available. Preferred keeps the link only while it meets the SLA."
+    - id: drop
+      text: "It drops the traffic"
+      explanation: "Dropping is the Mandatory behaviour when a link is inactive."
+    - id: reboot
+      text: "It restarts the MPLS link"
+      explanation: "DMPO steers traffic; it does not restart circuits."
+  correct: move
+  explanation: "Preferred keeps the chosen link while it meets the application SLA and moves to another public link when it does not."
+  lesson_ref: dmpo-steering
+
+- id: dmpo-q-available
+  topic: dmpo-steering
+  difficulty: 3
+  type: single_choice
+  prompt: "Scenario: A backup job uses **Available** on the Internet link. The link is up but loss exceeds the SLA. A second link is healthy. What does the documentation say?"
+  options:
+    - id: stay
+      text: "The flow stays on the chosen link and remediation is applied; it moves only if the link goes down"
+    - id: move
+      text: "The flow moves to the healthy link at once"
+      explanation: "Moving on SLA failure is Preferred. Available moves only if the link is down."
+    - id: drop
+      text: "The flow is dropped"
+      explanation: "The link is up, so nothing is dropped."
+    - id: ignore
+      text: "Nothing is done at all"
+      explanation: "Remediation is applied when the SLA is missed."
+  correct: stay
+  explanation: "Available uses the chosen link while it is up, whatever the SLA; remediation is applied when the SLA is missed, and flows move only if the link is down."
+  lesson_ref: dmpo-steering
+
+- id: dmpo-q-outage-vs-brownout
+  topic: dmpo-outage-brownout
+  difficulty: 1
+  type: single_choice
+  prompt: "Scenario: A link is up and passes traffic, but the jitter on it is too high for voice. Which term do Arista's guides use?"
+  options:
+    - id: brown
+      text: "Brownout"
+    - id: out
+      text: "Outage"
+      explanation: "An outage means the link has failed completely and cannot pass traffic."
+    - id: hold
+      text: "Hold time"
+      explanation: "The hold time is the one-minute wait before moving traffic back after recovery."
+    - id: premium
+      text: "Premium Service"
+      explanation: "Premium Service is a customer setting for on-demand remediation, not a link condition."
+  correct: brown
+  explanation: "A brownout is a link that is still up but cannot deliver the SLA for latency, jitter or loss for an application."
+  lesson_ref: dmpo-outage-brownout
+
+- id: dmpo-q-blackout
+  topic: dmpo-outage-brownout
+  difficulty: 2
+  type: true_false
+  prompt: "**True or false:** Arista's current guides use the word \"blackout\" for a link that has failed completely."
+  correct: false
+  explanation: "They say \"outage\". \"Blackout\" is older or industry wording that appears in a legacy white paper."
+  lesson_ref: dmpo-outage-brownout
+
+- id: dmpo-q-order
+  topic: dmpo-outage-brownout
+  difficulty: 3
+  type: ordering
+  prompt: "Put what happens when a preferred link has an outage and later recovers in order."
+  options:
+    - id: measure
+      text: "The endpoints keep measuring the path"
+    - id: detect
+      text: "DMPO detects the failure, within 300 to 500 ms"
+    - id: steer
+      text: "DMPO steers the flow to a healthy link"
+    - id: recover
+      text: "The failed link recovers"
+    - id: hold
+      text: "DMPO waits one minute"
+    - id: back
+      text: "The flow returns to the preferred link named in the policy"
+  correct: [measure, detect, steer, recover, hold, back]
+  explanation: "Measurement is continuous, detection takes 300 to 500 ms, then the flow is steered. After recovery there is a one-minute hold before steering back."
+  lesson_ref: dmpo-outage-brownout
+
+- id: dmpo-q-fec
+  topic: dmpo-remediation
+  difficulty: 2
+  type: multi_choice
+  prompt: "Which statements about FEC in Arista's DMPO description are correct? (Select all that apply.)"
+  options:
+    - id: dup
+      text: "It is packet duplication"
+    - id: two
+      text: "With several links, DMPO uses up to two of the best links"
+    - id: off
+      text: "It is switched off when loss no longer exceeds the threshold"
+    - id: always
+      text: "It is always on for every flow"
+      explanation: "FEC is triggered per flow, in real time, by loss crossing a threshold."
+    - id: tcp
+      text: "It is the mechanism for TCP file transfers"
+      explanation: "TCP applications use NACK."
+  correct: [dup, two, off]
+  explanation: "FEC duplicates packets, uses up to two links, and turns off when loss falls below its threshold."
+  lesson_ref: dmpo-remediation
+
+- id: dmpo-q-jitter
+  topic: dmpo-remediation
+  difficulty: 2
+  type: single_choice
+  prompt: "For which jitter does DMPO enable the jitter buffer for a **voice** flow?"
+  options:
+    - id: j7
+      text: "When jitter exceeds 7 ms"
+    - id: j5
+      text: "When jitter exceeds 5 ms"
+      explanation: "5 ms is the figure for video."
+    - id: j200
+      text: "When jitter exceeds 200 ms"
+      explanation: "200 ms is the most the buffer can hold, not the trigger."
+    - id: always
+      text: "Always, for every voice flow"
+      explanation: "It is enabled only when jitter crosses the threshold, and disabled if the flow is not constant."
+  correct: j7
+  explanation: "The jitter buffer is enabled for voice above 7 ms and for video above 5 ms; the receiver buffers up to 10 packets or 200 ms."
+  lesson_ref: dmpo-remediation
+
+- id: dmpo-q-nack
+  topic: dmpo-remediation
+  difficulty: 2
+  type: single_choice
+  prompt: "Scenario: A large file download over TCP is losing packets on the only WAN link. Which on-demand mechanism does DMPO use for this kind of traffic?"
+  options:
+    - id: nack
+      text: "NACK: the receiving endpoint asks the sender to retransmit the missing packet"
+    - id: jb
+      text: "The jitter buffer"
+      explanation: "The jitter buffer evens out delay for real-time traffic; it does not recover lost packets."
+    - id: fec
+      text: "FEC, as for voice"
+      explanation: "The guide associates FEC with real-time traffic and NACK with TCP applications."
+    - id: none
+      text: "Nothing; TCP must cope alone"
+      explanation: "DMPO retransmits at its own level so TCP does not see the loss."
+  correct: nack
+  explanation: "For TCP applications such as file transfer DMPO uses NACK-based retransmission at the DMPO level."
+  lesson_ref: dmpo-remediation
+
+- id: dmpo-q-premium
+  topic: dmpo-remediation
+  difficulty: 3
+  type: single_choice
+  prompt: "What is true when **Premium Service** is switched off for a customer?"
+  options:
+    - id: nogw
+      text: "Monitoring and dynamic steering continue, but the Gateway applies no error correction"
+    - id: nodmpo
+      text: "DMPO stops measuring links"
+      explanation: "Continuous monitoring still applies."
+    - id: nosteer
+      text: "Applications can no longer be steered"
+      explanation: "Dynamic application steering still applies."
+    - id: noedge
+      text: "The Edges stop forwarding"
+      explanation: "Nothing about forwarding stops; only the Gateway error correction does."
+  correct: nogw
+  explanation: "Premium Service is on by default and enables On-Demand Remediation; without it the Gateway does no error correction, while monitoring, steering and secure transmission continue."
+  lesson_ref: dmpo-remediation
+
+- id: dmpo-q-pick
+  topic: dmpo-scenarios
+  difficulty: 3
+  type: single_choice
+  prompt: "Scenario: A branch has two links and a voice call. **Both** links start losing packets, so no clean link exists. What does DMPO do for the call?"
+  options:
+    - id: fec
+      text: "It enables on-demand remediation, FEC, with copies of packets sent on both links"
+    - id: steer
+      text: "It steers the call to the better link, because steering always fixes loss"
+      explanation: "Remediation is used precisely when steering cannot help, such as when several links are degraded at once."
+    - id: nack
+      text: "It uses NACK, as it does for any loss"
+      explanation: "NACK is for TCP applications; voice is real-time."
+    - id: nothing
+      text: "Nothing, until one link recovers"
+      explanation: "On-demand remediation exists for this situation."
+  correct: fec
+  explanation: "When steering cannot help (single link, or several links degraded together) DMPO applies error correction; for real-time traffic that is FEC and, for high jitter, the jitter buffer."
+  lesson_ref: dmpo-together
+
+- id: dmpo-q-qoe
+  topic: dmpo-vco-diagnosis
+  difficulty: 1
+  type: single_choice
+  prompt: "Calls are choppy at a branch. Which Edge tab in the Orchestrator gives Good, Fair or Poor scores for traffic types?"
+  options:
+    - id: qoe
+      text: "QoE"
+    - id: sys
+      text: "System"
+      explanation: "The System tab is about the device, not traffic quality scores."
+    - id: profile
+      text: "Profile"
+      explanation: "A Profile is a configuration template, not a monitoring view."
+    - id: users
+      text: "Users"
+      explanation: "There is no such tab among the monitoring views we confirmed."
+  correct: qoe
+  explanation: "The QoE tab scores traffic quality as Good, Fair or Poor."
+  lesson_ref: dmpo-vco-diagnosis

@@ -1,0 +1,65 @@
+---
+id: dmpo-vco-diagnosis
+title: Reading DMPO in the VCO
+summary: A guided diagnostic lesson from the symptom "calls are choppy at Branch X", using the QoE, Links, Paths and Flows views and the business policy.
+estimated_minutes: 10
+topics: [dmpo-vco-diagnosis]
+---
+
+**By the end of this lesson you will be able to:**
+
+- turn a symptom into questions the VCO can answer;
+- use QoE, Links, Paths and Flows in a sensible order;
+- decide between a link problem, a policy problem and a path problem;
+- say what you could not conclude from the views alone.
+
+## The symptom
+
+"Calls are choppy at Branch X." Choppy audio is usually a <Term id="loss" /> or <Term id="jitter" /> problem, sometimes a <Term id="latency" /> one. DMPO measures all three, so the VCO should tell you which.
+
+## Step by step
+
+1. **QoE tab** (<Term id="qoe" />). Does voice show Good, Fair or Poor? A Poor score says the experience is bad now.
+2. **Links tab.** Which link is the call on, and what are its loss, latency and jitter? Compare with the other links. Use the Transport Groups view to see public wired, wireless and private links.
+3. **Paths tab.** Is the problem on the path toward one peer only?
+4. **Flows tab (live mode).** Watch the call's flow: which link is it on right now?
+5. **Business Policy.** Which rule matches voice? Is it Auto, or <Term id="mandatory" />, <Term id="preferred" /> or <Term id="available" /> on a link?
+
+<Predict
+  prompt="Voice is Mandatory on one link and that link has jitter. What would you conclude?"
+  choices={["DMPO will move voice to another link", "DMPO cannot move it; only remediation can help", "The Orchestrator is broken", "Voice is Auto"]}
+  answer={1}
+>
+  Mandatory does not steer away, so brownouts are handled by remediation. The rule choice may be part of the problem.
+</Predict>
+
+## Reading the answer
+
+| What you see | Likely reading |
+|---|---|
+| One link has high jitter; voice is Auto | DMPO should be moving the call; check for a hold or a second bad link |
+| Voice is Mandatory on a bad link | the policy is why it is not moving |
+| All links bad | on-demand remediation territory; check Premium Service |
+| Only one path | a peer-specific problem, not the whole link |
+
+<Callout variant="warning" title="Do not over-read">
+  We could not confirm that the VCO says "FEC is on" for a flow, and the SLA values behind Good, Fair and Poor were not readable. These views show measurements and states; you infer the mechanism.
+</Callout>
+
+## What you would see in the VCO
+
+- **Monitor > Edges > Branch X**: QoE, Links, Paths, Flows.
+- **Diagnostics** (called Test & Troubleshoot before the new UI): tools such as Remote Diagnostics.
+- The **Business Policy** tab of the Edge (**Configure > Edges**) and of its Profile: the rule for voice.
+
+## Key takeaways
+
+- Start from the symptom, then QoE, Links, Paths, Flows, and finally the policy.
+- Check the strictness before blaming the link.
+- State what you inferred and what you saw.
+
+## What would you look for in the VCO
+
+- Is voice's rule pinning it to a link?
+- Which link has the worst jitter?
+- Did the flow move, and when?

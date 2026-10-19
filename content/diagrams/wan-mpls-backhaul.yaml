@@ -1,0 +1,77 @@
+# Section 1, lesson 1: a simplified hub-and-spoke WAN over carrier MPLS circuits, with backhauled Internet traffic.
+# Consistent with reference/wan-background.md (backhauling through the data center; MPLS = private circuits).
+id: wan-mpls-backhaul
+title: A traditional hub-and-spoke WAN with backhauling
+alt: >-
+  A simplified traditional WAN. Two branch sites, each with a user and a router, connect over private MPLS circuits to a
+  headquarters data center. The data center holds company applications and has the only Internet connection, through a
+  firewall, which leads to the Internet and a SaaS provider. Internet-bound traffic from the branches must first travel
+  to the data center.
+width: 900
+height: 520
+
+groups:
+  - { id: branch-a, label: Branch A, nodes: [host-a, rtr-a] }
+  - { id: branch-b, label: Branch B, nodes: [host-b, rtr-b] }
+  - { id: hq, label: Headquarters data center, nodes: [dc-edge, dc-apps, dc-fw] }
+
+nodes:
+  - { id: host-a, label: Branch A user, kind: host, x: 70, y: 120 }
+  - { id: rtr-a, label: Branch router, kind: router, x: 210, y: 120 }
+  - { id: host-b, label: Branch B user, kind: host, x: 70, y: 410 }
+  - { id: rtr-b, label: Branch router, kind: router, x: 210, y: 410 }
+  - { id: mpls, label: Carrier MPLS network, kind: mpls, x: 390, y: 265 }
+  - { id: dc-edge, label: DC router, kind: router, x: 580, y: 265 }
+  - { id: dc-apps, label: Company apps, kind: datacenter, x: 580, y: 440 }
+  - { id: dc-fw, label: Internet firewall, kind: firewall, x: 740, y: 265 }
+  - { id: inet, label: Internet, kind: internet, x: 690, y: 62 }
+  - { id: saas, label: SaaS provider, kind: saas, x: 830, y: 62 }
+
+links:
+  - { id: lan-a, from: host-a, to: rtr-a, style: lan }
+  - { id: lan-b, from: host-b, to: rtr-b, style: lan }
+  - { id: circuit-a, from: rtr-a, to: mpls, style: underlay-mpls }
+  - { id: circuit-b, from: rtr-b, to: mpls, style: underlay-mpls }
+  - { id: circuit-dc, from: mpls, to: dc-edge, style: underlay-mpls }
+  - { id: lan-apps, from: dc-edge, to: dc-apps, style: lan }
+  - { id: lan-fw, from: dc-edge, to: dc-fw, style: lan }
+  - { id: net-dc, from: dc-fw, to: inet, style: underlay-internet }
+  - { id: net-saas, from: inet, to: saas, style: underlay-internet }
+
+steps:
+  - title: Branches reach the data center over private circuits
+    narration: >-
+      In the classic design every branch is joined to the headquarters data center by a **private circuit** from a carrier.
+      The data center is the hub; the branches are spokes. In this picture the applications the branches need live in the
+      data center.
+    highlight: [rtr-a, rtr-b, mpls, dc-edge, circuit-a, circuit-b, circuit-dc]
+
+  - title: A company application takes the short road
+    narration: >-
+      A user at branch A opens an internal application. The traffic crosses the carrier network to the data center and
+      lands on the application servers. This is the case the design was built for, and MPLS is typically good at it.
+    highlight: [host-a, lan-a, rtr-a, circuit-a, mpls, circuit-dc, dc-edge, lan-apps, dc-apps]
+    packets:
+      - { path: [host-a, rtr-a, mpls, dc-edge, dc-apps], label: to company app, color_style: underlay-mpls }
+
+  - title: A SaaS application takes the long road
+    narration: >-
+      The same user now opens a SaaS application on the Internet. The branch has no Internet connection of its own, so the
+      request is **backhauled**: across the carrier network to the data center, out through the data center's firewall and
+      Internet connection, and only then on to the SaaS provider. The reply comes back the same long way.
+    highlight: [host-a, lan-a, rtr-a, circuit-a, mpls, circuit-dc, dc-edge, lan-fw, dc-fw, net-dc, inet, net-saas, saas]
+    packets:
+      - { path: [host-a, rtr-a, mpls, dc-edge, dc-fw, inet, saas], label: to SaaS, color_style: underlay-mpls }
+    callouts:
+      - { target: dc-fw, text: "Every branch's Internet traffic funnels through here." }
+  - title: Many branches, one exit
+    narration: >-
+      Now both branches use SaaS at the same time. All of their Internet-bound traffic converges on the data center's single
+      Internet connection, so that link, and the firewall in front of it, must be sized for everyone's cloud traffic as well
+      as the company applications.
+    highlight: [host-a, host-b, rtr-a, rtr-b, circuit-a, circuit-b, mpls, circuit-dc, dc-edge, lan-fw, dc-fw, net-dc, inet, net-saas, saas]
+    packets:
+      - { path: [host-a, rtr-a, mpls, dc-edge, dc-fw, inet, saas], label: A to SaaS, color_style: underlay-mpls }
+      - { path: [host-b, rtr-b, mpls, dc-edge, dc-fw, inet, saas], label: B to SaaS, color_style: underlay-mpls, delay_ms: 400 }
+    callouts:
+      - { target: dc-fw, text: "A shared bottleneck for all cloud traffic." }

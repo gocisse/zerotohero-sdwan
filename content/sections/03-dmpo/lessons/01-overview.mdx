@@ -1,0 +1,83 @@
+---
+id: dmpo-overview
+title: DMPO in one lesson
+summary: The problem DMPO solves, where it runs, five plain-language ideas, flow-based versus packet-based handling, and what DMPO does not do.
+estimated_minutes: 9
+topics: [dmpo-overview]
+---
+
+**By the end of this lesson you will be able to:**
+
+- explain the problem <Term id="dmpo" /> exists to solve in one sentence;
+- say between which components DMPO runs;
+- describe five ideas that make up DMPO in plain words;
+- explain the difference between handling traffic per <Term id="flow" /> and per packet;
+- name things DMPO does not do.
+
+## The problem
+
+A branch has two or three WAN links and none of them is perfect. The Internet link is fast but its quality wanders. The MPLS link is steadier but costs more. A
+traditional router picks a path by looking at a routing table and mostly ignores how well the path is performing right now. So a voice call can sit on a link
+that is losing packets while a clean link next to it stays idle.
+
+DMPO is the part of VeloCloud SD-WAN that closes that gap. It **watches** every link, **chooses** a link for each application, and **repairs** problems it cannot avoid.
+
+## Where it runs
+
+DMPO runs between the components that carry user traffic: an Edge and a Gateway, and an Edge and another Edge. Arista's overview says Gateways implement DMPO, and that
+an Edge can optionally connect to Gateways for cloud services. The DMPO endpoints are Edges and Gateways. The rules that tell DMPO what to prefer are written in the business policy.
+
+<Diagram id="dmpo-probes" />
+
+## Five ideas
+
+1. **Measure continuously.** Loss, latency and <Term id="jitter" /> are measured on every path, in each direction separately.
+2. **Know what each application needs.** A voice call and a file transfer tolerate different things, so each application has an SLA (see <Term id="sla" />).
+3. **Steer.** Send each application over the link that currently serves it best, following the <Term id="business-policy-rule">business policy rule</Term> that matches it.
+4. **Remediate on demand.** When steering cannot help, for example with one link or with every link degraded, switch on error correction for as long as the problem lasts.
+5. **Be quick.** Arista says DMPO detects an SLA failure or an outage within 300 to 500 ms.
+
+<Predict
+  prompt="Which of these is NOT one of DMPO's jobs?"
+  choices={["Measuring each link", "Choosing a link for an application", "Writing the business policy for you from scratch", "Switching on error correction when steering cannot help"]}
+  answer={2}
+>
+  You write the business policy rules (or accept the defaults). DMPO measures, steers and remediates according to them.
+</Predict>
+
+## Per flow or per packet
+
+A <Term id="flow" /> is one conversation: one call, one download. Handling traffic **<Term id="per-flow" />** means all of a flow's packets share a decision, for
+example the same link. Handling it **<Term id="per-packet" />** means each packet can be treated separately, so one flow can use several links at once.
+
+Arista's overview says a single flow can be moved to another tunnel in the middle of the session. Older VeloCloud material goes further and describes per-packet steering and per-packet
+load balancing; we cover which of those we could confirm in the lesson on putting it together. For now, remember the two words and that both exist.
+
+<Callout variant="warning" title="Old and new wording">
+  The 2017 VeloCloud white paper is the origin of much of what is written about DMPO online. It is useful, but it is a legacy document. Where this course relies on it, it
+  says so, and it never uses it for a fact the current Arista guides do not support.
+</Callout>
+
+## What DMPO does not do
+
+- It does not make a bad link good. It avoids it where it can and covers for it where it cannot.
+- It does not create bandwidth that no link has. Duplicating packets, for example, uses extra bandwidth.
+- It does not replace the policy: it follows the rules you wrote. A rule that pins traffic to one link is obeyed even when that link is struggling.
+- It does not apply to everything alike. Remediation, for instance, is meant for network-sensitive priority applications.
+
+## What you would see in the VCO
+
+- **Monitor > Edges**, then an Edge, shows tabs such as **QoE**, **Links** and **Paths**. They are where DMPO's measurements surface. Exact tab names can vary by release, so use them as pointers rather than a script.
+- The **Business Policy** tab of a Profile (**Configure > Profiles**) or of an Edge (**Configure > Edges**) is where the steering rules live.
+
+## Key takeaways
+
+- DMPO runs between Edges and Gateways, and between Edges.
+- It measures, steers and remediates; detection is within 300 to 500 ms.
+- Decisions can be per flow or per packet. A flow can move mid-session.
+- DMPO follows the policy and cannot create bandwidth.
+
+## What would you look for in the VCO
+
+- Where would you read the current quality of each link at one branch?
+- Where would you find the rule that decides how voice uses the links?

@@ -1,0 +1,108 @@
+---
+id: arch-underlay-overlay
+title: Underlay and overlay
+summary: Raw transports versus the tunnels built on them, what lives in each layer, and what transport independence means in practice.
+estimated_minutes: 9
+topics: [underlay-overlay]
+---
+
+**By the end of this lesson you will be able to:**
+
+- tell the <Term id="underlay" /> from the <Term id="overlay" /> and say what belongs in each;
+- explain what carries the tunnels and what protects them;
+- describe what <Term id="transport-independence" /> lets you do when circuits change;
+- name three things the underlay still affects, even though the overlay hides most of it.
+
+## Two layers, one network
+
+Section 1 introduced the two words. Here we make them precise.
+
+- The **underlay** is the set of circuits and carrier networks that physically move packets: an Internet line, an MPLS circuit, a cellular
+  connection, the routers and NAT devices along the way. The underlay is where the carriers' responsibility ends.
+- The **overlay** is what the VeloCloud components build on top: <Term id="tunnel">tunnels</Term> between Edges and Gateways, and directly between Edges, plus
+  the routing and policy that use them.
+
+<Callout variant="tip" title="Course vocabulary">
+  "Underlay" is our word. Arista's guides describe the same layers in other terms, for example "WAN links", "transports" and "the SD-WAN
+  overlay", and they use "overlay" in names such as Overlay Flow Control. Use whichever term your own documentation uses; the layers are
+  the same.
+</Callout>
+
+<Diagram id="arch-underlay-overlay" />
+
+## What carries the tunnels
+
+The overlay tunnels run on **UDP port 2426**: <Term id="vcmp" /> is registered with IANA on that port, and it is used for tunnel management and information
+exchange between two tunnel endpoints (Edge and Gateway, or Edge and Edge). Arista's guide says VCMP is encrypted with transport-mode
+<Term id="ipsec" />, and that VeloCloud forces NAT traversal on with the special port 2426, so its behaviour is the same whether or not a
+NAT device is present on the path. The next two lessons use these facts.
+
+## What lives in each layer
+
+| | Underlay | Overlay |
+|---|---|---|
+| Made of | circuits, carrier networks, routers, NAT devices, firewalls | tunnels, tunnel endpoints (Edges, Gateways), routes exchanged between them |
+| Owned by | carriers and the site's own network team | the SD-WAN (configured from the Orchestrator) |
+| Measured by | the Edge, per path and per link | the same: DMPO measures loss, latency and jitter on every path |
+| Policy talks about | nothing: it only moves packets | applications, transport groups, WAN links, interfaces |
+
+Arista's Business Policy page describes **Transport Group** steering as an abstraction of the actual interfaces, so one policy can apply across
+different device types or locations. That abstraction is what makes transport independence practical.
+
+<Predict
+  prompt="What port does VCMP use?"
+  choices={["TCP 443", "UDP 2426", "UDP 500", "TCP 2426"]}
+  answer={1}
+>
+  VCMP operates on the IANA-registered port UDP 2426. TCP 443 is what an Edge uses to talk to the Orchestrator, and UDP 500 and 4500 are
+  associated with IKEv2 and NAT transparency for IPsec.
+</Predict>
+
+## Transport independence in practice
+
+What does it buy you? Look at the last three steps of the diagram.
+
+- **Add a circuit.** A site adds a cellular connection. The applications and the data center do not change; the Edge has one more circuit to
+  carry a tunnel. Arista's overview lists private line, cable, DSL, 4G or 5G and satellite as links an Edge can aggregate.
+- **Remove a circuit.** One disappears. The tunnels over the others keep working, and DMPO detects an SLA failure or outage within 300 to 500
+  milliseconds and steers flows to a healthy link where one exists.
+- **Describe intent, not cables.** Policy can refer to groups of circuits (transport groups) instead of to a physical port, so the same
+  policy fits a site with MPLS and broadband and a site with broadband and LTE.
+
+<Predict
+  prompt="A site replaces its MPLS circuit with an LTE connection. Which part of the SD-WAN design is **designed** to stay the same?"
+  choices={["The application policy, which can refer to transport groups rather than to cables", "The carrier's circuit identifier", "The physical port the circuit plugs into", "The Internet service provider's NAT"]}
+  answer={0}
+>
+  Transport independence means policy talks about applications and groups of transports, not about a specific cable or carrier. The
+  circuit, the port it uses and any NAT in front of it are underlay details that change.
+</Predict>
+
+## Independence is not indifference
+
+The overlay hides *most* of the underlay, not all of it. Three examples the guides make explicit:
+
+1. **MTU.** Tunnels add headers (lesson 7), so the underlay's packet size limit bounds the overlay's. Path MTU discovery even behaves
+   differently by underlay type: on public Internet links discovery runs toward the Gateways, and on private WAN links toward the other Edges.
+2. **NAT and firewalls.** A NAT device in front of an Edge can stop other Edges from building a direct tunnel to it (lesson 5), and firewalls
+   have to allow the tunnel ports (lesson 6).
+3. **Capacity.** After detecting a WAN link, the Edge runs a bandwidth test against the nearest Gateway to learn what the link can actually carry.
+
+<Callout variant="gotcha" title="'Transport independent' does not mean 'transport blind'">
+  If a tunnel will not come up over one circuit and works over another, look in the underlay first: a firewall rule, a NAT device or a
+  size limit that one carrier handles differently from the other is a
+  place to check before assuming an SD-WAN fault.
+</Callout>
+
+## What you would see in the VCO
+
+- **Monitor > Edges > (an Edge) > Links** lists the WAN links with their measurements, including a transport-group view. These are the underlay circuits as the Edge sees them.
+- **Monitor > Edges > (an Edge) > Paths** lists the paths to the Edge's SD-WAN peers with quality scores. These are the overlay paths.
+- In the Edge's device settings, the **WAN overlay** option on an interface says whether that interface carries overlay tunnels.
+- In a business-policy rule, the **Action** tab's link steering offers **Transport Group**, **Interface** and **WAN Link**: three ways of naming the underlay in policy.
+
+## Key takeaways
+
+- Underlay = the circuits; overlay = the tunnels (VCMP on UDP 2426, protected with IPsec) and routing built on them.
+- Policy and tunnels are designed to survive circuits being added, removed or swapped.
+- The underlay still shapes MTU, NAT behaviour, firewall needs and capacity.

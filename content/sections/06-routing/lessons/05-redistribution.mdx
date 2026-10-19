@@ -1,0 +1,103 @@
+---
+id: rt-redistribution
+title: Redistribution and route preference
+summary: What flows between connected, static, OSPF, BGP and the overlay, which directions you switch on yourself, how the Edge chooses between routes of different types, and where loops can appear.
+estimated_minutes: 11
+topics: [rt-redistribution]
+---
+
+**By the end of this lesson you will be able to:**
+
+- name the sources of a route and the switch that moves it from one to another;
+- state the order in which the Edge chooses between routes of different types;
+- explain what the best-route rule means for redistribution;
+- say what is documented about loops and what is only general routing theory.
+
+## The directions
+
+<Term id="redistribution">Redistribution</Term> copies routes learned one way into another protocol. Think of five boxes: connected, static, OSPF, BGP and the overlay.
+
+<Diagram id="rt-redistribution" />
+
+| into the overlay | how |
+|---|---|
+| connected | the Global Advertise Flags control it (lesson 7) |
+| static | tick **Advertise** on the static route |
+| OSPF | automatic, but External OSPF stays out until its flag is enabled |
+| BGP | a route with advertise True and reachable Yes |
+
+| out of the overlay | how |
+|---|---|
+| into BGP | **Overlay Prefix** check box (neighbor flagged Uplink: **Overlay Prefixes over Uplink**) |
+| into OSPF | **Overlay Prefixes** check box |
+
+| between protocols | how |
+|---|---|
+| OSPF into BGP | the **OSPF** check box, BGP metric 20 by default |
+| BGP into OSPF | the **BGP** option in the OSPF settings |
+| connected into BGP | the **Connected Routes** check box |
+
+The defaults for Overlay Prefix, Overlay Prefixes and Connected Routes are not stated in the pages we read, so do not assume any direction is on or off. Check each one in the VCO.
+
+<Predict
+  prompt="OSPF is enabled and a LAN router sends an E2 route for 10.40.0.0/24. Remote sites cannot reach it. Everything on the LAN side looks healthy. What would you check first?"
+  choices={["Whether the External OSPF Global Advertise Flag is enabled", "Whether the Edge has more than 16 tunnels", "Whether Dynamic Branch to Branch is on", "Whether Premium Service is on"]}
+  answer={0}
+>
+  By default the system keeps External OSPF routes (E1 and E2) out of the overlay until the flag is enabled.
+</Predict>
+
+## Choosing between routes
+
+The Edge does not use administrative distances. Traffic is routed by a **fixed order of operations**:
+
+1. longest prefix length (the most specific mask always wins);
+2. local connected routes;
+3. local static routes (with Preferred on; LAN static over WAN static);
+4. local Non SD-WAN Destination static routes;
+5. remote NSD static routes;
+6. remote Edge routes (remote connected, then remote static);
+7. Partner Gateway static routes;
+8. **dynamic routes**: OSPF and BGP, ordered by <Term id="overlay-flow-control" /> or by distributed cost calculation.
+
+Inside the dynamic routes each type has a <Term id="route-preference" /> number and the **lower value wins**. The defaults printed for Edges are:
+
+| route type | default preference |
+|---|---|
+| OSPF intra-area (O) | 1001 |
+| OSPF inter-area (O IA) | 1002 |
+| eBGP | 1003 |
+| iBGP | 1004 |
+
+OSPF external types (OE1, OE2) are printed with far larger numbers, so they lose to BGP. The diagnostics agree: an OSPF route with an intra- or inter-area metric beats a BGP route, and a BGP route beats an OE1 or OE2 route. If preferences tie, the Edge compares protocol attributes (BGP attributes or OSPF metrics), then the Logical ID of the next-hop device, then route age (oldest wins). You can change the outcome by **pinning** a route, adjusting BGP local preference or OSPF costs, or editing preferred exits.
+
+<Callout variant="info" title="Our word for it">
+  "Administrative distance" is the general routing term. In Arista's guides the equivalent is the route preference. The glossary keeps both names so searching either finds the entry.
+</Callout>
+
+## Loops and how they are avoided
+
+The documented protections are narrow. The system redistributes **only the best route** from its routing table to the destination protocol, if that protocol allows that route type; OSPF and BGP can be enabled independently; a received prefix that overlaps a locally connected subnet is not advertised into the Overlay Flow Control table; and an overlapping prefix is not redistributed into BGP even when overlay redistribution is on. Turning off AS-path carry-over carries a loop warning.
+
+<Callout variant="warning" title="General theory, not documented">
+  Mutual redistribution between two routing protocols at more than one point can create loops in any network. The pages we read do not walk through VeloCloud-specific loop cases, so treat advice such as "tag routes" or "redistribute at one point only" as general good practice, not as documented product behaviour.
+</Callout>
+
+## What you would see in the VCO
+
+- **Route Table Dump** with Routes set to **all**: every candidate for a prefix with its Type, Preference, Cost and **Lost Reason**; with **preferred**: the winner.
+- **List Routes per Prefix**: the first route entry is the best path, the second is next best.
+- **List OSPF Redistributed Routes** and **List BGP Redistributed Routes**.
+
+## Key takeaways
+
+- Each direction is its own switch; defaults mostly not stated.
+- Fixed order of operations, then numeric preference (lower wins), then attributes, Logical ID and age.
+- OSPF intra and inter beat BGP; BGP beats OSPF external.
+- Only the best route is redistributed, and overlapping connected prefixes are held back.
+
+## What would you look for in the VCO
+
+- Which route type is preferred, and what does Lost Reason say about the others?
+- Which redistribution check box is off, if a protocol does not show the prefix?
+- Is the prefix being held back because it overlaps a connected subnet?

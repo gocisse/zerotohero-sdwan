@@ -1,0 +1,65 @@
+# Section 3, lesson 3: Auto and the three strictness levels. Facts: reference/dmpo-steering.md. No numbers shown.
+id: dmpo-steering-modes
+title: Auto, Mandatory, Preferred and Available
+alt: >-
+  A branch Edge and a hub Edge are joined by three paths: MPLS, Internet and LTE. In Auto DMPO chooses. Mandatory pins the
+  traffic to the chosen link even in an outage. Preferred uses the chosen link while it meets the SLA and otherwise moves to
+  another public link. Available keeps the chosen link while it is up whatever the SLA and moves only if it goes down.
+width: 900
+height: 520
+
+nodes:
+  - { id: edge-a, label: Branch Edge, kind: vce, x: 150, y: 260 }
+  - { id: edge-b, label: Hub Edge, kind: vce, x: 750, y: 260 }
+
+links:
+  - { id: path-mpls, from: edge-a, to: edge-b, style: underlay-mpls, label: MPLS (private), curve: -110 }
+  - { id: path-inet, from: edge-a, to: edge-b, style: underlay-internet, label: Internet (public) }
+  - { id: path-lte, from: edge-a, to: edge-b, style: underlay-lte, label: LTE (public), curve: 110 }
+
+steps:
+  - title: Three paths, one rule
+    narration: >-
+      A business-policy rule decides how an application uses the links. Link steering has four modes: **Auto**, **Transport Group**, **Interface** and **WAN Link**. For
+      Interface and WAN Link you also choose how strict to be: **Mandatory**, **Preferred** or **Available**.
+    highlight: [edge-a, edge-b, path-mpls, path-inet, path-lte]
+
+  - title: Auto, DMPO chooses
+    narration: >-
+      Auto is the default for applications. DMPO picks the best links for the type of application and switches on on-demand remediation
+      when it is needed. You name no link at all.
+    highlight: [edge-a, edge-b, path-inet]
+    packets:
+      - { path: [edge-a, path-inet, edge-b], label: app traffic, color_style: overlay-tunnel }
+    callouts:
+      - { target: path-inet, text: "DMPO picks the link, and adds remediation when needed." }
+
+  - title: Mandatory, pinned
+    narration: >-
+      Mandatory pins the traffic to the link you chose. It does not steer away, **even in an outage**. Brownouts are handled by remediation, not by moving. If the
+      link is inactive the policy table says the packet is dropped.
+    highlight: [edge-a, edge-b, path-mpls]
+    packets:
+      - { path: [edge-a, path-mpls, edge-b], label: pinned, color_style: overlay-tunnel }
+    callouts:
+      - { target: path-mpls, text: "Pinned to MPLS. Link down means packets are dropped." }
+
+  - title: Preferred, moves to another public link
+    narration: >-
+      Preferred uses the chosen link while it meets the application SLA. When it does not, traffic moves to **another public link**. It does not
+      move to a private link because of an SLA failure.
+    highlight: [edge-a, edge-b, path-inet, path-lte]
+    packets:
+      - { path: [edge-a, path-lte, edge-b], label: moved, color_style: overlay-tunnel }
+    callouts:
+      - { target: path-inet, text: "Chosen link misses the SLA..." }
+      - { target: path-lte, text: "...so traffic moves to another public link." }
+
+  - title: Available, stays while the link is up
+    narration: >-
+      Available keeps the chosen link as long as it is **up**, whatever the SLA. If the SLA is missed, remediation is applied. Flows move only if the link goes down.
+    highlight: [edge-a, edge-b, path-inet]
+    packets:
+      - { path: [edge-a, path-inet, edge-b], label: stays, color_style: overlay-tunnel }
+    callouts:
+      - { target: path-inet, text: "SLA missed: remediation, not a move. Down: then it moves." }

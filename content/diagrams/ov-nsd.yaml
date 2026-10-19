@@ -1,0 +1,45 @@
+# Section 5, lesson 5: NSD via Gateway versus via Edge. Facts: reference/non-sdwan-destinations.md. Tunnel counts are not shown.
+id: ov-nsd
+title: Non SD-WAN destination via Gateway or via Edge
+alt: >-
+  A branch Edge reaches a cloud provider in two ways. Via Gateway, the Gateway builds an IPsec tunnel to the provider and the
+  branch reaches it through its overlay tunnel to the Gateway. Via Edge, the branch Edge builds the IPsec tunnel itself.
+width: 900
+height: 520
+
+nodes:
+  - { id: host, label: Branch user, kind: host, x: 70, y: 260 }
+  - { id: edge, label: Branch Edge, kind: vce, x: 260, y: 260 }
+  - { id: gw, label: Gateway, kind: vcg, x: 540, y: 120 }
+  - { id: nsd, label: Cloud or third-party site, kind: cloud, x: 800, y: 260 }
+  - { id: inet, label: Internet, kind: internet, x: 540, y: 420 }
+
+links:
+  - { id: lan, from: host, to: edge, style: lan }
+  - { id: tun, from: edge, to: gw, style: overlay-tunnel }
+  - { id: ipsec-gw, from: gw, to: nsd, style: ipsec, label: IPsec from Gateway }
+  - { id: wan, from: edge, to: inet, style: underlay-internet }
+  - { id: ipsec-edge, from: inet, to: nsd, style: ipsec, label: IPsec from Edge }
+
+steps:
+  - title: The destination does not run SD-WAN
+    narration: >-
+      The cloud provider or third-party site has its own router or firewall. It can be reached over an **IPsec** tunnel, from a Gateway or from an Edge.
+    highlight: [nsd]
+    show: [gw, tun, ipsec-gw, inet, wan, ipsec-edge]
+
+  - title: Via Gateway
+    narration: >-
+      The Gateway builds the IPsec tunnel. The branch only needs its normal overlay tunnel to the Gateway. NSD via Gateway is defined at the **Profile** level and cannot be overridden on an Edge.
+    show: [gw, tun, ipsec-gw]
+    highlight: [host, lan, edge, tun, gw, ipsec-gw, nsd]
+    packets:
+      - { path: [host, lan, edge, tun, gw, ipsec-gw, nsd], label: via Gateway, color_style: ipsec }
+
+  - title: Via Edge
+    narration: >-
+      The Edge itself builds the IPsec tunnel across its own WAN link. It is added under Configure > Network Services > Non SD-WAN Destinations via Edges, and enabled in the Profile's VPN Services.
+    show: [inet, wan, ipsec-edge]
+    highlight: [host, lan, edge, wan, inet, ipsec-edge, nsd]
+    packets:
+      - { path: [host, lan, edge, wan, inet, ipsec-edge, nsd], label: via Edge, color_style: ipsec }

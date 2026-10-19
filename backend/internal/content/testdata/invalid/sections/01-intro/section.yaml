@@ -1,0 +1,5 @@
+id: intro
+title: Intro
+summary: Fixture section.
+estimated_minutes: 10
+lessons: [first, nope]

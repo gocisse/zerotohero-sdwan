@@ -1,0 +1,9 @@
+id: bad-link
+title: Bad
+alt: alt
+width: 100
+height: 100
+nodes:
+  - { id: a, label: A, kind: host, x: 10, y: 10 }
+links:
+  - { id: l, from: a, to: ghost, style: lan }

@@ -1,0 +1,54 @@
+# Section 5, lesson 3: hubs and spokes. Facts: reference/hubs-and-branches.md.
+id: ov-hub-spoke
+title: Hubs and spokes
+alt: >-
+  Three spoke Edges have permanent tunnels to a primary and a secondary Hub. Branch to branch traffic goes through the primary
+  Hub. When the primary Hub goes down, a spoke moves its local flows to the secondary Hub.
+width: 900
+height: 540
+
+nodes:
+  - { id: hub1, label: Primary Hub, kind: datacenter, x: 300, y: 100 }
+  - { id: hub2, label: Secondary Hub, kind: datacenter, x: 600, y: 100 }
+  - { id: s1, label: Spoke 1, kind: vce, x: 150, y: 400 }
+  - { id: s2, label: Spoke 2, kind: vce, x: 450, y: 440 }
+  - { id: s3, label: Spoke 3, kind: vce, x: 750, y: 400 }
+
+links:
+  - { id: s1-h1, from: s1, to: hub1, style: overlay-tunnel }
+  - { id: s2-h1, from: s2, to: hub1, style: overlay-tunnel }
+  - { id: s3-h1, from: s3, to: hub1, style: overlay-tunnel }
+  - { id: s1-h2, from: s1, to: hub2, style: overlay-tunnel }
+  - { id: s3-h2, from: s3, to: hub2, style: overlay-tunnel }
+
+steps:
+  - title: Designate the Hubs
+    narration: >-
+      In the Profile, under VPN Services, tick **Enable Branch to Hubs** and use **Edit Hubs** to pick the Edges (or Clusters) that act as Hubs. The order you give matters: it breaks ties.
+    highlight: [hub1, hub2]
+    show: [s1, s2, s3]
+    callouts:
+      - { target: hub1, text: "Edit Hubs: choose Hubs and their order." }
+
+  - title: Permanent tunnels
+    narration: >-
+      Branch to Hub tunnels are **permanent**: every spoke keeps a tunnel to its Hub or Hubs, whether or not traffic is flowing.
+    show: [s1-h1, s2-h1, s3-h1, s1-h2, s3-h2]
+    highlight: [hub1, hub2, s1, s2, s3, s1-h1, s2-h1, s3-h1, s1-h2, s3-h2]
+
+  - title: Branch to branch through the Hub
+    narration: >-
+      With the **Hubs for VPN** option, connections between branch Edges go through a Hub. Spoke 1 to Spoke 3 travels up to the primary Hub and back down.
+    highlight: [s1, s1-h1, hub1, s3-h1, s3]
+    packets:
+      - { path: [s1, s1-h1, hub1, s3-h1, s3], label: via Hub, color_style: overlay-tunnel }
+
+  - title: The primary Hub goes down
+    narration: >-
+      If the primary Hub goes down, the Spoke updates the local flow's route to the secondary Hub. Peer flows are not moved back when the primary returns, so affected flows may need to be flushed.
+    hide: [s1-h1, s2-h1, s3-h1]
+    highlight: [s1, s1-h2, hub2, s3-h2, s3]
+    packets:
+      - { path: [s1, s1-h2, hub2, s3-h2, s3], label: via secondary, color_style: overlay-tunnel }
+    callouts:
+      - { target: hub1, text: "Primary Hub down." }

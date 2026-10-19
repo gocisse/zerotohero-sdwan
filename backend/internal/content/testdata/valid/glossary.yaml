@@ -1,0 +1,9 @@
+- id: widget
+  term: Widget
+  aliases: [gizmo]
+  short: A placeholder thing.
+  related: [doohickey]
+  lesson_ref: first
+- id: doohickey
+  term: Doohickey
+  short: Another placeholder thing.

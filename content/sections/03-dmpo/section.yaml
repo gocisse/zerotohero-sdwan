@@ -1,0 +1,12 @@
+id: dmpo
+title: "DMPO: how the overlay copes with bad links"
+summary: What DMPO measures, how a business policy steers applications across links, the difference between an outage and a brownout, the three on-demand remediation mechanisms, and how to tell in the VCO which one is acting.
+estimated_minutes: 70
+lessons:
+  - dmpo-overview
+  - dmpo-monitoring
+  - dmpo-steering
+  - dmpo-outage-brownout
+  - dmpo-remediation
+  - dmpo-together
+  - dmpo-vco-diagnosis

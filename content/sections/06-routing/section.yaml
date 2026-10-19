@@ -1,0 +1,13 @@
+id: routing
+title: "Routing: how routes flow"
+summary: What an Edge learns from the LAN, what it advertises into the overlay, what other sites receive, and why a prefix is or is not reachable - static routes, OSPF, BGP, redistribution, route preference, filters, Overlay Flow Control, and a guided way to read routes in the VCO.
+estimated_minutes: 80
+lessons:
+  - rt-big-picture
+  - rt-static
+  - rt-ospf
+  - rt-bgp
+  - rt-redistribution
+  - rt-filters
+  - rt-ofc
+  - rt-diagnosis

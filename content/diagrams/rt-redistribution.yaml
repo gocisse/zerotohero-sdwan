@@ -1,0 +1,63 @@
+# Section 6, lessons 4 and 5: redistribution directions. Facts: reference/route-redistribution-and-precedence.md, ospf.md, bgp.md.
+id: rt-redistribution
+title: Redistribution directions
+alt: >-
+  An Edge sits between connected and static routes, an OSPF LAN router, a BGP LAN router and the overlay. Each arrow is its
+  own switch: Advertise for static, automatic for OSPF with flags, a route state for BGP, check boxes for overlay prefixes, and
+  check boxes between OSPF and BGP.
+width: 960
+height: 520
+
+nodes:
+  - { id: conn, label: Connected subnet, kind: generic, x: 300, y: 70 }
+  - { id: stat, label: Static route, kind: generic, x: 560, y: 70 }
+  - { id: ospf, label: OSPF LAN router, kind: router, x: 100, y: 230 }
+  - { id: bgp, label: BGP LAN router, kind: router, x: 100, y: 430 }
+  - { id: edge, label: Edge, kind: vce, x: 450, y: 300 }
+  - { id: ov, label: Overlay (VCRP), kind: cloud, x: 840, y: 300 }
+
+links:
+  - { id: c-e, from: conn, to: edge, style: lan }
+  - { id: s-e, from: stat, to: edge, style: lan }
+  - { id: o-e, from: ospf, to: edge, style: lan, label: OSPF }
+  - { id: b-e, from: bgp, to: edge, style: lan, label: BGP }
+  - { id: e-ov, from: edge, to: ov, style: overlay-tunnel }
+
+steps:
+  - title: Connected and static into the overlay
+    narration: >-
+      A static route enters the overlay when **Advertise** is ticked. Connected subnets are governed by the Global Advertise Flags.
+    highlight: [conn, c-e, stat, s-e, edge, e-ov, ov]
+    packets:
+      - { path: [stat, s-e, edge, e-ov, ov], label: Advertise, color_style: overlay-tunnel }
+      - { path: [conn, c-e, edge, e-ov, ov], label: flags, color_style: overlay-tunnel, delay_ms: 300 }
+
+  - title: OSPF into the overlay
+    narration: >-
+      Routes learned through OSPF are redistributed to the Gateway automatically, but External OSPF routes (E1, E2) are held out until their Global Advertise Flag is enabled.
+    highlight: [ospf, o-e, edge, e-ov, ov]
+    packets:
+      - { path: [ospf, o-e, edge, e-ov, ov], label: auto + flags, color_style: overlay-tunnel }
+
+  - title: BGP into the overlay
+    narration: >-
+      A BGP route enters the overlay when List BGP Routes shows **advertise True** and **reachable Yes**.
+    highlight: [bgp, b-e, edge, e-ov, ov]
+    packets:
+      - { path: [bgp, b-e, edge, e-ov, ov], label: advertise + reachable, color_style: overlay-tunnel }
+
+  - title: Out of the overlay
+    narration: >-
+      To give a LAN router the remote prefixes you must switch it on: **Overlay Prefix** for BGP, **Overlay Prefixes** for OSPF. Their defaults are not stated; check them.
+    highlight: [ov, e-ov, edge, o-e, ospf, b-e, bgp]
+    packets:
+      - { path: [ov, e-ov, edge, b-e, bgp], label: Overlay Prefix, color_style: lan }
+      - { path: [ov, e-ov, edge, o-e, ospf], label: Overlay Prefixes, color_style: lan, delay_ms: 300 }
+
+  - title: Between OSPF and BGP
+    narration: >-
+      The **OSPF** check box under BGP sends OSPF routes into BGP (metric 20 by default). The **BGP** option under OSPF injects BGP routes into OSPF. Only the best route is redistributed.
+    highlight: [ospf, o-e, edge, b-e, bgp]
+    packets:
+      - { path: [ospf, o-e, edge, b-e, bgp], label: OSPF into BGP, color_style: lan }
+      - { path: [bgp, b-e, edge, o-e, ospf], label: BGP into OSPF, color_style: lan, delay_ms: 300 }

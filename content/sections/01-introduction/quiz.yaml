@@ -1,0 +1,279 @@
+# Section 1 quiz. Correct answers use only VERIFIED rows in content/reference/.
+
+- id: intro-q-mpls
+  topic: wan-limits
+  difficulty: 1
+  type: single_choice
+  prompt: "Which description of **MPLS circuits** matches how this course (following Arista's overview) characterizes them?"
+  options:
+    - id: good
+      text: "Typically high-quality service, but with limited capacity, higher cost and long deployment lead times"
+    - id: cheap
+      text: "Cheap and quick to deploy, but unreliable"
+      explanation: "That describes the common view of broadband, not MPLS. MPLS is typically high quality but costly and slow to deploy."
+    - id: encrypted
+      text: "Encrypted by default across the public Internet"
+      explanation: "MPLS circuits are private carrier circuits; they are not a way of using the public Internet."
+    - id: dc
+      text: "Only usable inside a data center"
+      explanation: "MPLS is used to join branches to the data center, not only inside it."
+  correct: good
+  explanation: "Arista's overview says MPLS typically provides high-quality service with the trade-off of limited capacity, higher cost and long deployment lead times."
+  lesson_ref: intro-why-wans-fall-short
+
+- id: intro-q-backhaul
+  topic: wan-limits
+  difficulty: 1
+  type: true_false
+  prompt: "**True or false:** Backhauling means sending a branch's Internet or SaaS traffic across the WAN to the data center first, and out to the Internet from there."
+  correct: true
+  explanation: "That is the definition used in the lesson. Branches with only private circuits depend on it, which adds latency and raises bandwidth cost."
+  lesson_ref: intro-why-wans-fall-short
+
+- id: intro-q-saas-scenario
+  topic: wan-limits
+  difficulty: 2
+  type: single_choice
+  prompt: "A branch has **only** a private MPLS circuit to headquarters. Users complain that a SaaS application is slow. Which explanation fits best?"
+  options:
+    - id: backhaul
+      text: "The SaaS traffic is being backhauled through the data center, adding distance and delay"
+    - id: blocked
+      text: "MPLS carriers block SaaS traffic"
+      explanation: "Nothing in the lesson suggests that. The slowness comes from the detour through the data center."
+    - id: orch
+      text: "The Orchestrator is throttling the branch"
+      explanation: "This branch has no SD-WAN in the scenario at all. It is a traditional MPLS-only branch."
+    - id: bw
+      text: "The SaaS provider is always slower than internal applications"
+      explanation: "There is no such rule. The path the traffic takes is the issue."
+  correct: backhaul
+  explanation: "With no local Internet access, cloud and SaaS traffic is backhauled through the enterprise data center, which adds latency and degrades application performance."
+  lesson_ref: intro-why-wans-fall-short
+
+- id: intro-q-zero-touch
+  topic: sdwan-benefits
+  difficulty: 1
+  type: single_choice
+  prompt: "In the zero-touch deployment model described by Arista, what does the person at the branch do?"
+  options:
+    - id: plug
+      text: "Plugs in power and a network cable; activation and configuration are handled from the cloud"
+    - id: cli
+      text: "Logs in to the Edge's command line and enters its configuration"
+      explanation: "That is the manual, device-by-device approach that zero-touch is meant to avoid."
+    - id: vpn
+      text: "Builds a VPN to the Orchestrator from a laptop"
+      explanation: "No laptop or VPN step is needed in the zero-touch model."
+    - id: ship
+      text: "Ships the Edge back to headquarters for setup"
+      explanation: "The Edge is shipped to the branch and set up from the cloud."
+  correct: plug
+  explanation: "The Edge is shipped to the branch, a non-technical person plugs in power and a network cable, and activation, configuration and ongoing management are handled from the cloud."
+  lesson_ref: intro-problems-sdwan-solves
+
+- id: intro-q-autoact-scenario
+  topic: sdwan-benefits
+  difficulty: 2
+  type: single_choice
+  prompt: "A new Edge arrives at a site whose only connection is a DHCP Internet line. An administrator has already assigned the Edge's serial number to a profile and license in the Orchestrator. For **push (auto) activation** to succeed, what must be true at the site?"
+  options:
+    - id: dhcp
+      text: "The Edge must have outbound Internet connectivity via DHCP"
+    - id: static
+      text: "The site must have a static IP address and a private circuit"
+      explanation: "Push activation only needs outbound Internet connectivity through DHCP."
+    - id: tech
+      text: "A technician must be on site with a laptop"
+      explanation: "Auto-activation exists precisely so that nobody needs to be on site."
+    - id: mpls
+      text: "The site must have an MPLS circuit to the data center"
+      explanation: "No MPLS circuit is needed for activation."
+  correct: dhcp
+  explanation: "The documentation says successful push activation requires outbound Internet connectivity via DHCP; the Edge is identified by its serial number and model."
+  lesson_ref: intro-problems-sdwan-solves
+
+- id: intro-q-central-policy
+  topic: sdwan-benefits
+  difficulty: 1
+  type: true_false
+  prompt: "**True or false:** In VeloCloud SD-WAN a business policy is defined centrally in the Orchestrator and can be applied to many Edges, with room for site-specific overrides."
+  correct: true
+  explanation: "Arista describes enterprise-wide business policies defined in the Orchestrator and applied across many Edges, with specific configuration overrides still possible."
+  lesson_ref: intro-problems-sdwan-solves
+
+- id: intro-q-activation-order
+  topic: sdwan-benefits
+  difficulty: 3
+  type: ordering
+  prompt: "Put the steps of **email (pull) activation** in order."
+  options:
+    - id: send
+      text: "An administrator sends an activation email from the Orchestrator to the site contact"
+    - id: link
+      text: "The site contact connects the Edge and opens the activation link in the email"
+    - id: download
+      text: "The Edge downloads its configuration and software from the Orchestrator"
+    - id: reboot
+      text: "The Edge reboots (several times) to apply them"
+  correct: [send, link, download, reboot]
+  explanation: "This is the pull method: the email comes first, the contact opens the link, then the Edge downloads configuration and software and reboots several times to apply them."
+  lesson_ref: intro-problems-sdwan-solves
+
+- id: intro-q-gateway
+  topic: velocloud-components
+  difficulty: 2
+  type: multi_choice
+  prompt: "Which statements about the **Gateway** are true? (Select all that apply.)"
+  options:
+    - id: cloud
+      text: "It is cloud-delivered and serves multiple customers"
+    - id: routes
+      text: "It reflects routes between Edges, so Edges do not need a full mesh of tunnels"
+    - id: access
+      text: "It provides cloud application access and Internet optimization"
+    - id: branch
+      text: "It is the device installed at each branch"
+      explanation: "That is the Edge. The Gateway is a cloud service."
+    - id: portal
+      text: "It is the portal where policy is configured"
+      explanation: "That is the Orchestrator."
+  correct: [cloud, routes, access]
+  explanation: "Arista's overview describes the Gateway as cloud-delivered and multi-tenant, reflecting routes between Edges and providing cloud application access and Internet optimization. The branch device is the Edge and the configuration portal is the Orchestrator."
+  lesson_ref: intro-how-velocloud-solves
+
+- id: intro-q-firewall-scenario
+  topic: velocloud-components
+  difficulty: 2
+  type: single_choice
+  prompt: "A virtual Edge sits behind a firewall that allows **outbound UDP 2426** but blocks **outbound TCP 443**. Which capability is the Edge most likely missing?"
+  options:
+    - id: orch
+      text: "Communication with the Orchestrator"
+    - id: tunnels
+      text: "Building VCMP tunnels, since UDP 2426 is blocked"
+      explanation: "UDP 2426 is allowed in this scenario, so tunnel traffic on that port is not the blocked item."
+    - id: lan
+      text: "Local LAN connectivity for branch users"
+      explanation: "The LAN is not affected by a firewall on the WAN side."
+    - id: dhcp
+      text: "Getting an address by DHCP"
+      explanation: "DHCP is not carried over TCP 443."
+  correct: orch
+  explanation: "Arista's virtual-Edge guide says the firewall must allow outbound TCP/443 for communication with the Orchestrator and outbound UDP/2426 for VCMP. With 443 blocked, the Orchestrator connection is what suffers."
+  lesson_ref: intro-how-velocloud-solves
+
+- id: intro-q-tunnels
+  topic: overlay-and-tunnels
+  difficulty: 1
+  type: true_false
+  prompt: "**True or false:** In VeloCloud SD-WAN, each Edge creates tunnels to one or more Gateways, and Edges can also create direct tunnels to each other."
+  correct: true
+  explanation: "Arista's overview describes DMPO tunnels between Edges and Gateways, and direct DMPO tunnels between Edges."
+  lesson_ref: intro-how-velocloud-solves
+
+- id: intro-q-dynamic-scenario
+  topic: overlay-and-tunnels
+  difficulty: 3
+  type: single_choice
+  prompt: "**Dynamic Branch to Branch** is enabled. Two branches start exchanging traffic for the first time. What happens?"
+  options:
+    - id: via
+      text: "The first traffic goes through a Gateway or a Hub; if the initiating Edge decides a direct tunnel is possible, it builds one, and removes it after 180 seconds of silence"
+    - id: direct
+      text: "A permanent direct tunnel between every pair of branches already existed"
+      explanation: "Direct tunnels in this mode are created on demand, not permanently for every pair."
+    - id: hubonly
+      text: "Traffic can only ever travel via the Hub"
+      explanation: "If a direct tunnel is possible the initiating Edge creates one."
+    - id: orch
+      text: "All traffic is relayed by the Orchestrator"
+      explanation: "The Orchestrator is the management portal, not a data path."
+  correct: via
+  explanation: "Arista's profile guide: initial traffic goes through the Gateway or Hub; if the initiating Edge determines a secure multipath tunnel is possible, it creates a direct tunnel; it is torn down after 180 seconds of traffic silence."
+  lesson_ref: intro-how-velocloud-solves
+
+- id: intro-q-acquirer
+  topic: history-naming
+  difficulty: 1
+  type: single_choice
+  prompt: "Which company's press release dated **1 July 2025** says it acquired the VeloCloud SD-WAN portfolio from Broadcom?"
+  options:
+    - id: arista
+      text: "Arista Networks"
+    - id: vmware
+      text: "VMware"
+      explanation: "VMware had been acquired by Broadcom earlier; it is not the buyer in this press release."
+    - id: cisco
+      text: "Cisco"
+      explanation: "Cisco is not mentioned."
+    - id: veloc
+      text: "VeloCloud itself"
+      explanation: "VeloCloud was the business being acquired."
+  correct: arista
+  explanation: "Arista's press release of July 1, 2025 states that it acquired the VeloCloud SD-WAN portfolio from Broadcom."
+  lesson_ref: intro-history-and-naming
+
+- id: intro-q-naming-scenario
+  topic: history-naming
+  difficulty: 2
+  type: single_choice
+  prompt: "You read an Arista 7.0 guide that introduces the \"SASE Orchestrator\", and an Arista advisory about the \"VeloCloud Orchestrator (VCO)\". What is the safest conclusion?"
+  options:
+    - id: vary
+      text: "Names for the Orchestrator vary between Arista documents; read the context and match the release"
+    - id: two
+      text: "They are two unrelated products"
+      explanation: "Both describe the component that configures and monitors the network."
+    - id: old
+      text: "Only the VCO name is current"
+      explanation: "Both names appear in Arista material."
+    - id: ignore
+      text: "Documentation names never matter"
+      explanation: "Matching names to the right release and context is exactly what saves time."
+  correct: vary
+  explanation: "The 7.0 Administration Guide calls the Orchestrator the SASE Orchestrator, while an Arista advisory uses VeloCloud Orchestrator and VCO. Names differ by document and era."
+  lesson_ref: intro-history-and-naming
+
+- id: intro-q-pcap-scenario
+  topic: vco-orientation
+  difficulty: 2
+  type: single_choice
+  prompt: "You need a **packet capture** from one interface of a branch Edge for a set number of seconds. Where do you request it in the Orchestrator?"
+  options:
+    - id: pcap
+      text: "Diagnostic Bundles, using Request PCAP Bundle"
+    - id: qoe
+      text: "The Edge's QoE tab"
+      explanation: "QoE shows quality scores for voice, video and transactional traffic; it does not capture packets."
+    - id: prof
+      text: "Configure > Profiles"
+      explanation: "Profiles are configuration templates."
+    - id: auto
+      text: "Edge Auto-activation"
+      explanation: "That is the inventory of Edges waiting to activate."
+  correct: pcap
+  explanation: "The Testing and Troubleshooting chapter describes Diagnostic Bundles with a Request PCAP Bundle option that captures packets from a chosen Edge interface or VLAN for a set duration."
+  lesson_ref: intro-vco-orientation
+
+- id: intro-q-monitor-areas
+  topic: vco-orientation
+  difficulty: 2
+  type: multi_choice
+  prompt: "Which of these are pages under **Monitor** in the 7.0 documentation? (Select all that apply.)"
+  options:
+    - id: overview
+      text: "Network Overview"
+    - id: edges
+      text: "Edges"
+    - id: services
+      text: "Network Services"
+    - id: auto
+      text: "Edge Auto-activation"
+      explanation: "That page is under Service Settings, not Monitor."
+    - id: remote
+      text: "Remote Diagnostics"
+      explanation: "That is part of Diagnostics, not Monitor."
+  correct: [overview, edges, services]
+  explanation: "The Monitor chapter describes Network Overview, Security Overview, Edges and Network Services. Edge Auto-activation is under Service Settings and Remote Diagnostics belongs to the Diagnostics area."
+  lesson_ref: intro-vco-orientation

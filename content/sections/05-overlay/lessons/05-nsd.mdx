@@ -1,0 +1,66 @@
+---
+id: ov-nsd
+title: Non SD-WAN destinations
+summary: NSD via Gateway versus NSD via Edge, typical targets, the tunnel types at a high level, and the trade-offs.
+estimated_minutes: 10
+topics: [overlay-nsd]
+---
+
+**By the end of this lesson you will be able to:**
+
+- define a <Term id="non-sd-wan-destination" /> and name typical targets;
+- contrast <Term id="nsd-via-gateway" /> with <Term id="nsd-via-edge" />;
+- say where each is configured;
+- name what limits each.
+
+## The idea
+
+A non SD-WAN destination (NSD) is a site or service that does not run VeloCloud SD-WAN: a cloud provider, a third-party firewall or router, a data center, or a security service such as Zscaler. You reach it over an <Term id="ipsec" /> tunnel.
+
+<Diagram id="ov-nsd" />
+
+## Via Gateway
+
+A Gateway builds the IPsec tunnel. You create it at **Configure > Network Services > Non SD-WAN Destinations via Gateway**. It is defined **exclusively at the Profile level** and cannot be overridden at the Edge. Documented types include AWS VPN Gateway, Check Point, Cisco ASA and ISR, Generic IKEv1 and IKEv2 (route-based), Azure Virtual Hub, Palo Alto, SonicWALL, Zscaler and a Generic Firewall (policy-based). Active/Active allows up to 4 tunnels for most types and Active/Hot-Standby up to 2; Cisco ASA and Generic Firewall allow 1. In the Profile, tick **Enable Edge to Non SD-WAN via Gateway** under **Edge to Non SD-WAN Sites**.
+
+## Via Edge
+
+The Edge builds the IPsec tunnel across its own WAN. You create it under **Configure > Network Services > Non SD-WAN Destinations via Edges**, then enable it in the Profile's VPN Services (one such service per segment). Types listed are Generic IKEv1 and IKEv2 (route-based) and Microsoft Azure Virtual WAN. BGP can be configured for the destination's neighbors on the Edge.
+
+## Trade-offs
+
+| | via Gateway | via Edge |
+|---|---|---|
+| Who builds the tunnel | a Gateway | the branch Edge |
+| Where it is defined | Network Services, Profile level only | Network Services, then enabled in the Profile's VPN Services |
+| What the branch needs | its normal tunnel to the Gateway | its own WAN reaching the destination |
+| Documented types | many named vendors and clouds | generic IKE and Azure Virtual WAN |
+
+<Callout variant="warning" title="What we could not confirm">
+  When to prefer one over the other is not spelled out in the pages we read; the table states only what is documented. Authentication options and primary and secondary addresses for NSD via Edge came from a search summary, not a page, so they are not taught here.
+</Callout>
+
+<Predict
+  prompt="You must reach a cloud provider's VPN gateway through a tunnel that a Gateway builds. Which description is documented?"
+  choices={["NSD via Gateway: the Gateway builds an IPsec tunnel to the provider", "NSD via Gateway: the Orchestrator builds it", "NSD via Edge: the Gateway builds it", "A Hub builds it automatically"]}
+  answer={0}
+>
+  With NSD via Gateway a Gateway builds the IPsec tunnel to the external destination, such as a cloud provider.
+</Predict>
+
+## What you would see in the VCO
+
+- **Configure > Network Services**: Non SD-WAN Destinations via Gateway and via Edges.
+- **Configure > Profiles > Device > VPN Services**: Edge to Non SD-WAN via Gateway; Non SD-WAN via Edge.
+- **Diagnostics > Remote Diagnostics > MTR**: a path option that can be Direct, Multipath, NVS via Edge or NVS via Gateway.
+
+## Key takeaways
+
+- NSD: an IPsec tunnel to something that is not running VeloCloud.
+- Via Gateway: Profile level only; via Edge: the Edge builds it.
+- Both are enabled in the Profile's VPN Services.
+
+## What would you look for in the VCO
+
+- Is the destination defined under Gateway or Edge services?
+- Is the Profile ticked for it?

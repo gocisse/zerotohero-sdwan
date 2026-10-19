@@ -1,0 +1,59 @@
+# Section 4, lesson 1: the layers of an Edge's configuration. Facts: reference/profiles.md, edge-overrides.md, segments.md.
+id: cfg-layers
+title: How an Edge's configuration is layered
+alt: >-
+  In the Orchestrator, segments and network services are building blocks. A Profile is a composite of them. Edges using the
+  Profile inherit its settings, and an Edge can override a setting with the Override checkbox, so the Edge's effective
+  configuration is the Profile plus its own overrides.
+width: 900
+height: 520
+
+groups:
+  - { id: vco-box, label: Orchestrator, box: { x: 40, y: 40, width: 820, height: 310 } }
+
+nodes:
+  - { id: seg, label: Segments, kind: generic, x: 160, y: 140, group: vco-box }
+  - { id: ns, label: Network Services, kind: generic, x: 160, y: 250, group: vco-box }
+  - { id: profile, label: Profile, kind: vco, x: 450, y: 195, group: vco-box }
+  - { id: edge-a, label: Branch A Edge, kind: vce, x: 300, y: 430 }
+  - { id: edge-b, label: Branch B Edge, kind: vce, x: 620, y: 430 }
+
+links:
+  - { id: l-seg, from: seg, to: profile, style: control }
+  - { id: l-ns, from: ns, to: profile, style: control }
+  - { id: l-a, from: profile, to: edge-a, style: overlay-tunnel, label: inherits }
+  - { id: l-b, from: profile, to: edge-b, style: overlay-tunnel, label: inherits }
+
+steps:
+  - title: Building blocks
+    narration: >-
+      In the Orchestrator you first create **building blocks**: segments (Configure > Segments) and network services. They are not attached to any Edge yet.
+    highlight: [seg, ns]
+    show: [profile, l-seg, l-ns, edge-a, edge-b, l-a, l-b]
+    callouts:
+      - { target: seg, text: "Configure > Segments" }
+
+  - title: A Profile composes them
+    narration: >-
+      A **Profile** is a template. Arista describes it as a composite of the configurations created in Segments and Network Services, plus its own Device, Business Policy and Firewall settings.
+    show: [profile, l-seg, l-ns]
+    highlight: [seg, ns, profile, l-seg, l-ns]
+    packets:
+      - { path: [seg, l-seg, profile], label: segments, color_style: control }
+      - { path: [ns, l-ns, profile], label: services, color_style: control, delay_ms: 400 }
+
+  - title: Edges inherit it
+    narration: >-
+      Each Edge is assigned one Profile when it is provisioned. By default the Edge inherits the Profile's settings, so changing the Profile changes what its Edges are told to do.
+    show: [edge-a, edge-b, l-a, l-b]
+    highlight: [profile, l-a, l-b, edge-a, edge-b]
+    packets:
+      - { path: [profile, l-a, edge-a], label: settings, color_style: overlay-tunnel }
+      - { path: [profile, l-b, edge-b], label: settings, color_style: overlay-tunnel, delay_ms: 300 }
+
+  - title: An Edge can override a setting
+    narration: >-
+      On one Edge you can tick **Override** next to a setting and give it a different value. Branch A now has its own value for that setting; everything else still comes from the Profile.
+    highlight: [edge-a, l-a]
+    callouts:
+      - { target: edge-a, text: "Override on this setting only. The rest is inherited." }

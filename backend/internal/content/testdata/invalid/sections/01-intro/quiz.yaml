@@ -1,0 +1,8 @@
+- id: q1
+  topic: basics
+  difficulty: 1
+  type: single_choice
+  prompt: Pick.
+  options: [{id: a, text: A}, {id: b, text: B}]
+  correct: [a, b]
+  explanation: x

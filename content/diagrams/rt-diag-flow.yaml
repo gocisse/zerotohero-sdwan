@@ -1,0 +1,72 @@
+# Section 6, lesson 8: the diagnostic walk. The order is our method (the route's life), not an Arista procedure. Prefix is illustrative.
+id: rt-diag-flow
+title: Why can't Branch B reach 10.20.0.0/24? (illustrative prefix)
+alt: >-
+  A walk along the life of a route from Branch A's LAN router to Branch B: does Branch A know it, is it advertised, is it
+  filtered, is it redistributed, which route wins at Branch B, and is the path built.
+width: 960
+height: 480
+
+nodes:
+  - { id: lan-a, label: LAN router A, kind: router, x: 80, y: 190 }
+  - { id: ea, label: Branch A Edge, kind: vce, x: 270, y: 190 }
+  - { id: gw, label: Gateway, kind: vcg, x: 490, y: 190 }
+  - { id: eb, label: Branch B Edge, kind: vce, x: 700, y: 190 }
+  - { id: lan-b, label: LAN router B, kind: router, x: 890, y: 190 }
+  - { id: diag, label: Diagnostics tab, kind: vco, x: 490, y: 400 }
+
+links:
+  - { id: l1, from: lan-a, to: ea, style: lan }
+  - { id: l2, from: ea, to: gw, style: overlay-tunnel }
+  - { id: l3, from: gw, to: eb, style: overlay-tunnel }
+  - { id: l4, from: eb, to: lan-b, style: lan }
+  - { id: d-a, from: diag, to: ea, style: control }
+  - { id: d-b, from: diag, to: eb, style: control }
+
+steps:
+  - title: The question
+    narration: >-
+      Branch B cannot reach 10.20.0.0/24 behind Branch A. Follow the route from its source, one stage at a time.
+    highlight: [lan-a, l1, ea, l2, gw, l3, eb, l4, lan-b]
+
+  - title: 1. Does Branch A know it?
+    narration: >-
+      **Route Table Dump** on Branch A for the prefix, then Show OSPF Neighbors or Show BGP Summary if it is missing.
+    highlight: [lan-a, l1, ea, diag, d-a]
+    callouts:
+      - { target: ea, text: "Route Table Dump; neighbor Full / Established?" }
+
+  - title: 2. Is it advertised into the overlay?
+    narration: >-
+      Static: Advertise ticked. BGP: advertise True, reachable Yes. OSPF external: the External OSPF flag in Overlay Flow Control.
+    highlight: [ea, l2, gw]
+    callouts:
+      - { target: l2, text: "Advertise / Global Advertise Flags" }
+
+  - title: 3. Is it filtered or held back?
+    narration: >-
+      Inbound filters on the neighbor, route filters, and the rule that a prefix overlapping a connected subnet is not advertised into OFC.
+    highlight: [lan-a, l1, ea]
+    callouts:
+      - { target: l1, text: "Neighbor filters; overlap" }
+
+  - title: 4. Is it redistributed to LAN B?
+    narration: >-
+      On Branch B, the Overlay Prefixes (OSPF) or Overlay Prefix (BGP) setting decides whether LAN router B hears about it.
+    highlight: [eb, l4, lan-b]
+    callouts:
+      - { target: l4, text: "Overlay Prefix(es) on?" }
+
+  - title: 5. Which route wins at Branch B?
+    narration: >-
+      **List Routes per Prefix** or Route Table Dump (all): the first entry is the best path; read Lost Reason for the others.
+    highlight: [eb, diag, d-b]
+    callouts:
+      - { target: eb, text: "Winner and Lost Reason" }
+
+  - title: 6. Is the path built?
+    narration: >-
+      If the route exists but Reachable is False (PR_UNREACHABLE), check tunnels with List Paths and VPN Test.
+    highlight: [ea, l2, gw, l3, eb]
+    packets:
+      - { path: [eb, l3, gw, l2, ea], label: "reachable?", color_style: overlay-tunnel }

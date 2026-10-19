@@ -1,0 +1,72 @@
+---
+id: cfg-model
+title: The configuration model
+summary: How an Edge's effective configuration is layered from segments, a Profile, Edge overrides and the business policy and firewall rules, and a question you can reuse on any screen.
+estimated_minutes: 9
+topics: [config-model]
+---
+
+**By the end of this lesson you will be able to:**
+
+- name the layers an Edge's configuration comes from, general to specific;
+- explain <Term id="inheritance" /> and the <Term id="override" /> checkbox in one sentence each;
+- say where business policy and firewall rules fit in the same picture;
+- ask "where is this setting coming from?" of any Edge behaviour.
+
+## The question this section trains
+
+You open an Orchestrator and an Edge is doing something. It sends one application over one link, drops some traffic, uses a VLAN. **Why does it behave this way, and where is that set?** Almost every answer is a layer.
+We call the result the <Term id="effective-configuration" />: what the Edge actually ends up using. That phrase is our vocabulary, not a menu name.
+
+## The layers
+
+<Diagram id="cfg-layers" />
+
+1. **Building blocks** (Enterprise level): <Term id="segment">segments</Term>, created under **Configure > Segments**, and network services. They belong to no Edge yet.
+2. **Profile**: a template. Arista says Profiles provide a composite of the configurations created in Segments and Network Services, and that administrators use them to apply one template to many Edges at once.
+3. **Edge**: each Edge is assigned a Profile at provisioning and inherits from it by default. On the Edge's **Device** tab, ticking **Override** next to an inherited setting lets you change it for that Edge only.
+4. **Business policy and firewall rules** follow the same two-level pattern: rules exist at Profile level and the Edge has its own tab where an override can be made.
+
+<Callout variant="info" title="Two levels, not three">
+  Segments and network services are inputs to a Profile; they are not an extra layer that can override it. The two levels that compete are the **Profile** and the **Edge override**.
+</Callout>
+
+<Predict
+  prompt="An Edge shows a setting you did not configure on that Edge. Where does it most likely come from?"
+  choices={["The Edge's own override", "Its Profile, by inheritance", "The Gateway", "The WAN carrier"]}
+  answer={1}
+>
+  Edges inherit their settings from their Profile by default; an Edge's own value exists only where someone ticked Override.
+</Predict>
+
+## A reusable method
+
+When you see a behaviour, ask in this order:
+
+1. Which kind of setting is it: interface or VLAN (Device tab), traffic treatment (business policy), or allow and drop (firewall)?
+2. Does the **Edge** have an override for it?
+3. If not, what does the **Profile** say?
+4. Which **segment** does the traffic belong to?
+
+<Callout variant="warning" title="What we could not confirm">
+  How the Orchestrator marks an overridden setting on screen, and a complete list of which settings can be overridden, were not described in the pages we read. Look at the Override checkbox next to each setting in your own release.
+</Callout>
+
+## What you would see in the VCO
+
+- **Configure > Profiles** lists Profiles with a **Used By** count of Edges; **Configure > Edges** lists Edges.
+- An Edge's page has a **Device** tab for settings, and **Business Policy** and **Firewall** tabs for rules.
+- **Configure > Segments** holds the segments a Profile can include.
+
+## Key takeaways
+
+- Layers: segments and network services, then Profile, then Edge override.
+- Edges inherit from the Profile by default; Override changes one setting on one Edge.
+- Business policy and firewall rules have the same Profile and Edge pattern.
+- The reusable question: where is this setting coming from?
+
+## What would you look for in the VCO
+
+- Which Profile does this Edge use?
+- Is the setting ticked Override on the Edge?
+- Which segment is the traffic in?

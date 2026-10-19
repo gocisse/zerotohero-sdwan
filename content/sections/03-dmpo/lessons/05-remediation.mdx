@@ -1,0 +1,91 @@
+---
+id: dmpo-remediation
+title: On-demand remediation
+summary: FEC as packet duplication, the jitter buffer and NACK, when each applies, what each costs, when each is off, and a worked example per mechanism.
+estimated_minutes: 12
+topics: [dmpo-remediation]
+---
+
+**By the end of this lesson you will be able to:**
+
+- explain when <Term id="on-demand-remediation" /> is used;
+- describe <Term id="fec" /> as Arista describes it, and what it costs;
+- describe the <Term id="jitter-buffer" /> with its documented limits;
+- describe <Term id="nack" /> for TCP;
+- say when each is off, and what Premium Service has to do with it.
+
+## When remediation is used
+
+Steering is the first tool. If a better link exists, move there. Remediation is for when steering cannot help: a single link, or several links degraded at once. It is on for the duration
+of the problem and, per Arista's brief, is for network-sensitive priority applications.
+
+| Mechanism | Traffic | Fixes |
+|---|---|---|
+| FEC | real-time (voice, video) | loss |
+| Jitter buffer | real-time | jitter |
+| NACK | TCP such as file transfer | loss |
+
+## FEC: send it twice
+
+In Arista's description, FEC is **packet duplication**. On a single link the duplicate is sent next to the original on the same link. With two or more links the copies go on **separate links**, and DMPO picks up
+to two of the best links. The receiver keeps the first copy and discards the duplicate.
+
+<Diagram id="dmpo-brownout-fec" />
+
+- **Triggers:** per flow, in real time, when measured loss crosses an activation threshold.
+- **Off:** when loss no longer exceeds the threshold, or when the traffic is not real-time.
+- **Cost:** extra bandwidth for the duplicates. We did not find a percentage.
+
+**Worked example (illustrative).** A voice call loses packet 5 on the Internet link. Because 5 was also sent on MPLS, the receiver already has it from there. The listener hears nothing.
+
+<Callout variant="warning" title="The word FEC">
+  Textbook forward error correction usually means sending extra coded data. Arista's guide describes FEC here as duplication, so that is what this course means.
+</Callout>
+
+## The jitter buffer: hold, then release
+
+For real-time traffic, the jitter buffer is enabled when jitter exceeds **7 ms for voice** or **5 ms for video**. The receiving endpoint buffers up to **10 packets or 200 ms**. It is disabled when the flow is not constant.
+
+<Diagram id="dmpo-jitter-buffer" />
+
+- **Off:** when jitter is below the threshold, or the flow is not steady.
+- **Cost:** packets wait at the receiver; the delay is bounded by the limit above (our reading, not a documented sentence).
+
+**Worked example (illustrative).** Voice packets arrive at gaps of 2, 2, 30 and 1 ms. Played raw they sound choppy; the buffer releases them evenly.
+
+## NACK: ask again
+
+For TCP applications such as file transfer, the receiving endpoint asks the sender to retransmit a missing packet. The two Edges handle it, so the end hosts are protected from seeing the loss (Arista's wording). It
+is enabled when loss exceeds a threshold that depends on the application type.
+
+<Diagram id="dmpo-nack" />
+
+**Worked example (illustrative).** In a download, packet 2 is lost. The receiving Edge sends a NACK for 2, and the sender resends it; the file keeps flowing at speed.
+
+<Predict
+  prompt="A branch has one WAN link, and it starts losing packets during a video call. Which statement is supported by Arista's text?"
+  choices={["DMPO cannot do anything with one link", "FEC can be enabled on a single link, with the duplicate next to the original", "The call must be moved to the Orchestrator", "Only NACK applies"]}
+  answer={1}
+>
+  FEC is enabled automatically on a single link or on several. With one link the duplicate is sent adjacent to the original.
+</Predict>
+
+## Premium Service
+
+Premium Service is on by default. It enables the On-Demand Remediation feature: the Gateway applies FEC to impaired traffic that cannot be steered. With it off, monitoring and steering continue but there is no Gateway error correction.
+
+## What you would see in the VCO
+
+- Premium Service is a customer setting in the Operator portal (Manage Customers).
+- Whether the Orchestrator shows, per flow, that remediation is active was not confirmed. Look at the **Flows** tab and at link events in your own release.
+
+## Key takeaways
+
+- Remediation starts when steering cannot help, and stops when the problem does.
+- FEC duplicates, up to two links; jitter buffer: 7 ms voice, 5 ms video, 10 packets or 200 ms; NACK for TCP.
+- Premium Service on by default; off means no Gateway error correction.
+
+## What would you look for in the VCO
+
+- Is the problem on one link only, or on all of them?
+- Is the affected traffic real-time or TCP?

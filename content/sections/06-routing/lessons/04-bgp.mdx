@@ -1,0 +1,75 @@
+---
+id: rt-bgp
+title: BGP
+summary: iBGP versus eBGP, neighbors and ASNs, advertising prefixes, the network statement versus redistribution, and what to check when a neighbor is down.
+estimated_minutes: 10
+topics: [rt-bgp]
+---
+
+**By the end of this lesson you will be able to:**
+
+- say where BGP is configured and what a neighbor needs;
+- tell iBGP from eBGP by the ASNs and say what changes;
+- separate "advertise this network" from "redistribute that source";
+- run the first checks when a neighbor is down.
+
+## Turning it on
+
+In a Profile or on an Edge: **Routing & NAT > BGP**, toggle it On and enter the local <Term id="asn">ASN</Term> (four-byte ASNs are supported). BGP can be set per segment, and an Edge can override what the Profile gives it.
+
+## Neighbors, iBGP and eBGP
+
+A <Term id="bgp-neighbor">neighbor</Term> has an IP address, the neighbor's ASN, and an Inbound and an Outbound filter. If the neighbor's ASN equals yours the session is <Term id="ibgp" />; if it differs it is <Term id="ebgp" />. The visible difference in the form: **Max-hop** applies only to eBGP (default 1); with iBGP multi-hop is inherent and the field is fixed. The timers are Keep-alive 60 s and Hold 180 s by default. The **Uplink** flag marks a neighbor that is your WAN overlay towards MPLS, with an Uplink Community.
+
+<Callout variant="info" title="Two kinds of BGP">
+  The Gateway reflects overlay routes between Edges with its own route-reflector behaviour (VCRP). That is not the BGP session you configure with a LAN router; do not confuse the two.
+</Callout>
+
+## Advertising prefixes: three different switches
+
+<Diagram id="rt-redistribution" />
+
+1. **Redistribution into BGP** (Advanced Settings). **Overlay Prefix** redistributes prefixes learned from the overlay; **Connected Routes** redistributes the connected interface subnets; **OSPF** redistributes OSPF routes, with BGP metric 20 by default. Defaults for Overlay Prefix and Connected Routes are not stated.
+2. **Network statement.** The **Default Route** option adds a network statement to advertise the default route to the neighbor; the **Networks** field lists network addresses BGP advertises. A network statement names a prefix; redistribution names a *source*.
+3. **Default route behaviour.** Neighbor and global settings combine and the neighbor wins: Yes/Yes always advertises the default route, No/No never; Conditional advertises it only when the Edge learns one.
+
+<Predict
+  prompt="You want the LAN router to learn every remote branch prefix over BGP. Which Advanced Setting does that?"
+  choices={["Overlay Prefix", "Connected Routes", "Turn off AS-Path carry over", "Max-hop"]}
+  answer={0}
+>
+  Overlay Prefix redistributes the prefixes the Edge learned from the overlay to the BGP neighbors. Connected Routes advertises the Edge's own interface subnets instead.
+</Predict>
+
+## What reaches the overlay
+
+A BGP route enters the overlay route table when List BGP Routes shows **advertise True** and **reachable Yes**. If the neighbor is an NSD, only eBGP is supported over IPsec.
+
+## When a neighbor is down
+
+1. **Show BGP Summary**: is the neighbor up?
+2. **Show BGP Neighbor Details**: status and uptime, local and remote AS, timers, which filters are attached, and the prefixes accepted after the inbound filter. Check the AS numbers match what the neighbor expects.
+3. **Show BGP Neighbor Received / Advertised Routes**: what actually crosses the session.
+4. Check Max-hop and Local IP for multi-hop eBGP, and whether BFD is on (off by default; when a BFD session goes down the BGP session ends at once and its routes are flushed).
+
+<Callout variant="warning" title="Not confirmed">
+  We did not confirm the default action for routes that match no filter, whether the Networks field is a general network statement for arbitrary prefixes, or the filter evaluation order.
+</Callout>
+
+## What you would see in the VCO
+
+- **Configure > Profiles or Edges > Device > Routing & NAT > BGP**: Local ASN, Neighbors, Advanced Settings, Filter List.
+- **Monitor > Routing > BGP Edge Neighbor State**, plus the Diagnostics tests above.
+
+## Key takeaways
+
+- Same ASN means iBGP; different means eBGP (Max-hop only for eBGP).
+- Redistribution picks sources; a network statement picks prefixes.
+- Overlay Prefix sends remote prefixes to the LAN; Connected Routes sends this site's subnets.
+- Neighbor down: Summary, then Neighbor Details.
+
+## What would you look for in the VCO
+
+- Is the neighbor Established, and do the ASNs match?
+- Which filters are attached to it?
+- Is the prefix advertise True and reachable Yes in List BGP Routes?

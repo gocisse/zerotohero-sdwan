@@ -1,0 +1,65 @@
+---
+id: ov-dynamic
+title: Dynamic branch-to-branch
+summary: The first packet via the Gateway or Hub, the direct tunnel afterwards, the conditions to build and tear it down, and what to expect to see in the VCO over time.
+estimated_minutes: 9
+topics: [overlay-dynamic]
+---
+
+**By the end of this lesson you will be able to:**
+
+- describe the life of a <Term id="dynamic-branch-to-branch" /> tunnel from first packet to teardown;
+- say who decides to build and who tears down;
+- say what you would see in List Paths during each stage;
+- name what we do not know about the conditions.
+
+## The life of a dynamic tunnel
+
+<Diagram id="ov-dynamic-b2b" />
+
+1. **Before:** both Edges have <Term id="static-tunnel">static tunnels</Term> to a Gateway or Hub. There is no tunnel between them.
+2. **First packet:** with Dynamic Branch to Branch activated, "the first packet goes through the Cloud Gateway (or the Hub)".
+3. **Build:** the **initiating Edge** determines that traffic can be routed through a secure overlay multi-path tunnel, and builds a direct tunnel.
+4. **Use:** traffic goes directly.
+5. **Teardown:** after **180 seconds of traffic silence** the initiating Edge tears the tunnel down.
+
+It builds on <Term id="branch-to-branch-vpn" /> and can be activated for all Edges or for Edges in a Profile; the 7.0 Profile page says the Orchestrator configures it for all Edges by default.
+
+<Callout variant="gotcha" title="No direct tunnel is not an outage">
+  If the initiating Edge decides a direct tunnel is not possible, or NAT blocks it, traffic keeps using the Gateway or Hub path. The cost is the detour.
+</Callout>
+
+## What you would see over time
+
+- **List Paths** on an Edge shows each tunnel's **Mode**. Static tunnels are always up. Dynamic tunnels "facilitate B2B communication by establishing connections on a need basis".
+- Right after first contact you should see the Gateway or Hub path; later a Dynamic entry to the peer; and after silence it should be gone. (We describe that sequence from the documented behaviour, not from a recording of the screen.)
+- The **State** column says Stable, Unstable, BW_Measurement or Quiet; **Uptime** shows how long the tunnel has been up.
+
+<Predict
+  prompt="No traffic flows between two branches for 180 seconds. What does the documentation say happens to a direct dynamic tunnel between them?"
+  choices={["The initiating Edge tears it down", "The Orchestrator deletes the Profile", "It stays up forever", "The Gateway tears it down"]}
+  answer={0}
+>
+  After 180 seconds of traffic silence the initiating Edge tears the tunnel down.
+</Predict>
+
+<Callout variant="warning" title="What we could not confirm">
+  Beyond "a secure overlay multi-path tunnel is possible", the conditions for building a direct tunnel were not found, and neither was what happens to in-flight flows when it is torn down.
+</Callout>
+
+## What you would see in the VCO
+
+- **Configure > Profiles > Device > VPN Services > Branch to Branch VPN**: the Dynamic Branch To Branch VPN option.
+- **Diagnostics > Remote Diagnostics > List Paths** and **VPN Test**.
+- **Monitor > Edges > (Edge) > Paths**.
+
+## Key takeaways
+
+- First packet via the Gateway or Hub; the initiating Edge builds the direct tunnel; 180 seconds of silence removes it.
+- List Paths Mode: Static versus Dynamic.
+- Conditions beyond "secure overlay multi-path tunnel possible" are not documented in what we read.
+
+## What would you look for in the VCO
+
+- Does List Paths show a Dynamic tunnel to the peer right now?
+- If not, is Dynamic Branch to Branch on, and has there been traffic recently?

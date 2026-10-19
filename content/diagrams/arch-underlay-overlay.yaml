@@ -1,0 +1,74 @@
+# Section 2, lesson 4: underlay (circuits) below, overlay (tunnels) above. See reference/underlay-overlay.md.
+id: arch-underlay-overlay
+title: Underlay below, overlay above
+alt: >-
+  A branch Edge and a data center Edge. Underneath, the Edge reaches the data center over an Internet circuit and an MPLS
+  circuit, later joined by an LTE circuit. On top, one tunnel runs between the two Edges for each circuit. A packet rides a
+  tunnel, and when MPLS is removed the traffic continues over the remaining tunnels.
+width: 900
+height: 540
+
+groups:
+  - { id: branch, label: Branch, nodes: [host-a, edge-a] }
+  - { id: dc, label: Data center, nodes: [edge-dc, dc-apps] }
+
+nodes:
+  - { id: host-a, label: Branch user, kind: host, x: 60, y: 300 }
+  - { id: edge-a, label: Branch Edge, kind: vce, x: 210, y: 300 }
+  - { id: edge-dc, label: Data center Edge, kind: vce, x: 690, y: 300 }
+  - { id: dc-apps, label: Company apps, kind: datacenter, x: 830, y: 300 }
+  - { id: inet, label: Internet, kind: internet, x: 330, y: 465 }
+  - { id: mpls, label: MPLS, kind: mpls, x: 450, y: 465 }
+  - { id: lte, label: LTE, kind: cloud, x: 570, y: 465 }
+
+links:
+  - { id: lan-a, from: host-a, to: edge-a, style: lan }
+  - { id: lan-dc, from: edge-dc, to: dc-apps, style: lan }
+  - { id: wan-a-inet, from: edge-a, to: inet, style: underlay-internet }
+  - { id: wan-inet-dc, from: inet, to: edge-dc, style: underlay-internet }
+  - { id: wan-a-mpls, from: edge-a, to: mpls, style: underlay-mpls }
+  - { id: wan-mpls-dc, from: mpls, to: edge-dc, style: underlay-mpls }
+  - { id: wan-a-lte, from: edge-a, to: lte, style: underlay-lte }
+  - { id: wan-lte-dc, from: lte, to: edge-dc, style: underlay-lte }
+  - { id: tun-inet, from: edge-a, to: edge-dc, style: overlay-tunnel, label: tunnel over Internet, curve: -55 }
+  - { id: tun-mpls, from: edge-a, to: edge-dc, style: overlay-tunnel, label: tunnel over MPLS, curve: -110 }
+  - { id: tun-lte, from: edge-a, to: edge-dc, style: overlay-tunnel, label: tunnel over LTE, curve: -165 }
+
+steps:
+  - title: The underlay, the circuits
+    narration: >-
+      Start at the bottom. The **underlay** is the set of circuits and carrier networks the sites are plugged into: here an
+      Internet line and an MPLS circuit. On their own they only know how to move packets between the sites.
+    highlight: [edge-a, edge-dc, inet, mpls, wan-a-inet, wan-inet-dc, wan-a-mpls, wan-mpls-dc]
+    show: [tun-inet, tun-mpls, tun-lte, lte, wan-a-lte, wan-lte-dc]
+
+  - title: The overlay, tunnels on top
+    narration: >-
+      The Edges build an **overlay** on top: a tunnel between the two Edges over each circuit. The tunnels are logical
+      connections carried inside ordinary packets across the underlay.
+    show: [tun-inet, tun-mpls]
+    highlight: [edge-a, edge-dc, tun-inet, tun-mpls]
+
+  - title: A packet rides a tunnel
+    narration: >-
+      A user's packet reaches the Edge, travels inside a tunnel to the data center Edge, and is delivered to the application.
+      The underlay carries the tunnel, but it never needs to know about the user's traffic.
+    highlight: [host-a, lan-a, edge-a, tun-inet, edge-dc, lan-dc, dc-apps]
+    packets:
+      - { path: [host-a, edge-a, tun-inet, edge-dc, dc-apps], label: app traffic, color_style: overlay-tunnel }
+
+  - title: Add a transport
+    narration: >-
+      The site adds a cellular LTE connection. Nothing about the application or the data center changes: the Edge simply has
+      one more circuit to carry a tunnel over. Policy can talk about groups of circuits instead of individual cables.
+    show: [lte, wan-a-lte, wan-lte-dc, tun-lte]
+    highlight: [lte, wan-a-lte, wan-lte-dc, tun-lte]
+
+  - title: Swap a transport
+    narration: >-
+      Now the MPLS circuit goes away. The tunnels that remain keep working, and the Edge carries the traffic over them. When
+      a link fails, DMPO notices within a few hundred milliseconds and moves flows to a healthy link, if one exists.
+    hide: [mpls, wan-a-mpls, wan-mpls-dc, tun-mpls]
+    highlight: [host-a, lan-a, edge-a, tun-lte, edge-dc, lan-dc, dc-apps]
+    packets:
+      - { path: [host-a, edge-a, tun-lte, edge-dc, dc-apps], label: app traffic, color_style: overlay-tunnel }

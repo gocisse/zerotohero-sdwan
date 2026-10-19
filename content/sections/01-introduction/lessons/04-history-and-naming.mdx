@@ -1,0 +1,122 @@
+---
+id: intro-history-and-naming
+title: History and naming
+summary: The VeloCloud, VMware, Broadcom, Arista path, and why the names in documents and screens do not always match.
+estimated_minutes: 9
+topics: [history-naming]
+---
+
+**By the end of this lesson you will be able to:**
+
+- tell the story of how the product moved from VeloCloud to VMware, Broadcom and Arista, and say how sure each date is;
+- explain why this course says <Term id="vce" />, <Term id="vco" /> and <Term id="vcg" />, and why documents may say something else;
+- choose the right documentation set for the software release you are looking at.
+
+## Why bother with history?
+
+Because the product has had several owners, **you will meet several names** for the same thing: in documentation, in training videos,
+in forum posts and in the product itself. Knowing the history turns that confusion into a lookup problem.
+
+## The timeline
+
+| When | What happened | How sure are we? |
+|---|---|---|
+| Before 2018 | VeloCloud existed as an independent company selling cloud-delivered SD-WAN | Background only (founding details not confirmed) |
+| Late 2017 to early 2018 | VMware acquired VeloCloud Networks; VMware's annual filing places it in the fourth quarter of fiscal 2018. Trade press put the announcement in November 2017 and completion in mid-December 2017 | Filing confirmed; exact days reported by trade press only |
+| November 2023 | Broadcom completed its acquisition of VMware, so VeloCloud, as part of VMware, became part of Broadcom | Year confirmed; exact day not read from the primary source |
+| 1 July 2025 | Arista announced that it had acquired the VeloCloud SD-WAN portfolio from Broadcom | Confirmed in Arista's own press release |
+| Since then | The documentation is published by Arista as "VeloCloud SD-WAN" | Confirmed on arista.com |
+
+<Callout variant="warning" title="Dates we could not fully confirm">
+  The day-level dates for the VMware and Broadcom steps come from news coverage and search results rather than from pages we could
+  read in full. The year-level story is solid. Our reference sheet <code>branding-history</code> lists exactly what was and was not
+  confirmed.
+</Callout>
+
+<Predict
+  prompt="Which company's press release, dated 1 July 2025, says it acquired the VeloCloud SD-WAN portfolio from Broadcom?"
+  choices={["VMware", "Arista", "Cisco", "VeloCloud, as a new company"]}
+  answer={1}
+>
+  Arista. Its press release says it acquired the VeloCloud SD-WAN portfolio from Broadcom. The release does not mention VMware at all.
+</Predict>
+
+## Names you will see
+
+Arista's own pages show how names layer over time:
+
+- A 7.0 guide introduces the Orchestrator as the **"SASE Orchestrator"**.
+- An Arista advisory refers to **"VeloCloud Orchestrator On-Prem (Formerly VeloCloud Orchestrator by Broadcom)"** and to **VCO** for short,
+  and to the Edge and Gateway as **"VeloCloud Edge"** and **"VeloCloud Gateway"**, with a former-name note.
+- Older documentation was titled for the owner of the day. We have seen "VMware SD-WAN by VeloCloud" in older documentation addresses,
+  but could not read those pages.
+
+In this course:
+
+| We write | Meaning | You may also read |
+|---|---|---|
+| <Term id="vce" /> | the Edge | Edge, VeloCloud Edge |
+| <Term id="vco" /> | the Orchestrator | Orchestrator, VeloCloud Orchestrator, SASE Orchestrator |
+| <Term id="vcg" /> | the Gateway | Gateway, VeloCloud Gateway |
+
+<Callout variant="gotcha" title="Labels in the product can lag or differ">
+  User-interface labels and documentation do not always change at the same time as a brand does. A screen can still show an older word
+  while the current guide uses a newer one, and two guides for different releases can name the same menu differently. When a name does
+  not match, check **which release's guide** you are reading.
+</Callout>
+
+<Predict
+  prompt="One article calls the component the 'SASE Orchestrator'; another calls it the 'VeloCloud Orchestrator (VCO)'. What is the safest reading?"
+  choices={["They are unrelated products", "Both names appear in Arista material for the Orchestrator, so read the context and the release", "The first is a newer product that replaced it", "Only the VCO name is real"]}
+  answer={1}
+>
+  Arista's 7.0 guide uses "SASE Orchestrator" for the Orchestrator, and an Arista advisory uses "VeloCloud Orchestrator" and "VCO". Names
+  vary by document and era. Check the release and read the description.
+</Predict>
+
+## Releases and documentation sets
+
+Arista maintains documentation per **release**, and several release trains exist side by side. An Arista advisory from September 2026
+lists Orchestrator trains 5.2, 6.1, 6.4 and 7.0. This course targets the **7.0** documentation set (the newest Arista publishes).
+Whether 7.0.0 carries a GA or long-term-support label is **not confirmed** in our reference sheets, and we say so openly rather than
+guess. Whatever release you are running, read the documentation set that matches it.
+
+## Reading version strings
+
+Releases and builds carry numbers, and those numbers decide which guide, which advisory and which release notes apply to you. Here are
+real examples from Arista's own documents, and what you can safely say about each.
+
+| Where it appears | Example | What you can safely say |
+|---|---|---|
+| Release notes title | "Arista VeloCloud SD-WAN 6.4.0" | A release, dated 2 May 2025 in the notes |
+| Build names in those notes | Edge and Gateway "R6400-20250429-GA", Orchestrator "R6400-20250430-GA" | The Edge and Gateway builds and the Orchestrator build differ, and each carries a build date and a GA label |
+| A security advisory | Orchestrator "6.4.2.7 and below", fixed in "6.4.2.8 and later" | Four-part numbers identify maintenance builds within a **release train** (here 6.4.2) |
+| The same advisory | Trains 5.2, 6.1, 6.4 and 7.0 | Several trains are supported side by side, each fixed on its own schedule |
+
+<Callout variant="tip" title="Why this matters in practice">
+  When you read an advisory or a release note, first find your **train** (for example 7.0.x or 6.4.x), then the build within it. A fix
+  listed for 6.4.2.8 says nothing about 7.0 unless the advisory lists a fixed 7.0 build. In one September 2026 advisory, fixed builds were
+  listed for some trains but not yet for 6.1 or 7.0, with a note that more would be added over time.
+</Callout>
+
+Treat the way the build strings are put together (the "R6400" part and the date) as a convention you can observe, not as a documented
+rule: we did not find a page that defines it.
+
+### Three questions to ask of any document
+
+1. **Which release is this for?** Check the version in the title or address.
+2. **Which era's names does it use?** Map the names with the table above.
+3. **Is it documented behavior, or a vendor claim?** Product briefs describe goals; guides describe behavior. This course marks the
+   difference.
+
+## What you would see in the VCO
+
+In the Orchestrator, **Monitor > Network Overview** has a *Configuration Data* tab that shows, among other things, the **software
+versions** in use across your Edges, which tells you which documentation set applies to which site.
+
+## Key takeaways
+
+- VeloCloud, then VMware, then Broadcom, then Arista: the owner, and often the name, changed along the way.
+- Year-level history is solid; some exact dates are reported by trade press only.
+- VCE, VCO and VCG are our abbreviations for Edge, Orchestrator and Gateway. Expect other names in documents and screens.
+- Always match the documentation set to the software release.

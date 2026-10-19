@@ -1,0 +1,116 @@
+---
+id: intro-why-wans-fall-short
+title: Why traditional WANs fall short
+summary: How a classic MPLS hub-and-spoke WAN works, what it does well, and why backhauling and cloud applications made it painful.
+estimated_minutes: 10
+topics: [wan-limits]
+---
+
+**By the end of this lesson you will be able to:**
+
+- explain what a <Term id="wan" /> is for and describe a classic <Term id="hub-and-spoke" /> design;
+- list the strengths and the costs of <Term id="mpls" /> circuits;
+- explain <Term id="backhauling" /> and why <Term id="saas" /> applications made it hurt;
+- describe what <Term id="broadband" /> adds, and what it lacks.
+
+## What a WAN is for
+
+A company rarely fits in one building. There are offices, shops and factories (we will call them <Term id="branch">branches</Term>) and
+there are places where the company's applications actually run, usually one or more <Term id="data-center">data centers</Term>. The
+network that joins them over long distances is the <Term id="wan" />.
+
+For a long time the WAN had one dominant job: carry traffic from branches to applications in the data center. Almost every design
+decision you will meet in this lesson follows from that single assumption, and the assumption stopped being true.
+
+## The classic design: private circuits and a hub
+
+In the traditional design every branch buys a **private circuit** from a carrier, and all of those circuits meet at the headquarters
+data center. That layout is called <Term id="hub-and-spoke" />: the data center is the hub, the branches are the spokes. The carrier's
+private service is commonly <Term id="mpls" />, and in this course "MPLS" mostly means "the private circuits".
+
+Arista's own overview of the problem is a fair summary of the trade-off. MPLS typically gives **high-quality service**, but with
+**limited capacity, higher cost and long lead times** to get a new circuit installed. Step through the diagram below and watch what
+happens to two kinds of traffic.
+
+<Diagram id="wan-mpls-backhaul" />
+
+<Callout variant="gotcha" title="The diagram is simplified on purpose">
+  Real networks have redundant circuits, several data centers and plenty of other details. The point of the drawing is the *shape*:
+  every path goes through the hub, and the hub has the only way out to the Internet.
+</Callout>
+
+<Predict
+  prompt="A branch has **only** a private circuit to the data center. A user opens a SaaS application. Where does the traffic go first?"
+  choices={["Straight to the SaaS provider", "To the data center, and from there out to the Internet", "To another branch", "To the SaaS provider through the carrier, which keeps it off the Internet"]}
+  answer={1}
+>
+  With only a private circuit, the branch has no path of its own to the Internet. The request goes to the data center, leaves through
+  the data center's Internet connection, and only then reaches the provider. That detour is called **backhauling**.
+</Predict>
+
+## Backhauling, and why the cloud broke the model
+
+When applications lived in the data center, sending everything to the data center was exactly right. Then the applications moved.
+Collaboration tools, email and business software increasingly run as <Term id="saas" /> in the provider's cloud, and branch users
+consume more and more bandwidth doing so. The data center is no longer where the traffic wants to go, yet the WAN still sends it there.
+
+Arista's overview describes the consequence for branches that only have private circuits: they rely on backhauling all cloud, SaaS
+and Internet traffic through the enterprise data center, which **adds latency, degrades application performance and drives up
+bandwidth costs**. It also notes that a traditional hub-and-spoke architecture might not support a move to the cloud.
+
+In this simplified design, two things get worse together:
+
+- **Distance.** Every request and reply travels to the data center and back before it even starts the journey to the provider.
+- **Concentration.** All branches' cloud traffic converges on one Internet link and one firewall at the hub, which must be sized for
+  everyone.
+
+<Callout variant="tip" title="Backhauling is not always a mistake">
+  Some organizations backhaul on purpose, for example so that all Internet traffic passes through one security inspection point.
+  The problem is not that backhauling exists; it is that it is the *only* option when the branch has no alternative path.
+</Callout>
+
+## Broadband: fast and cheap, but not assured
+
+The obvious fix is to give each branch an ordinary Internet connection: <Term id="broadband" />, such as DSL, cable or LTE. Arista's
+overview credits broadband with fast deployment and greater capacity, and warns that it can lack **reliability, security and assured
+performance**, which means a poor experience for the user. Branches are served by private circuits, by Internet connections, or
+by both, and, as the overview puts it, neither is ideal on its own.
+
+Letting a branch send Internet-bound traffic straight out is called <Term id="dia" />, and the next lesson shows how that changes the
+picture. But notice the new problem it creates: two kinds of circuit with different strengths, and something has to decide, per
+application, which one to use.
+
+<Predict
+  prompt="Which statement about broadband compared with a private MPLS circuit is **best supported**?"
+  choices={["Broadband is always slower and always less secure", "Broadband is quicker to deploy and has more capacity, but can lack reliability and assured performance", "Broadband cannot carry cloud traffic", "Broadband is only available in data centers"]}
+  answer={1}
+>
+  Broadband trades assurance for speed of deployment and capacity. That trade-off is exactly why many networks want *both* kinds of
+  link and a smart way to use them together.
+</Predict>
+
+## The management problem
+
+Circuits are only half the story. Arista's overview also points out that traditional branch networks tend to lack **centralized
+management, control and visibility**, and that having many different management tools makes it harder to troubleshoot or to respond
+to threats. Compliance rules such as PCI, HIPAA and GDPR are harder to keep up across many branches when each has different security
+products from different vendors.
+
+## What you would see in the VCO
+
+You have not met the Orchestrator yet (lesson 5 is a tour), but you can already see where this lesson shows up. In the Orchestrator, an
+Edge's WAN links, for example a private circuit and a broadband line side by side, are listed together on the **Links** tab of that
+Edge under **Monitor > Edges**, with measurements for each. Seeing two very different circuits in one table is the whole idea.
+
+<Callout variant="warning" title="Source note">
+  The claims about MPLS, broadband and backhauling come from a vendor document, so they describe the problem as Arista sees it. The
+  statement that MPLS circuits are carrier-provisioned with contractual service levels, and the exact meaning of "DIA", are general
+  industry knowledge that we have not tied to a specific source (see the reference sheet <code>wan-background</code>).
+</Callout>
+
+## Key takeaways
+
+- The traditional WAN was built to carry branch traffic to applications in a data center.
+- MPLS is typically high quality but limited in capacity, costly, and slow to deploy.
+- When applications moved to SaaS, backhauling through the data center added delay and cost.
+- Broadband is quick and plentiful but not assured, so networks end up with a mix, and a new question: which traffic uses which link?

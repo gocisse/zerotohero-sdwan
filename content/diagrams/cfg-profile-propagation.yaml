@@ -1,0 +1,49 @@
+# Section 4, lesson 3: a change in a Profile reaches the Edges that use it. Facts: reference/profiles.md, edge-overrides.md. Whether an overriding Edge keeps its own value is shown as the Override semantics, not a documented propagation rule.
+id: cfg-profile-propagation
+title: A Profile change reaches its Edges
+alt: >-
+  A Profile used by three Edges is changed in the Orchestrator. Two Edges without an override inherit the new setting. The third
+  Edge has ticked Override for that setting, so it uses its own value.
+width: 900
+height: 520
+
+nodes:
+  - { id: profile, label: Profile, kind: vco, x: 450, y: 90 }
+  - { id: edge-a, label: Edge A, kind: vce, x: 170, y: 380 }
+  - { id: edge-b, label: Edge B, kind: vce, x: 450, y: 380 }
+  - { id: edge-c, label: Edge C, kind: vce, x: 730, y: 380 }
+
+links:
+  - { id: l-a, from: profile, to: edge-a, style: overlay-tunnel }
+  - { id: l-b, from: profile, to: edge-b, style: overlay-tunnel }
+  - { id: l-c, from: profile, to: edge-c, style: overlay-tunnel }
+
+steps:
+  - title: One Profile, three Edges
+    narration: >-
+      The Profile list shows a **Used By** count: here, three Edges. Edge C has an Override on one setting; A and B do not.
+    highlight: [profile, edge-a, edge-b, edge-c]
+    callouts:
+      - { target: edge-c, text: "Override ticked for one setting." }
+
+  - title: The Profile is edited
+    narration: >-
+      An administrator changes a setting in the Profile, for example an interface setting. Nothing is changed on any Edge by hand.
+    highlight: [profile]
+    callouts:
+      - { target: profile, text: "Setting changed once, here." }
+
+  - title: Inheriting Edges receive it
+    narration: >-
+      Interface settings of a Profile are applied automatically to the Edges that use it, so Edges A and B pick up the new value. Some changes restart the Edge service, so check the Appendix list before changing a live site.
+    highlight: [profile, l-a, l-b, edge-a, edge-b]
+    packets:
+      - { path: [profile, l-a, edge-a], label: new value, color_style: overlay-tunnel }
+      - { path: [profile, l-b, edge-b], label: new value, color_style: overlay-tunnel, delay_ms: 300 }
+
+  - title: The overriding Edge keeps its own value
+    narration: >-
+      Edge C has its own value for the overridden setting; Arista says the Profile's interface settings can be overridden for a specific Edge. Everything C did not override is still inherited.
+    highlight: [edge-c]
+    callouts:
+      - { target: edge-c, text: "Own value for the overridden setting." }

@@ -1,0 +1,73 @@
+---
+id: rt-diagnosis
+title: Reading routes in the VCO
+summary: "A guided diagnostic: Branch B cannot reach 10.20.0.0/24 behind Branch A. What to check, in what order, in which screen."
+estimated_minutes: 12
+topics: [rt-diagnosis]
+---
+
+**By the end of this lesson you will be able to:**
+
+- turn "why does Edge X have (or not have) a route to this prefix" into an ordered list of checks;
+- say which screen or Diagnostics test answers each check;
+- say where you would change each setting;
+- say what each reading cannot tell you.
+
+## The question
+
+"Branch B cannot reach 10.20.0.0/24 (illustrative), which sits behind Branch A." The route's life has stages, so follow it from its source.
+
+<Diagram id="rt-diag-flow" />
+
+### 1. Does Branch A know the prefix?
+
+Run **Route Table Dump** (the <Term id="routing-table" /> view) on Branch A with that prefix. If it is not there, check where it should come from: **Show OSPF Neighbors** (state Full?) and **List OSPF Routes**, or **Show BGP Summary** and **List BGP Routes**, or the static route. No neighbor, no route. *Change it in* Device > Routing & NAT.
+
+### 2. Is it advertised into the overlay?
+
+For BGP the route needs advertise True and reachable Yes in **List BGP Routes**. For a static route, **Advertise** must be ticked. For OSPF, remember the default: E1 and E2 routes are held out until the External OSPF flag is on. *Change it in* the static route, or **Configure > Overlay Flow Control > Global Advertise Flags**.
+
+### 3. Is it filtered or held back?
+
+Look at **Show BGP Neighbor Details** for attached <Term id="bgp-filter">filters</Term> and the prefixes accepted after the inbound filter, and at the OSPF route filters. A prefix that overlaps a locally connected subnet is not advertised into the OFC table. *Change it in* the neighbor's filters.
+
+### 4. Is it redistributed where it needs to be?
+
+On Branch B, the LAN router needs the route too: **List OSPF Redistributed Routes** or **List BGP Redistributed Routes**, and the **Overlay Prefixes** or **Overlay Prefix** check box. *Change it in* Routing & NAT on the Branch B Edge or Profile.
+
+### 5. Which route wins at Branch B?
+
+**Route Table Dump** (all routes) or **List Routes per Prefix** on Branch B: the first entry is the best path. A longer prefix, a connected or preferred static route, or a lower <Term id="route-preference" /> can beat the route you expected. Read **Lost Reason**. *Change it in* <Term id="overlay-flow-control" /> (pinning, exits) or filters.
+
+### 6. Is the path built and reachable?
+
+A route can exist but be unreachable: the Reachable column and its reason (PR_UNREACHABLE: the remote peer is unreachable; IF_DOWN; SLA_STATE_DOWN). Then check tunnels with **List Paths** and **VPN Test** (Section 5).
+
+<Predict
+  prompt="Branch B's Route Table Dump shows a route to 10.20.0.0/24 with Reachable = False and reason PR_UNREACHABLE. Where do you go next?"
+  choices={["Check the tunnel to the remote peer, with List Paths and VPN Test", "Edit the BGP local preference at Branch A", "Delete the route", "Increase the Hold timer"]}
+  answer={0}
+>
+  PR_UNREACHABLE means that for an overlay route the remote peer, Gateway or Edge, is unreachable. The route is known; the path is not.
+</Predict>
+
+<Callout variant="warning" title="A method, not Arista's procedure">
+  The order above follows the route's life as the guides describe it: learned locally, advertised, filtered, redistributed, selected, reachable. Arista does not publish this as a procedure. Some screen names in your release may differ; the Diagnostics tests are named in the 7.0 Troubleshooting Guide.
+</Callout>
+
+## What you would see in the VCO
+
+- **Diagnostics tab**, choose the Edge, pick the test and **Run** (shortcut on Configure > Edges and Monitor > Edges).
+- **Monitor > Routing** for BGP neighbor state; **Configure > Overlay Flow Control** for the route list.
+
+## Key takeaways
+
+- Follow the route's life: learned, advertised, filtered, redistributed, selected, reachable.
+- Route Table Dump and List Routes per Prefix show the winner and Lost Reason.
+- Reachable = False with a reason sends you to tunnels, not routing.
+
+## What would you look for in the VCO
+
+- Does the owning Edge have the prefix, and does it say advertise True?
+- What do Branch B's candidate routes say about the winner and Lost Reason?
+- Is the path to the next hop up?

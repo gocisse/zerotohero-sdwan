@@ -1,0 +1,66 @@
+---
+id: ov-hubs
+title: Hubs and spokes
+summary: Designating a Hub, why hubs exist, Hub order, clusters in concept, static tunnels, and what changes for traffic.
+estimated_minutes: 11
+topics: [overlay-hubs]
+---
+
+**By the end of this lesson you will be able to:**
+
+- explain how a <Term id="hub" /> is designated and why hubs are used;
+- describe Hub order and what happens when a Hub is unreachable;
+- explain a <Term id="hub-cluster" /> in concept;
+- say what changes for traffic when Hubs for VPN is used.
+
+## Designating a Hub
+
+A Hub is an Edge you designate in the Profile: **Configure > Profiles > Device > VPN Services**, **Enable Branch to Hubs**, then **Edit Hubs**, where you pick Edges or Clusters from "Available Edges & Clusters" as Hubs or <Term id="backhaul-hub">Backhaul Hubs</Term>. The branch Edges that connect to them are the <Term id="spoke">spokes</Term>.
+
+<Diagram id="ov-hub-spoke" />
+
+## Why hubs
+
+Branch to Hub tunnels are permanent, so a branch always has a ready path to the data center. The tunnel is a <Term id="static-tunnel" />: List Paths shows it with Mode Static. With the **Hubs for VPN** option, connections between branches also go through a Hub, so the branches do not need tunnels to each other.
+
+In 6.4 documentation, enabling Hubs for VPN deactivates the data plane through the Gateway for Branch to Branch VPN, and branch-to-branch traffic first transits one of the Hubs **in the order you specify**.
+
+## Hub order and failure
+
+- Hub order is a **tie-breaker**: routes from primary and secondary Hubs are sorted by BGP attributes first, then by Hub order.
+- If the **primary Hub goes down**, the Spoke updates the local flow's route to the secondary Hub. Peer flows are not moved back when the primary returns, so the documented workaround is to flush the affected flows.
+
+<Predict
+  prompt="The primary Hub goes down. Which statement is documented?"
+  choices={["The Spoke updates the local flow's route to the secondary Hub", "The Orchestrator rebuilds the Hub within one second", "All traffic stops until an administrator intervenes", "The Gateway adopts the Hub's role"]}
+  answer={0}
+>
+  The documentation says the Spoke updates the local flow's route to the secondary Hub; peer flows are not re-routed when the primary returns, so affected flows may need flushing.
+</Predict>
+
+## Clusters in concept
+
+Edge Clustering addresses the Hub scale issue by dynamically expanding tunnel capacity through a logical cluster of Edges, and provides Active/Active high availability. Other Edges treat the cluster as a single Hub. The Gateway assigns each Edge to a member using the Edge's logical ID modulo the number of Hubs. Each Hub reports a Cluster Score (CPU, memory and tunnel capacity, 1 to 100) every 30 seconds, and above 70 means over capacity; Auto Rebalance, off by default, can move one Spoke per minute. Clusters are created under **Configure > Network Services > Clusters and Hubs**.
+
+<Callout variant="warning" title="What we could not confirm">
+  Which inbound ports an Edge acting as a Hub needs (UDP 2426 is expected but we found no readable statement), and what an Edge does when the Orchestrator is unreachable, are not in the pages we read. A real-VCO observation could settle the first.
+</Callout>
+
+## What you would see in the VCO
+
+- **Configure > Profiles > (Profile) > Device > VPN Services**: Enable Branch to Hubs, Edit Hubs (Hubs, Backhaul Hubs, order).
+- **Configure > Network Services > Clusters and Hubs**: clusters.
+- **Diagnostics > Remote Diagnostics > List Paths**: Static tunnels to the Hubs; **VPN Test**: Pass or Fail between Edges.
+- **Monitor > Firewall Logs**: destinations named "...-via-Hub" for traffic that went through a Hub.
+
+## Key takeaways
+
+- A Hub is a designated Edge; spokes keep permanent (static) tunnels to it.
+- Hubs for VPN routes branch-to-branch traffic through the Hub; order breaks ties.
+- If the primary Hub fails, spokes move local flows to the secondary Hub.
+- A cluster is several Edges acting as one Hub.
+
+## What would you look for in the VCO
+
+- Which Edges are the Hubs, and in what order?
+- Does List Paths show a Static tunnel to each Hub?

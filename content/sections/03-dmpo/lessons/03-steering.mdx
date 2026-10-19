@@ -1,0 +1,91 @@
+---
+id: dmpo-steering
+title: Link steering
+summary: The four steering modes, the Mandatory, Preferred and Available axis, how a business policy rule selects them, what each does when a link fails, and a decision table.
+estimated_minutes: 12
+topics: [dmpo-steering]
+---
+
+**By the end of this lesson you will be able to:**
+
+- list the four link-steering modes in a business policy rule;
+- describe Mandatory, Preferred and Available and what each does in an outage and in a brownout;
+- say where a rule picks these;
+- choose a setting for a stated requirement.
+
+## A rule picks how links are used
+
+A <Term id="business-policy-rule" /> matches traffic and says how to treat it. Its **Link Steering** setting has four modes:
+
+| Mode | What you name | Notes |
+|---|---|---|
+| **Auto** | nothing | The default for applications. DMPO picks the best links for the application type and turns on remediation when needed. |
+| **Transport Group** | a <Term id="transport-group" /> | e.g. Public Wired |
+| **Interface** | an interface | Also asks for strictness; allowed only at the Edge override level |
+| **WAN Link** | a specific link | Also asks for strictness; allowed only at the Edge override level |
+
+<Term id="link-steering" /> for Interface and WAN Link comes with a second choice, the strictness.
+
+## The strictness axis
+
+<Diagram id="dmpo-steering-modes" />
+
+| Strictness | While the link meets the SLA | In a brownout | In an outage |
+|---|---|---|---|
+| <Term id="mandatory" /> | stays | stays; remediation is used | does not steer away; the policy table says packets are dropped if the link or group is inactive |
+| <Term id="preferred" /> | stays | moves to another **public** link | moves on; the guide says it reaches a private link only if the preferred link and the other public links are unstable or down |
+| <Term id="available" /> | stays | stays; remediation is applied | moves only because the link is down |
+
+<Callout variant="gotcha" title="Two sentences about Mandatory">
+  Arista's overview says Mandatory "never steers away". The business-policy table says the packet is dropped if the link is inactive. They describe the same thing from two sides:
+  traffic is bound to that link, so when the link is down there is nowhere for it to go. Choose Mandatory only for traffic you would rather lose than send on another link.
+</Callout>
+
+<Predict
+  prompt="Voice is set to Preferred on the MPLS link, and MPLS develops a brownout that misses the voice SLA. What does the documentation say happens?"
+  choices={["It is dropped", "It moves to another public link", "Nothing, ever", "It stays and the rule changes"]}
+  answer={1}
+>
+  Preferred keeps the chosen link while it meets the SLA and moves to another public link when it does not.
+</Predict>
+
+## Decision table
+
+| I want... | Setting | Why |
+|---|---|---|
+| Let DMPO decide | Auto | no link named |
+| This traffic must **only** use the MPLS link, never the Internet | WAN Link or Interface, **Mandatory** | it never leaves the link, and is dropped when the link is down |
+| Voice on MPLS, but fail over to Internet if MPLS fails | **Preferred** on MPLS | uses MPLS while it meets the SLA, moves to a public link otherwise |
+| Stay on the cheap link unless it is actually down | **Available** | no move on SLA failure; remediation instead |
+
+Notice the second and third rows: the only difference is whether the Internet may be used as a fallback. Mandatory says never; Preferred says yes, to another public link.
+
+## Error Correct Before Steering
+
+A rule can try error correction **before** moving traffic: remediation first, and a move only if the link still fails the SLA. Arista's example quotes a loss SLA default of 0.3% for Real-Time traffic.
+
+## Moving back
+
+After a brownout or outage clears, DMPO waits **one minute** before returning traffic to a preferred link that the policy names.
+
+## What you would see in the VCO
+
+- The **Business Policy** tab of a Profile (**Configure > Profiles**) or of an Edge (**Configure > Edges**): a rule's **Link Steering** field, and for Interface and WAN Link the Mandatory, Preferred and Available choices.
+- A **Customizable QoE** option lets you override the latency threshold per traffic type (Edge release 5.2.0 and later; range 1 to 1000 ms).
+
+<Callout variant="warning" title="What we could not confirm">
+  The exact SLA values behind "meets the SLA" are in image tables we could not read as text. The behaviour of Preferred when the chosen link is a **private** one in every combination was not spelled out;
+  test it in a lab before relying on it.
+</Callout>
+
+## Key takeaways
+
+- Four modes: Auto, Transport Group, Interface, WAN Link. Strictness applies to the last two.
+- Mandatory pins, Preferred moves to another public link on SLA failure, Available moves only on link down.
+- Mandatory plus a dead link means dropped packets, by policy.
+- One-minute hold before moving back.
+
+## What would you look for in the VCO
+
+- Which rule matches voice at this Edge, and what is its Link Steering setting?
+- Is the rule set to Mandatory, Preferred or Available?

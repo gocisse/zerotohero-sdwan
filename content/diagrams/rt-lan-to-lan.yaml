@@ -1,0 +1,61 @@
+# Section 6, lessons 1 and 3: a prefix from a LAN router to a remote LAN. Facts: reference/routing-overview.md, ospf.md. The prefix is illustrative.
+id: rt-lan-to-lan
+title: A prefix from one LAN to another (illustrative prefix)
+alt: >-
+  A LAN router behind Branch A owns a prefix. Branch A learns it through OSPF, sends it to the Gateway over the overlay, the Gateway
+  passes it to Branch B, and Branch B hands it to its own LAN router. Data then flows the other way.
+width: 960
+height: 380
+
+nodes:
+  - { id: lan-a, label: LAN router A, kind: router, x: 90, y: 190, sublabel: owns 10.20.0.0/24 }
+  - { id: edge-a, label: Branch A Edge, kind: vce, x: 290, y: 190 }
+  - { id: gw, label: Gateway, kind: vcg, x: 490, y: 190 }
+  - { id: edge-b, label: Branch B Edge, kind: vce, x: 690, y: 190 }
+  - { id: lan-b, label: LAN router B, kind: router, x: 880, y: 190 }
+
+links:
+  - { id: a-lan, from: lan-a, to: edge-a, style: lan, label: OSPF }
+  - { id: a-gw, from: edge-a, to: gw, style: overlay-tunnel, label: VCRP }
+  - { id: gw-b, from: gw, to: edge-b, style: overlay-tunnel, label: VCRP }
+  - { id: b-lan, from: edge-b, to: lan-b, style: lan, label: OSPF }
+
+steps:
+  - title: 1. Learned locally
+    narration: >-
+      The LAN router tells Branch A about its prefix through OSPF. On Branch A this is a **local route**: Route Table Dump shows it with its type and preference.
+    highlight: [lan-a, a-lan, edge-a]
+    packets:
+      - { path: [lan-a, a-lan, edge-a], label: 10.20.0.0/24, color_style: lan }
+    callouts:
+      - { target: edge-a, text: "Local route (OSPF)" }
+
+  - title: 2. Carried across the overlay
+    narration: >-
+      The Edge sends its locally learned routes to the Gateway, according to its configuration. Subject to the advertise flags, the OSPF route enters the overlay.
+    highlight: [edge-a, a-gw, gw]
+    packets:
+      - { path: [edge-a, a-gw, gw], label: route, color_style: overlay-tunnel }
+
+  - title: 3. Reflected to the other Edge
+    narration: >-
+      The Gateway acts as a route reflector, so Branch B learns the route without a tunnel to Branch A. On Branch B it is a **remote route**.
+    highlight: [gw, gw-b, edge-b]
+    packets:
+      - { path: [gw, gw-b, edge-b], label: remote route, color_style: overlay-tunnel }
+
+  - title: 4. Handed to the remote LAN
+    narration: >-
+      Only if you redistribute overlay prefixes into OSPF (the Overlay Prefixes check box) does LAN router B learn the route.
+    highlight: [edge-b, b-lan, lan-b]
+    packets:
+      - { path: [edge-b, b-lan, lan-b], label: Overlay Prefixes, color_style: lan }
+    callouts:
+      - { target: b-lan, text: "Off? Then LAN B never sees it." }
+
+  - title: Traffic follows the route
+    narration: >-
+      With every stage in place, a packet from LAN B to 10.20.0.0/24 follows the route back through Branch B, the overlay and Branch A.
+    highlight: [lan-b, b-lan, edge-b, gw-b, gw, a-gw, edge-a, a-lan, lan-a]
+    packets:
+      - { path: [lan-b, b-lan, edge-b, gw-b, gw, a-gw, edge-a, a-lan, lan-a], label: data, color_style: overlay-tunnel }

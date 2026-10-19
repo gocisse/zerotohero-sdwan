@@ -1,0 +1,126 @@
+---
+id: arch-orchestrator
+title: The Orchestrator (VCO)
+summary: What the Orchestrator manages and stores, how Edges and Gateways talk to it, configuration in layers, monitoring, and what is and is not documented about losing it.
+estimated_minutes: 11
+topics: [orchestrator-role]
+---
+
+**By the end of this lesson you will be able to:**
+
+- describe the jobs of the <Term id="vco">Orchestrator</Term> and the portals people use to reach it;
+- say what Edges and Gateways send to it and how often, and how it notices that one has gone quiet;
+- explain configuration in layers (segments and network services feed Profiles, Profiles feed Edges);
+- list what the documentation says happens, and what it does not say, when the Orchestrator cannot be reached.
+
+## One portal, several jobs
+
+In Arista's Orchestrator guide the Orchestrator "powers the management plane". That is the course's word for it too: it is where you
+**configure**, **monitor** and **troubleshoot**. It is multi-tenant, and it can be hosted, dedicated or run on-premises. Different people
+see different views of it: operators have an Operator portal (where, for example, Gateways are managed and system properties are set),
+partners have a Partner portal, and enterprises use the SD-WAN service of the Enterprise portal, which is the part this course mostly
+shows.
+
+## What runs inside, just enough to understand the traffic
+
+The guide names three Orchestrator processes, and the second explains much of what you will later see in firewall logs and monitoring:
+
+| Process | Job |
+|---|---|
+| **Portal** | Handles the user interface and API requests from people and scripts |
+| **Upload** | Handles incoming requests from Edges and Gateways: activations, heartbeats, flow statistics, link statistics and routing information |
+| **Backend** | A job runner for scheduled cleanup and rollups and for queued statistics processing |
+
+New statistics reach the Orchestrator every five minutes, which is why Arista advises against polling the API more often than every ten
+minutes for statistics.
+
+<Predict
+  prompt="Which Orchestrator process receives activations, heartbeats and statistics from Edges and Gateways?"
+  choices={["Portal", "Upload", "Backend", "None: devices write directly to the database"]}
+  answer={1}
+>
+  The Upload process handles incoming requests from Edges and Gateways. The Portal serves people and API clients, and the Backend runs
+  scheduled and queued jobs.
+</Predict>
+
+## Configuration in layers
+
+You met <Term id="profile">Profiles</Term> in Section 1. The picture to hold now is three layers:
+
+1. **Building blocks**: <Term id="segment">segments</Term> (configured under **Configure > Segments**) and network services (under **Configure > Network Services**);
+2. **Profiles**, which combine configuration from segments and network services and are applied to many Edges;
+3. **Edges**, which inherit from their Profile and can <Term id="override">override</Term> individual settings.
+
+The Orchestrator also holds routing policy for enterprises. Arista says it manages routes for all enterprises and can override default
+routing behaviour. The details of each layer come in the Configuration section; here we only need to know that the Orchestrator is where
+the layers live.
+
+## Monitoring and telemetry
+
+Edges and Gateways report to the Orchestrator, which keeps the history. The guide lists default retention periods: a year for link
+statistics, link quality and Edge health statistics and for events; two weeks for path statistics and for high-resolution flow
+statistics; and a year, at one-hour rollup, for low-resolution flow statistics. Link Insights, a monitoring feature added to the
+on-premises Orchestrator in 7.0, has the Orchestrator measure link degradation at 30-second intervals.
+
+The Orchestrator also decides when a device is "gone". If it sees no <Term id="heartbeat" /> from an Edge for a configured time, it shows
+the Edge as OFFLINE, and if it receives no link statistics for a link for another configured time, it shows the link as unstable and
+then disconnected.
+
+## Trust and software
+
+- **Certificates.** The Orchestrator has a built-in certificate authority that issues X.509 certificates to Edges and Gateways. They are used to
+  authenticate the management-plane TLS tunnels between the Orchestrator and its devices and the IKEv2/IPsec tunnels between Edges and
+  Gateways.
+- **Software.** Edge software images are managed from the Orchestrator, with per-Edge overrides, and enterprise users can upgrade one Edge,
+  a set, or all of them.
+
+<Predict
+  prompt="Which statement about the Orchestrator's certificate authority is supported by the documentation?"
+  choices={["It encrypts users' traffic to SaaS sites", "It issues certificates that Edges and Gateways use to authenticate their tunnels", "It is only used for the administrator's web login", "It replaces IKEv2"]}
+  answer={1}
+>
+  The guide says the Orchestrator's certificate server issues X.509 certificates to Edges and Gateways and that these are used to
+  authenticate the management-plane TLS tunnels and the IKEv2/IPsec tunnels. User traffic to SaaS sites is not part of that.
+</Predict>
+
+## If the Orchestrator is unreachable
+
+This is the question people ask first, and the honest answer is "some of it is documented". Here is what we can say, and what we cannot.
+
+| Situation | What the documentation says |
+|---|---|
+| A Gateway loses its Orchestrator connection and does **not** reboot | All of its control-plane modules keep working normally |
+| A Gateway **restarts** while disconnected | Features that need the control-plane configuration (Non SD-WAN Destinations, VLAN/VRF handoff, BGP) do not work until the connection returns, because that configuration is never cached locally |
+| The Orchestrator itself fails over (disaster recovery) | It runs as an active/standby pair with a manual failover; Edges and Gateways cache the monitoring data collected during the outage until the standby is promoted |
+| Route preferences while an Edge or Gateway is out of contact | A mechanism called Distributed Cost Calculation (<Term id="dcc" />) moves route-preference calculation to the Edges and Gateways |
+| An Edge's traffic forwarding while it cannot reach the Orchestrator | **Not stated** in the pages we read |
+
+<Callout variant="warning" title="Do not assume the missing row">
+  It is tempting to write "the network keeps forwarding without the Orchestrator". It may well be true, but the documents we read do not
+  say it, so this course does not. Look up your own release's documentation on Edge behaviour during Orchestrator loss before you rely on it
+  in a design.
+</Callout>
+
+<Predict
+  prompt="A Gateway loses its connection to the Orchestrator but does not reboot. What does the Gateway guide say happens to its control-plane modules?"
+  choices={["They stop until the connection returns", "They function normally", "They reboot the Gateway", "They fall back to the Edge's configuration"]}
+  answer={1}
+>
+  When a Gateway loses the Orchestrator connection and does not reboot, all the control-plane modules function normally. The caveat is
+  a restart while disconnected: the control-plane configuration is never cached, so some features wait for the Orchestrator to return.
+</Predict>
+
+## What you would see in the VCO
+
+- **Monitor > Edges**: the status column and the per-Edge tabs show what the Orchestrator knows about each Edge. An Edge that has stopped sending heartbeats is marked OFFLINE by the Orchestrator.
+- **Configure > Segments**, **Configure > Network Services** and **Configure > Profiles**: the layers described above.
+- **Service Settings > Edge Management**: where Edge software images are managed.
+- For an on-premises Orchestrator, a disaster-recovery view called **Replication** is reached through the Orchestrator tab. (We read this
+  path in the on-premises guide; the hosted service may differ.)
+
+## Key takeaways
+
+- The Orchestrator is the management plane: configure, monitor, troubleshoot, and issue certificates.
+- Edges and Gateways report to its Upload process: activations, heartbeats, statistics, routing information.
+- Configuration is layered: building blocks, then Profiles, then Edges with overrides.
+- What happens to Edge forwarding without the Orchestrator is not documented in our sources, so we do not claim it.

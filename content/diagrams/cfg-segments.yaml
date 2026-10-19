@@ -1,0 +1,43 @@
+# Section 4, lesson 2: segments isolate traffic across one Edge. Facts: reference/segments.md. Segment names are examples.
+id: cfg-segments
+title: Three segments on one Edge (example names)
+alt: >-
+  One Edge connects a corporate PC, a guest phone and a camera, each in its own segment, to the Gateway over one tunnel. Traffic
+  of each segment stays in its own segment end to end.
+width: 900
+height: 520
+
+nodes:
+  - { id: corp, label: Corporate PC, kind: host, x: 90, y: 110 }
+  - { id: guest, label: Guest phone, kind: host, x: 90, y: 260 }
+  - { id: cam, label: Camera, kind: host, x: 90, y: 410 }
+  - { id: edge, label: Branch Edge, kind: vce, x: 430, y: 260 }
+  - { id: gw, label: Gateway, kind: vcg, x: 800, y: 260 }
+
+links:
+  - { id: lan-corp, from: corp, to: edge, style: lan, label: corp segment }
+  - { id: lan-guest, from: guest, to: edge, style: lan, label: guest segment }
+  - { id: lan-cam, from: cam, to: edge, style: lan, label: IoT segment }
+  - { id: tun, from: edge, to: gw, style: overlay-tunnel }
+
+steps:
+  - title: One Edge, three kinds of traffic
+    narration: >-
+      The names corp, guest and IoT are **examples**. A segment is a logical sub-network: it keeps groups of traffic isolated by organization or data type. The Edge carries all three.
+    highlight: [corp, guest, cam, edge]
+
+  - title: Each segment has its own settings
+    narration: >-
+      Interface and VLAN settings can apply to all segments or be tied to one, and business policy rules are shown per segment. The Edge treats each segment's traffic by that segment's own configuration.
+    highlight: [edge, lan-corp, lan-guest, lan-cam]
+    callouts:
+      - { target: edge, text: "Business policy has a Segment drop-down." }
+
+  - title: Traffic stays in its segment
+    narration: >-
+      Packets from each segment cross the same tunnel but stay in their own segment, so the guest phone's traffic is not mixed into the corporate segment.
+    highlight: [corp, guest, cam, lan-corp, lan-guest, lan-cam, edge, tun, gw]
+    packets:
+      - { path: [corp, lan-corp, edge, tun, gw], label: corp, color_style: overlay-tunnel }
+      - { path: [guest, lan-guest, edge, tun, gw], label: guest, color_style: lan, delay_ms: 500 }
+      - { path: [cam, lan-cam, edge, tun, gw], label: IoT, color_style: control, delay_ms: 1000 }

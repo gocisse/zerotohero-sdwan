@@ -1,0 +1,84 @@
+# Section 2, lesson 3: what the Gateway does. See reference/gateway-details.md.
+id: arch-gateway-roles
+title: What a Gateway does
+alt: >-
+  Two branch Edges connect over the Internet to a cloud Gateway and build tunnels to it. The Gateway passes routes between the
+  Edges, is managed by the Orchestrator, can carry traffic to a SaaS provider, and can build an IPsec tunnel to a non-SD-WAN
+  site.
+width: 900
+height: 540
+
+nodes:
+  - { id: edge-a, label: Branch A Edge, kind: vce, x: 200, y: 140 }
+  - { id: edge-b, label: Branch B Edge, kind: vce, x: 200, y: 410 }
+  - { id: inet, label: Internet, kind: internet, x: 400, y: 285 }
+  - { id: gw, label: Gateway, kind: vcg, x: 620, y: 285 }
+  - { id: saas, label: SaaS provider, kind: saas, x: 810, y: 130 }
+  - { id: nsd, label: Non SD-WAN site, kind: generic, x: 810, y: 430 }
+  - { id: vco, label: Orchestrator, kind: vco, x: 620, y: 470 }
+
+links:
+  - { id: wan-a, from: edge-a, to: inet, style: underlay-internet }
+  - { id: wan-b, from: edge-b, to: inet, style: underlay-internet }
+  - { id: inet-gw, from: inet, to: gw, style: underlay-internet }
+  - { id: gw-saas, from: gw, to: saas, style: underlay-internet }
+  - { id: gw-nsd, from: gw, to: nsd, style: ipsec }
+  - { id: tun-a, from: edge-a, to: gw, style: overlay-tunnel, curve: -50 }
+  - { id: tun-b, from: edge-b, to: gw, style: overlay-tunnel, curve: 60 }
+  - { id: mgmt-gw, from: vco, to: gw, style: control }
+
+steps:
+  - title: A Gateway in the cloud
+    narration: >-
+      Both branches reach a **Gateway** across the Internet. The Gateway is cloud-delivered and shared by many customers; it is
+      deployed in different places so that Edges can reach one with low latency.
+    highlight: [edge-a, edge-b, inet, gw, wan-a, wan-b, inet-gw]
+    show: [tun-a, tun-b, vco, mgmt-gw, saas, gw-saas, nsd, gw-nsd]
+
+  - title: Tunnels from each Edge
+    narration: >-
+      Each Edge builds an overlay tunnel to the Gateway across its Internet circuit. These tunnels are the Gateway's links to
+      the branches.
+    show: [tun-a, tun-b]
+    highlight: [edge-a, edge-b, tun-a, tun-b, gw]
+
+  - title: Control plane, sharing routes
+    narration: >-
+      In the control plane the Gateway passes **routes** between Edges, so Branch B learns what is behind Branch A without the
+      two Edges needing a tunnel to each other. This is why Edges do not need a full mesh of tunnels.
+    highlight: [edge-a, edge-b, tun-a, tun-b, gw]
+    packets:
+      - { path: [edge-a, tun-a, gw], label: routes, color_style: overlay-tunnel }
+      - { path: [gw, tun-b, edge-b], label: routes, color_style: overlay-tunnel, delay_ms: 700 }
+    callouts:
+      - { target: gw, text: "Control plane: routes are exchanged through Gateways." }
+
+  - title: Management, from the Orchestrator
+    narration: >-
+      The Gateway is managed from the Orchestrator, which gives it its configuration. A process on the Gateway dedicated to
+      talking to the Orchestrator is kept separate from the one that forwards traffic.
+    show: [vco, mgmt-gw]
+    highlight: [vco, mgmt-gw, gw]
+    packets:
+      - { path: [vco, gw], label: configuration, color_style: control }
+
+  - title: Optional data-plane role, cloud applications
+    narration: >-
+      A Gateway can also carry user traffic. An Edge can send traffic for a cloud service through the Gateway, which forwards
+      it on to the SaaS provider. This is an option, not a requirement: it is how an Edge uses the Gateway as a nearby
+      on-ramp to cloud services.
+    show: [saas, gw-saas]
+    highlight: [edge-b, tun-b, gw, gw-saas, saas]
+    packets:
+      - { path: [edge-b, tun-b, gw, saas], label: to SaaS, color_style: overlay-tunnel }
+
+  - title: Secure VPN role, non-SD-WAN sites
+    narration: >-
+      A Gateway given the **Secure VPN** role can build an IPsec tunnel to a site that does not run VeloCloud SD-WAN. The
+      Gateway starts the tunnel; the other end is the remote site's own VPN device.
+    show: [nsd, gw-nsd]
+    highlight: [gw, gw-nsd, nsd]
+    packets:
+      - { path: [gw, nsd], label: IPsec, color_style: ipsec }
+    callouts:
+      - { target: nsd, text: "The Gateway initiates this tunnel." }

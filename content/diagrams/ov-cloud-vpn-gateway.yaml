@@ -1,0 +1,45 @@
+# Section 5, lesson 2: Cloud VPN with the Cloud Gateways option. Facts: reference/cloud-vpn.md.
+id: ov-cloud-vpn-gateway
+title: Cloud VPN through a Gateway
+alt: >-
+  The Orchestrator tells two branch Edges, in a Profile with Cloud VPN and Branch to Branch VPN set to Cloud Gateways, to build
+  tunnels to the closest Gateway. Traffic between the branches then goes up one tunnel and down the other.
+width: 900
+height: 500
+
+nodes:
+  - { id: vco, label: Orchestrator, kind: vco, x: 450, y: 70 }
+  - { id: a, label: Branch A Edge, kind: vce, x: 150, y: 360 }
+  - { id: gw, label: Closest Gateway, kind: vcg, x: 450, y: 230 }
+  - { id: b, label: Branch B Edge, kind: vce, x: 750, y: 360 }
+
+links:
+  - { id: cfg-a, from: vco, to: a, style: control }
+  - { id: cfg-b, from: vco, to: b, style: control }
+  - { id: t-a, from: a, to: gw, style: overlay-tunnel }
+  - { id: t-b, from: b, to: gw, style: overlay-tunnel }
+
+steps:
+  - title: The Profile turns Cloud VPN on
+    narration: >-
+      In the Profile's Device tab, under **VPN Services**, Cloud VPN is activated per segment and **Enable Branch to Branch VPN** is ticked with the **Cloud Gateways** option.
+    highlight: [vco, cfg-a, cfg-b, a, b]
+    show: [t-a, t-b, gw]
+    packets:
+      - { path: [vco, cfg-a, a], label: Cloud VPN settings, color_style: control }
+      - { path: [vco, cfg-b, b], label: Cloud VPN settings, color_style: control, delay_ms: 300 }
+
+  - title: Each Edge builds a tunnel to its Gateway
+    narration: >-
+      Edges establish a VPN tunnel with the closest Gateway.
+    show: [t-a, t-b, gw]
+    highlight: [a, t-a, gw, t-b, b]
+
+  - title: Branch to branch goes through the Gateway
+    narration: >-
+      Connections between the Edges go through this Gateway: up one tunnel and down the other. No tunnel between the two branches themselves is needed for this to work.
+    highlight: [a, t-a, gw, t-b, b]
+    packets:
+      - { path: [a, t-a, gw, t-b, b], label: A to B, color_style: overlay-tunnel }
+    callouts:
+      - { target: gw, text: "The Gateway carries the traffic between the Edges." }

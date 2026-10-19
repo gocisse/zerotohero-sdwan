@@ -1,0 +1,109 @@
+---
+id: arch-gateway
+title: The Gateway (VCG)
+summary: The Gateway's role in the control plane, its optional role in the data plane, the roles a Gateway can be given, Partner Gateways, and why Gateways sit where they do.
+estimated_minutes: 10
+topics: [gateway-role]
+---
+
+**By the end of this lesson you will be able to:**
+
+- explain the <Term id="vcg">Gateway's</Term> job in the control plane and why Edges do not need a full mesh;
+- describe its optional role in the data plane, including cloud and SaaS access;
+- name the Gateway roles (data plane, control plane, Secure VPN) and what a <Term id="partner-gateway" /> is;
+- say why Gateways are spread across many places and what a Gateway keeps if it loses the Orchestrator.
+
+## The Gateway in one picture
+
+A Gateway is a cloud-delivered service that many customers share. Arista describes it as autonomous, stateless and horizontally scalable, and it
+is deployed in different places so that Edges can reach one with low latency. Gateways are hosted by VeloCloud or by service providers,
+or deployed on-premises. Step through the diagram to see its jobs one at a time.
+
+<Diagram id="arch-gateway-roles" />
+
+## The control-plane job
+
+In the course's three-planes framing, the Gateway is the **control plane**: Arista's on-premises guide calls it the control and routing
+plane. What matters most is the job it does for Edges: it **reflects routes between Edges**. Branch B learns what is behind Branch A because
+the Gateway passes the routes along, so the two Edges do not each need a tunnel to every other Edge. (Simple arithmetic: a full mesh of tunnels grows with every pair of sites, which is what a Gateway or Hub in the middle avoids.)
+
+It is also managed by the Orchestrator. A dedicated management process on the Gateway talks to the Orchestrator and is kept separate from the
+process that forwards traffic, so the Orchestrator can still push a fix or an update if the forwarding process fails.
+
+<Callout variant="gotcha" title="The control-plane configuration is never cached">
+  A Gateway keeps a cached copy of most of the configuration it receives from the Orchestrator. The control-plane part is an exception, because
+  it contains sensitive data such as pre-shared keys for non-SD-WAN tunnels. If a Gateway restarts while it cannot reach the Orchestrator,
+  features that depend on it (non-SD-WAN destinations, VLAN/VRF handoff, BGP) wait until the connection returns.
+</Callout>
+
+## The optional data-plane job
+
+A Gateway can also carry **user traffic**. Arista's overview says an Edge can optionally connect to Gateways to get performance, security and
+visibility for cloud services (SaaS, IaaS), and that Gateways implement DMPO. In practice, a branch whose users reach a SaaS application can
+send that traffic through a Gateway that is close by. The word to keep in mind is *optional*: whether a given flow uses a Gateway in the data
+plane is a design and policy decision, not something every packet does.
+
+## Roles a Gateway can have
+
+In the Orchestrator's operator view a Gateway can be given roles:
+
+| Role | What it means |
+|---|---|
+| **Data plane** | The Gateway forwards data-plane traffic from source to destination |
+| **Control plane** | The Gateway is called a **Super Gateway** and is assigned to an Enterprise |
+| **Secure VPN** | The Gateway builds IPsec tunnels to <Term id="non-sd-wan-destination">Non SD-WAN Destinations</Term>; it acts as the tunnel *initiator* |
+
+Gateways are grouped into a <Term id="gateway-pool" />, and in the operator view each Gateway shows a status (Connected, Degraded, Never
+Activated, Not in Use, Offline, Out of Service or Quiesced) and the number of Edges connected to it.
+
+<Predict
+  prompt="Which Gateway role builds IPsec tunnels to sites that do not run VeloCloud SD-WAN?"
+  choices={["Data plane", "Control plane (Super Gateway)", "Secure VPN", "Partner Gateway"]}
+  answer={2}
+>
+  The Secure VPN role is the one that builds IPsec tunnels to Non SD-WAN Destinations. A Partner Gateway is a different thing: a Gateway a
+  service provider deploys in its own infrastructure.
+</Predict>
+
+## Cloud Gateways and Partner Gateways
+
+Most of this course treats the Gateway as a cloud service. Two variations are worth knowing about:
+
+- Service providers can deploy **Partner Gateways** in their own private cloud infrastructure.
+- A Partner Gateway is a Gateway tailored to on-premise operation. It is installed with **two interfaces**: one receives VCMP traffic from remote
+  Edges (and IPsec traffic from Non SD-WAN Destinations); the other faces the data center and connects to a PE router, giving access to shared
+  managed services or to a private MPLS or IP-VPN core.
+
+<Predict
+  prompt="Which statement about a Partner Gateway is supported by Arista's Partner Guide?"
+  choices={["It has two interfaces: one for VCMP and IPsec traffic from outside, one facing the data center", "It replaces the Orchestrator", "It only works for Internet-only branches", "It has a single interface"]}
+  answer={0}
+>
+  The guide describes Partner Gateways as installed with two interfaces: one dedicated to VCMP traffic from remote Edges and IPsec from
+  Non SD-WAN Destinations, the other facing the data center and a PE router.
+</Predict>
+
+## Why many, and why close
+
+Because the Gateway is on the path for control traffic and optional data traffic, distance matters, which is why Arista says Gateways are
+deployed geographically for low latency. The on-premises reference design adds that Edges usually have a **primary and a secondary** Gateway
+(called a Controller in that guide) for backup.
+
+<Callout variant="info" title="How many, and where">
+  Arista's June 2025 white paper on its cloud Gateways says the service runs in more than 30 regions with more than 3000 Gateways, and that each Edge gets a
+  primary and a secondary Gateway assigned by geolocation. Those figures are a snapshot from that document; check the current number if it matters to you.
+</Callout>
+
+## What you would see in the VCO
+
+- **Monitor > Edges** lists Edges together with the **Gateways** they use, and an Edge has a **View Gateways** shortcut.
+- An Edge's **Paths** tab shows the paths to its SD-WAN peers (the peers can be other Edges and Gateways).
+- **Diagnostics > Remote Diagnostics > List Paths** checks the active tunnel paths between local WAN links and each peer, **and the Gateway status**.
+- In the Operator portal, **Gateway Management > Gateways** shows each Gateway's status; you will only see this if you are an operator or partner.
+
+## Key takeaways
+
+- The Gateway reflects routes between Edges: that is its control-plane job, and why Edges need no full mesh.
+- Carrying user traffic through a Gateway is an option, used for example to reach cloud services.
+- Roles: data plane, control plane (Super Gateway), Secure VPN. A Partner Gateway is a service provider's on-premise Gateway with two interfaces.
+- A Gateway that loses the Orchestrator keeps its control plane running, unless it restarts while disconnected.

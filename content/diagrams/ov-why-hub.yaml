@@ -1,0 +1,58 @@
+# Section 5, lesson 7: why does A to B go through the Hub. A walk through the checks; the checks are our suggested order, the facts behind each are in reference/.
+id: ov-why-hub
+title: Why does Branch A to Branch B go through the Hub?
+alt: >-
+  A walk through the checks. First the Profile's Branch to Branch VPN option, then whether Dynamic Branch to Branch is on, then
+  whether a dynamic tunnel exists in List Paths, then the Hub order.
+width: 900
+height: 520
+
+nodes:
+  - { id: a, label: Branch A, kind: vce, x: 130, y: 380 }
+  - { id: hub, label: Hub, kind: datacenter, x: 450, y: 100 }
+  - { id: b, label: Branch B, kind: vce, x: 770, y: 380 }
+  - { id: vco, label: Orchestrator screens, kind: vco, x: 450, y: 440 }
+
+links:
+  - { id: a-h, from: a, to: hub, style: overlay-tunnel, label: static }
+  - { id: h-b, from: hub, to: b, style: overlay-tunnel, label: static }
+  - { id: a-b, from: a, to: b, style: overlay-tunnel, label: dynamic (if built) }
+  - { id: v-a, from: vco, to: a, style: control }
+
+steps:
+  - title: What we see
+    narration: >-
+      Traffic from Branch A to Branch B goes through the Hub, and nobody expected that. Four checks, in this order.
+    highlight: [a, a-h, hub, h-b, b]
+    show: [a-b]
+    packets:
+      - { path: [a, a-h, hub, h-b, b], label: via Hub, color_style: overlay-tunnel }
+
+  - title: 1. The Profile's Branch to Branch option
+    narration: >-
+      Configure > Profiles > the Profile > Device > VPN Services. Is Branch to Branch VPN set to **Hubs for VPN**? Then, by design, connections between branches go through the Hub. If it is the Cloud Gateways option, the path would be via a Gateway instead.
+    highlight: [vco, v-a, a]
+    callouts:
+      - { target: vco, text: "Branch to Branch: Hubs for VPN means via the Hub." }
+
+  - title: 2. Is Dynamic Branch to Branch on?
+    narration: >-
+      With it off, no direct tunnel is ever built. With it on, the first packets still go via the Hub (or Gateway) and a direct tunnel may follow.
+    highlight: [vco]
+    callouts:
+      - { target: vco, text: "Dynamic Branch To Branch VPN: all Edges or one Profile." }
+
+  - title: 3. Does a direct tunnel exist?
+    narration: >-
+      On the Edge, Diagnostics > Remote Diagnostics > List Paths shows each tunnel with its **Mode**: Static or Dynamic. A Dynamic tunnel to Branch B means the direct path exists; if there is none, the Hub path is all that exists (a NAT in front of an Edge can stop a direct tunnel).
+    show: [a-b]
+    highlight: [a, a-b, b]
+    callouts:
+      - { target: a-b, text: "Present in List Paths as Mode: Dynamic?" }
+
+  - title: 4. Which Hub, and in what order?
+    narration: >-
+      If several Hubs exist, the route to Branch B is chosen by the routing attributes first and the Hub order as a tie-breaker. The firewall log destination "...-via-Hub" also shows traffic that went through a Hub.
+    highlight: [hub, a-h, h-b]
+    callouts:
+      - { target: hub, text: "Hub order is the tie-breaker." }

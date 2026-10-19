@@ -1,0 +1,366 @@
+# Section 2 quiz. Correct answers use only VERIFIED rows in content/reference/ (MTU answers are arithmetic on VERIFIED overhead figures).
+
+- id: arch-q-override
+  topic: edge-role
+  difficulty: 1
+  type: single_choice
+  prompt: "Which control lets **one Edge** differ from the Profile it inherits its settings from?"
+  options:
+    - id: override
+      text: "The Override checkbox next to the setting"
+    - id: delete
+      text: "Deleting the Profile"
+      explanation: "A Profile that Edges use cannot be deleted, and deleting it would not be a way to change one Edge."
+    - id: reactivate
+      text: "Re-activating the Edge"
+      explanation: "Activation joins an Edge to the Orchestrator; it does not change an individual setting."
+    - id: gateway
+      text: "Editing the Gateway's configuration"
+      explanation: "The Gateway is a separate component; it does not hold an Edge's inherited settings."
+  correct: override
+  explanation: "Edge settings are inherited from the Profile by default; ticking Override lets you change the setting for that Edge only."
+  lesson_ref: arch-edge
+
+- id: arch-q-serial
+  topic: edge-role
+  difficulty: 2
+  type: single_choice
+  prompt: "An administrator provisions an Edge and enters the serial number **ABC123**. A device with a different serial number tries to use the activation key. What does the documentation say should be true?"
+  options:
+    - id: must
+      text: "The Edge must display the specified serial number (ABC123) on activation, so a different device does not match"
+    - id: ignored
+      text: "The serial number is ignored; the activation key is all that matters"
+      explanation: "If a serial number was specified, the Edge must display it on activation."
+    - id: gw
+      text: "The Gateway checks the serial number instead"
+      explanation: "The documentation ties the serial number to the Edge's activation, not to a Gateway."
+    - id: auto
+      text: "The device is accepted and its serial number replaces ABC123"
+      explanation: "Nothing in the documentation says the serial number is replaced."
+  correct: must
+  explanation: "When provisioning, the serial number is optional, but if it is specified the Edge must display it on activation."
+  lesson_ref: arch-edge
+
+- id: arch-q-key
+  topic: edge-role
+  difficulty: 1
+  type: true_false
+  prompt: "**True or false:** An Edge's activation key expires after one month if it is not used."
+  correct: true
+  explanation: "Provisioning gives the Edge an activation key, and the guide says it expires after one month."
+  lesson_ref: arch-edge
+
+- id: arch-q-upload
+  topic: orchestrator-role
+  difficulty: 2
+  type: single_choice
+  prompt: "Which Orchestrator process handles incoming requests from Edges and Gateways such as activations, heartbeats and statistics?"
+  options:
+    - id: upload
+      text: "Upload"
+    - id: portal
+      text: "Portal"
+      explanation: "The Portal handles user interface and API requests from people and scripts."
+    - id: backend
+      text: "Backend"
+      explanation: "The Backend is a job runner for scheduled and queued jobs."
+    - id: gwd
+      text: "gwd"
+      explanation: "gwd is the Gateway's forwarding process, not an Orchestrator process."
+  correct: upload
+  explanation: "The Upload process handles incoming requests from Edges and Gateways, primarily activations, heartbeats, flow statistics, link statistics and routing information."
+  lesson_ref: arch-orchestrator
+
+- id: arch-q-gw-offline
+  topic: orchestrator-role
+  difficulty: 2
+  type: single_choice
+  prompt: "A Gateway loses its connection to the Orchestrator but does **not** reboot. What does the Gateway monitoring guide say about its control-plane modules?"
+  options:
+    - id: normal
+      text: "They continue to function normally"
+    - id: stop
+      text: "They all stop until the connection returns"
+      explanation: "That is what happens to some features only if the Gateway restarts while disconnected."
+    - id: reboot
+      text: "The Gateway reboots itself"
+      explanation: "The guide does not describe an automatic reboot."
+    - id: edge
+      text: "The Edges take over the control plane"
+      explanation: "The guide does not say that."
+  correct: normal
+  explanation: "When a Gateway loses the Orchestrator connection and does not reboot, all the control-plane modules function normally. After a restart while disconnected, features needing the never-cached control-plane configuration wait for the Orchestrator."
+  lesson_ref: arch-orchestrator
+
+- id: arch-q-offline
+  topic: orchestrator-role
+  difficulty: 2
+  type: single_choice
+  prompt: "The Orchestrator has not received a heartbeat from an Edge for longer than the configured limit. What does it do?"
+  options:
+    - id: offline
+      text: "It moves the Edge to OFFLINE mode"
+    - id: delete
+      text: "It deletes the Edge from the enterprise"
+      explanation: "Nothing in the guide says the Edge is deleted."
+    - id: profile
+      text: "It reassigns the Edge to a different Profile"
+      explanation: "Profiles are assigned by administrators."
+    - id: ignore
+      text: "It does nothing until the next software upgrade"
+      explanation: "The guide describes a configurable limit after which the Edge is shown as OFFLINE."
+  correct: offline
+  explanation: "The edge.offline.limit.sec system property sets how long the Orchestrator waits without a heartbeat before it moves the Edge to OFFLINE mode."
+  lesson_ref: arch-orchestrator
+
+- id: arch-q-ca
+  topic: orchestrator-role
+  difficulty: 3
+  type: multi_choice
+  prompt: "The Orchestrator has a built-in certificate authority. Which things are its certificates used for, according to the Orchestrator guide? (Select all that apply.)"
+  options:
+    - id: mgmt
+      text: "Authenticating the management-plane TLS tunnels between the Orchestrator and Edges or Gateways"
+    - id: ipsec
+      text: "Authenticating the IKEv2/IPsec tunnels between Edges, and between Edges and Gateways"
+    - id: saas
+      text: "Encrypting users' web sessions with SaaS providers"
+      explanation: "User traffic to SaaS providers is not part of what the guide lists."
+    - id: login
+      text: "Authenticating administrators who log in to the Orchestrator web interface"
+      explanation: "The guide lists only the device tunnels above."
+  correct: [mgmt, ipsec]
+  explanation: "The guide says certificates issued by the CA are used only for authenticating the management-plane TLS tunnels and the control and data plane IKEv2/IPsec tunnels."
+  lesson_ref: arch-orchestrator
+
+- id: arch-q-secure-vpn
+  topic: gateway-role
+  difficulty: 1
+  type: single_choice
+  prompt: "Which Gateway role builds IPsec tunnels to sites that do **not** run VeloCloud SD-WAN?"
+  options:
+    - id: svpn
+      text: "Secure VPN"
+    - id: data
+      text: "Data plane"
+      explanation: "The data-plane role forwards data-plane traffic from source to destination."
+    - id: control
+      text: "Control plane (Super Gateway)"
+      explanation: "A Gateway with the control-plane role is called a Super Gateway and is assigned to an Enterprise."
+    - id: pool
+      text: "Gateway Pool"
+      explanation: "A Gateway Pool is a logical grouping of Gateways, not a role."
+  correct: svpn
+  explanation: "The Secure VPN role is the one that builds IPsec tunnels to Non SD-WAN Destinations; the Gateway acts as the tunnel initiator."
+  lesson_ref: arch-gateway
+
+- id: arch-q-partner
+  topic: gateway-role
+  difficulty: 2
+  type: multi_choice
+  prompt: "Which statements about a **Partner Gateway** are supported by Arista's Partner Guide? (Select all that apply.)"
+  options:
+    - id: two
+      text: "It is tailored to on-premise operation and installed with two interfaces"
+    - id: vcmp
+      text: "One interface receives VCMP traffic from remote Edges and IPsec from Non SD-WAN Destinations"
+    - id: dc
+      text: "The other interface faces the data center and connects to a PE router"
+    - id: single
+      text: "It has a single interface shared by all traffic"
+      explanation: "The guide describes two interfaces."
+    - id: orch
+      text: "It replaces the Orchestrator as the configuration portal"
+      explanation: "The Orchestrator remains the portal; the Gateway talks to it."
+  correct: [two, vcmp, dc]
+  explanation: "Partner Gateways are tailored to on-premise operation with two interfaces: one for VCMP traffic from remote Edges and IPsec from Non SD-WAN Destinations, the other facing the data center and a PE router."
+  lesson_ref: arch-gateway
+
+- id: arch-q-port
+  topic: underlay-overlay
+  difficulty: 1
+  type: single_choice
+  prompt: "Which port does VCMP, the protocol of the overlay tunnels, operate on?"
+  options:
+    - id: udp2426
+      text: "UDP 2426"
+    - id: tcp443
+      text: "TCP 443"
+      explanation: "TCP 443 is the port an Edge uses to communicate with the Orchestrator."
+    - id: udp500
+      text: "UDP 500"
+      explanation: "UDP 500 is listed for IKEv2 negotiation, not as the VCMP port."
+    - id: tcp2426
+      text: "TCP 2426"
+      explanation: "VCMP uses UDP, not TCP."
+  correct: udp2426
+  explanation: "VCMP operates on the IANA-registered port UDP 2426."
+  lesson_ref: arch-underlay-overlay
+
+- id: arch-q-lte
+  topic: underlay-overlay
+  difficulty: 2
+  type: single_choice
+  prompt: "A site that has an MPLS circuit and a broadband line adds a cellular LTE connection. Which statement is best supported by the documentation?"
+  options:
+    - id: another
+      text: "The Edge can use it as another circuit to carry tunnels, and policy can refer to transport groups instead of individual cables"
+    - id: dc
+      text: "The data center has to be rebuilt around the new circuit"
+      explanation: "The overlay is designed so that adding a circuit does not change the data center."
+    - id: orch
+      text: "The Orchestrator must be replaced"
+      explanation: "Nothing in the guides says that."
+    - id: never
+      text: "LTE cannot carry the overlay"
+      explanation: "Arista's overview lists 4G-LTE or 5G among the links an Edge can aggregate."
+  correct: another
+  explanation: "Arista's overview says an Edge aggregates multiple links including 4G-LTE or 5G, and the Business Policy page describes Transport Group steering as an abstraction of the actual interfaces."
+  lesson_ref: arch-underlay-overlay
+
+- id: arch-q-dynamic
+  topic: tunnel-architecture
+  difficulty: 2
+  type: single_choice
+  prompt: "**Dynamic Branch to Branch** is enabled. Two branches talk for the first time. How does the first traffic travel?"
+  options:
+    - id: gw
+      text: "Through the Gateway or a Hub; the initiating Edge then builds a direct tunnel if it determines one is possible"
+    - id: direct
+      text: "Directly between the Edges, because tunnels between every pair already exist"
+      explanation: "Direct tunnels in this mode are built on demand, not permanently for every pair."
+    - id: orch
+      text: "Through the Orchestrator"
+      explanation: "The guide describes the Orchestrator as the management plane; it describes initial branch-to-branch traffic going through a Gateway or Hub."
+    - id: block
+      text: "It cannot flow until an administrator creates a tunnel"
+      explanation: "Nobody has to create the direct tunnel."
+  correct: gw
+  explanation: "Initial traffic goes through the Cloud Gateway or Hub; if the initiating Edge determines a secure multipath tunnel is possible, it creates a direct tunnel."
+  lesson_ref: arch-tunnels
+
+- id: arch-q-dynamic-order
+  topic: tunnel-architecture
+  difficulty: 3
+  type: ordering
+  prompt: "Put the life of a dynamic branch-to-branch tunnel in order."
+  options:
+    - id: first
+      text: "The first traffic between the branches goes through the Gateway or a Hub"
+    - id: decide
+      text: "The initiating Edge determines that a secure direct tunnel is possible"
+    - id: build
+      text: "The initiating Edge creates the direct tunnel"
+    - id: silence
+      text: "The branches stop talking for 180 seconds"
+    - id: teardown
+      text: "The direct tunnel is torn down"
+  correct: [first, decide, build, silence, teardown]
+  explanation: "Initial traffic goes through the Gateway or Hub; if a secure multipath tunnel is possible the initiating Edge creates a direct one; after 180 seconds of traffic silence it is torn down."
+  lesson_ref: arch-tunnels
+
+- id: arch-q-nat
+  topic: tunnel-architecture
+  difficulty: 2
+  type: single_choice
+  prompt: "Two branch Edges sit behind **unconfigured NAT devices** on the WAN side. Direct traffic between them is not working. Based on the Edge settings guide, what is the most likely reason?"
+  options:
+    - id: blocked
+      text: "Incoming VCMP tunnels on UDP 2426 from the other Edge are blocked by the NAT device"
+    - id: profile
+      text: "The Profile has been deleted"
+      explanation: "A Profile used by Edges cannot be deleted, and this would not explain a NAT symptom."
+    - id: jumbo
+      text: "Jumbo frames are switched off"
+      explanation: "Jumbo frames are not supported at all."
+    - id: hub
+      text: "The Hub has run out of tunnels"
+      explanation: "The guide does not describe such a limit as the cause."
+  correct: blocked
+  explanation: "The guide says that with unconfigured NAT devices on the WAN side, the direct VCMP tunnel on UDP 2426 will not likely come up because incoming tunnels from other Edges are blocked."
+  lesson_ref: arch-tunnels
+
+- id: arch-q-fw-gw
+  topic: firewall-ports
+  difficulty: 2
+  type: single_choice
+  prompt: "An Edge can reach the Orchestrator, but its tunnels to the Gateway never come up. Which firewall rule is most likely missing?"
+  options:
+    - id: udp2426
+      text: "Outbound UDP 2426 from the Edge"
+    - id: tcp443
+      text: "Outbound TCP 443 from the Edge"
+      explanation: "TCP 443 is the Orchestrator connection, which works in this scenario."
+    - id: tcp80
+      text: "Inbound TCP 80 to the Edge"
+      explanation: "That rule is stated for an on-premises Orchestrator, not for an Edge."
+    - id: jumbo
+      text: "Permission for jumbo frames"
+      explanation: "Jumbo frames are not supported."
+  correct: udp2426
+  explanation: "Arista's virtual-Edge guide says the firewall must allow outbound TCP 443 for communication with the Orchestrator and outbound UDP 2426 (VCMP). The Gateway tunnels use VCMP."
+  lesson_ref: arch-ports-firewall
+
+- id: arch-q-pg-ports
+  topic: firewall-ports
+  difficulty: 2
+  type: single_choice
+  prompt: "A Partner Gateway sits behind a firewall and **no NAT is used**. Which inbound rules does Arista's Partner Guide list?"
+  options:
+    - id: set
+      text: "UDP 2426, UDP 4500 and UDP 500, plus IP protocol 50 (ESP)"
+    - id: tcp
+      text: "TCP 443 only"
+      explanation: "TCP 443 is the outbound rule for talking to the Orchestrator."
+    - id: dns
+      text: "UDP 53 and UDP 123"
+      explanation: "These are not listed in the Partner Guide's inbound rules."
+    - id: web
+      text: "TCP 80 and TCP 443"
+      explanation: "Those are the inbound rules for an on-premises Orchestrator."
+  correct: set
+  explanation: "The Partner Guide asks for inbound UDP 2426 (VCMP), UDP 4500 and UDP 500 from the Internet, and IP protocol 50 (ESP) when NAT is not used."
+  lesson_ref: arch-ports-firewall
+
+- id: arch-q-mtu-multipath
+  topic: mtu-overhead
+  difficulty: 2
+  type: single_choice
+  prompt: "The path MTU is **1500** bytes. What is the effective MTU for **Internet Multipath** traffic, given 59 bytes of overhead?"
+  options:
+    - id: a1441
+      text: "1441"
+    - id: a1500
+      text: "1500"
+      explanation: "That ignores the overhead entirely."
+    - id: a1403
+      text: "1403"
+      explanation: "That is the VPN result with the smallest overhead (97 bytes)."
+    - id: a1388
+      text: "1388"
+      explanation: "That is the VPN result with the largest overhead (112 bytes)."
+  correct: a1441
+  explanation: "The Internet Multipath overhead is IP 20 + UDP 8 + VCMP 23 + VCMP data 8 = 59, so 1500 - 59 = 1441."
+  lesson_ref: arch-mtu-overhead
+
+- id: arch-q-mtu-vpn
+  topic: mtu-overhead
+  difficulty: 3
+  type: single_choice
+  prompt: "The path MTU is **1400** bytes and the traffic is **IPsec VPN** traffic with the **smallest** overhead (97 bytes). What is the effective MTU?"
+  options:
+    - id: a1303
+      text: "1303"
+    - id: a1341
+      text: "1341"
+      explanation: "That is 1400 - 59, the Internet Multipath result."
+    - id: a1288
+      text: "1288"
+      explanation: "That is 1400 - 112, the result with the largest overhead."
+    - id: a1400
+      text: "1400"
+      explanation: "That ignores the overhead."
+  correct: a1303
+  explanation: "VPN traffic carries 97 to 112 bytes of overhead; with 97 the effective MTU is 1400 - 97 = 1303 (with 112 it would be 1288)."
+  lesson_ref: arch-mtu-overhead

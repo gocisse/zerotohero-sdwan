@@ -1,0 +1,73 @@
+---
+id: dmpo-outage-brownout
+title: Outages and brownouts
+summary: The difference between a link that is down and one that is merely bad, how DMPO reacts to each, and what the one-minute hold does.
+estimated_minutes: 9
+topics: [dmpo-outage-brownout]
+---
+
+**By the end of this lesson you will be able to:**
+
+- define an <Term id="outage" /> and a <Term id="brownout" /> in Arista's words;
+- explain why a brownout is harder to notice and to handle;
+- describe what DMPO does in each case;
+- explain the <Term id="hold-time" />.
+
+## Two kinds of bad
+
+Arista's guides call a link that has failed completely, and cannot pass traffic, an **outage**. A link that is still up but cannot deliver the quality an application needs, in loss, latency or
+jitter, is a **brownout**. The distinction is per application: a link may be fine for a file transfer and in a brownout for a voice call.
+
+<Callout variant="info" title="A word you will also hear">
+  <Term id="blackout" /> is older and common industry wording for a completely failed link. The legacy 2017 white paper uses it. Arista's current guides say outage, and so does this course.
+</Callout>
+
+## Why brownouts are harder
+
+An outage is a clear event: nothing arrives. A brownout is a gradual one: a link that drops one packet in a few dozen looks alive to an interface counter. DMPO's per-path measurements of loss, latency and jitter are what make a brownout visible as something other than "up".
+
+## What DMPO does
+
+DMPO detects an SLA failure or an outage within **300 to 500 ms**. What it then does depends on the situation:
+
+| Situation | Typical reaction |
+|---|---|
+| Outage, another healthy link exists, strictness allows moving | steers the flow to the healthy link |
+| Brownout, a healthy link exists | steers the flow away (Preferred) or applies remediation (Available, Mandatory) |
+| Brownout on every link, or only one link | on-demand remediation, which the next lesson covers |
+| Outage under Mandatory | no steering; packets are dropped by policy |
+
+<Diagram id="dmpo-outage-failover" />
+
+<Predict
+  prompt="A link is up, but 5% of voice packets on it are lost. Which word applies?"
+  choices={["Outage", "Brownout", "Blackout", "Hold time"]}
+  answer={1}
+>
+  The link still passes traffic, but not well enough for voice: that is a brownout. (The loss figure here is only an example.)
+</Predict>
+
+## The one-minute hold
+
+When a brownout or outage clears, DMPO waits **one minute** before steering back to a preferred link named in the policy. This stops a link that flaps from dragging a call back and forth.
+
+<Callout variant="gotcha" title="A recovered link may stay quiet for a minute">
+  If you restore a circuit and the traffic does not come back at once, that can be the hold, not a fault.
+</Callout>
+
+## What you would see in the VCO
+
+- **Monitor > Events** records link events, for example one raised when no packets arrive on a link for seven seconds.
+- **Monitor > Edges > Links** shows each link's state and measurements, so you can tell a down link from a degraded one.
+
+## Key takeaways
+
+- Outage: fails completely. Brownout: up but below the application's SLA.
+- DMPO acts within 300 to 500 ms.
+- Strictness decides whether DMPO moves, remediates or drops.
+- One-minute hold before moving back.
+
+## What would you look for in the VCO
+
+- Do the events show a link going down, or only measurements getting worse?
+- Is the link now carrying traffic again, and is it within the first minute?

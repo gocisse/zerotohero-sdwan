@@ -1,0 +1,51 @@
+# Section 2, lesson 5: hubs in concept: permanent tunnels from branches to a Hub Edge in a data center.
+id: arch-branch-to-hub
+title: Branches and a Hub
+alt: >-
+  Two branch Edges each have a permanent tunnel to a Hub Edge in a data center. Company applications sit behind the Hub. A
+  packet from branch A reaches the applications through the Hub, and branch-to-branch traffic can also be relayed by the Hub.
+width: 900
+height: 520
+
+groups:
+  - { id: dc, label: Data center, nodes: [hub, dc-apps] }
+
+nodes:
+  - { id: edge-a, label: Branch A Edge, kind: vce, x: 140, y: 140 }
+  - { id: edge-b, label: Branch B Edge, kind: vce, x: 140, y: 400 }
+  - { id: hub, label: Hub Edge, kind: vce, x: 540, y: 270 }
+  - { id: dc-apps, label: Company apps, kind: datacenter, x: 780, y: 270 }
+
+links:
+  - { id: tun-a, from: edge-a, to: hub, style: overlay-tunnel, label: permanent tunnel }
+  - { id: tun-b, from: edge-b, to: hub, style: overlay-tunnel, label: permanent tunnel }
+  - { id: lan-hub, from: hub, to: dc-apps, style: lan }
+
+steps:
+  - title: A Hub is a designated Edge, typically in a data center
+    narration: >-
+      A **Hub** is an Edge you designate in the Profile's Hub settings. It is typically placed in a data center, in front of the applications. Branch Edges are the spokes.
+    highlight: [hub, dc-apps, lan-hub]
+    show: [tun-a, tun-b]
+
+  - title: Permanent tunnels from every branch
+    narration: >-
+      With **Branch to Hub VPN** enabled and the Hubs chosen, the Orchestrator tells every Edge to build a secure tunnel to them.
+      Unlike dynamic tunnels, these are always there, so branches have a path to the data center ready at any time.
+    show: [tun-a, tun-b]
+    highlight: [edge-a, edge-b, tun-a, tun-b, hub]
+
+  - title: Reaching a company application
+    narration: >-
+      Traffic from branch A for a company application goes through its tunnel to the Hub and on to the application servers.
+    highlight: [edge-a, tun-a, hub, lan-hub, dc-apps]
+    packets:
+      - { path: [edge-a, tun-a, hub, dc-apps], label: to company app, color_style: overlay-tunnel }
+
+  - title: Branch to branch through the Hub
+    narration: >-
+      If Branch to Branch VPN is set to use Hubs, traffic between branches can also be relayed by the Hub, so the two branches
+      do not need a tunnel to each other.
+    highlight: [edge-a, tun-a, hub, tun-b, edge-b]
+    packets:
+      - { path: [edge-a, tun-a, hub, tun-b, edge-b], label: branch to branch, color_style: overlay-tunnel }

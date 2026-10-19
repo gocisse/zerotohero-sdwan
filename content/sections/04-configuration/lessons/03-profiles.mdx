@@ -1,0 +1,67 @@
+---
+id: cfg-profiles
+title: Profiles
+summary: What a Profile is for and contains, the Quick Start Profile, creating and assigning Profiles, and what a change to a Profile does to its Edges.
+estimated_minutes: 10
+topics: [config-profiles]
+---
+
+**By the end of this lesson you will be able to:**
+
+- explain what a <Term id="profile" /> is for and name what it contains;
+- describe the <Term id="quick-start-profile" /> and how Profiles are created, duplicated and deleted;
+- say how an Edge gets a Profile;
+- explain what happens to Edges when a Profile changes, and what is still unconfirmed.
+
+## Purpose
+
+Administrators use Profiles to define a template configuration and apply it to many Edges at once. Define it once, assign it to ten Edges or a thousand, and they all start from the same place, through <Term id="inheritance" />. That gives you scale and consistency: the second Edge does not drift from the first because someone retyped a setting.
+
+## What is in a Profile
+
+- Its **Device** tab: <Term id="segment">segments</Term> chosen with Change Profile Segments, and settings in categories such as Connectivity (VLANs, interfaces), Routing and NAT (for example OSPF areas), Telemetry (syslog), VPN Services and Edge Services.
+- A **Business Policy** tab and a **Firewall** tab holding rules.
+- It is described as a composite of the configurations created in Segments and Network Services.
+
+## Working with Profiles
+
+- **Configure > Profiles** lists them. **New Profile**, a name and description, then Create opens the Device tab.
+- **Duplicate** copies a Profile (or Shortcuts > Duplicate Profile from the Profile's page).
+- A Profile that Edges use **cannot be deleted**. The **Used By** column shows how many Edges use it.
+- A default **Quick Start Profile** exists after the Orchestrator is installed.
+- An Edge gets its Profile when it is provisioned: Configure > Edges > Add Edge, then choose a Profile from the drop-down.
+
+## When a Profile changes
+
+Arista says a Profile's interface settings are applied automatically to its Edges, and that they can be <Term id="override">overridden</Term> for a specific Edge. Some configuration changes make the Edge's data-plane service restart (a brief traffic interruption, and in a high-availability pair a failover); the Appendix lists which changes do. The business policy and firewall rows we read there are listed as not restarting the service.
+
+<Diagram id="cfg-profile-propagation" />
+
+<Predict
+  prompt="Ten Edges use Profile P. You change one of P's interface settings. What does the documentation say reaches the Edges that did not override it?"
+  choices={["Nothing until you edit each Edge", "The setting, applied automatically", "Only the first Edge", "The Gateway decides"]}
+  answer={1}
+>
+  The interface settings of a Profile are applied automatically to the Edges associated with it; an Edge can override them individually.
+</Predict>
+
+<Callout variant="warning" title="What we could not confirm">
+  The Profile pages do not say when a change is sent to the Edges or what the Quick Start Profile contains. When you move an Edge to a different Profile, only a few effects are documented (for example inherited VLANs are removed and some BGP filters are dropped), so treat a Profile switch as a change to test.
+</Callout>
+
+## What you would see in the VCO
+
+- **Configure > Profiles**: the list with **Used By**, and the Profile's **Overview** and **Device** tabs plus **Business Policy** and **Firewall** tabs.
+- **Configure > Edges > Add Edge**: the Profile drop-down.
+
+## Key takeaways
+
+- A Profile is a template applied to many Edges, for scale and consistency.
+- It contains Device settings, segments, business policy and firewall rules.
+- A Profile in use cannot be deleted; Quick Start exists by default.
+- Interface settings flow to Edges automatically unless overridden; some changes restart the Edge service.
+
+## What would you look for in the VCO
+
+- Which Profile does this Edge use, and how many Edges share it (Used By)?
+- If I change this Profile setting, which Edges does it reach, and does it restart anything?

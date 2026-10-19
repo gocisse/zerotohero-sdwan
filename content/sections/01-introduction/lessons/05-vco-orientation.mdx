@@ -1,0 +1,148 @@
+---
+id: intro-vco-orientation
+title: Orientation tour of the Orchestrator
+summary: A guided look at the main areas of the VCO (Monitor, Configure, Diagnostics and settings) and the question each one answers.
+estimated_minutes: 10
+topics: [vco-orientation]
+---
+
+**By the end of this lesson you will be able to:**
+
+- find your way around the main areas of the <Term id="vco" /> in the 7.0 documentation;
+- match a question ("why is this site slow?") to the area that answers it;
+- name the tabs of an Edge's monitoring page and what each shows;
+- tell which labels in this lesson are confirmed and which are not.
+
+<Callout variant="warning" title="How much to trust this map">
+  Everything below comes from Arista's **7.0 Administration Guide**. We read the pages for Monitor, Edge activation, Profiles, Business
+  Policy and Testing and Troubleshooting. Items with a warning box could **not** be confirmed (menu paths we did not read, and labels
+  where two guides disagree). Your own Orchestrator is the final authority: open it in a second window while you read.
+</Callout>
+
+## The big picture
+
+The pages we read place the enterprise screens in the **SD-WAN service of the Enterprise portal**. Inside it, the areas you will use most
+are grouped like this (the grouping is ours; the names are the guide's):
+
+| Area | In one line | Question it answers |
+|---|---|---|
+| **Monitor** | Live and recent state of the network | "Is everything healthy? Where is the problem?" |
+| **Configure** | How Edges, Profiles and policy are set up | "How is this site configured, and what should change?" |
+| **Diagnostics** | Tests, captures and remote actions on Edges | "Can I test this, capture traffic, or restart something?" |
+| **Service Settings / Global Settings** | Activation inventory, enterprise-wide settings | "How do new Edges onboard? Who and what is this enterprise?" |
+
+## Monitor
+
+Under **Monitor** the guide describes these pages:
+
+- **Network Overview**: a summary of activated Edges, links, top applications and Edges by traffic. It has a *Traffic Usage* tab and a
+  *Configuration Data* tab (which Profiles are used, which segments are active, software versions, and which Edges have features such as
+  HA or VNFs).
+- **Security Overview**: a summary of threats (IDS/IPS, URL filtering, malicious IPs). It needs the **EFS** feature to be
+  enabled in Global Settings first.
+- **Edges**: the list of <Term id="vce">Edges</Term> with their status, links and <Term id="vcg">Gateways</Term>.
+- **Network Services**: configured services, such as non-SD-WAN destinations reached through a Gateway or an Edge, cloud security
+  service sites, Edge clusters and Edge VNFs.
+
+### Inside one Edge
+
+Click an Edge in **Monitor > Edges** and you get a set of tabs. This is the screen you will spend the most time on, so learn the tabs:
+
+| Tab | What it shows |
+|---|---|
+| Overview | Link status, bandwidth use, top consumers |
+| QoE | Quality scores for voice, video and transactional traffic (<Term id="qoe" />) |
+| Links | WAN link metrics, including a transport-group view (the circuits, or <Term id="underlay" />) |
+| Paths | Paths to the Edge's SD-WAN peers, with quality scores over time |
+| Flows | Flow data, and a live mode for current flows |
+| Applications | Usage by application or category |
+| Sources | Client devices and operating systems |
+| Destinations | Where traffic goes, by domain, FQDN or IP |
+| Business Priority | Network use by business-policy priority |
+| System | CPU, memory, flow and tunnel counts, interface statistics |
+
+The same page has a **Shortcuts** menu with entries such as Configure, View Events, Remote Diagnostics, Generate Diagnostic Bundle,
+Remote Actions, View Profile and View Gateways.
+
+<Predict
+  prompt="A branch manager says video calls from one site are choppy. Where would you look **first** for a quality score for that site?"
+  choices={["Monitor > Edges > (the Edge) > QoE", "Service Settings > Edge Auto-activation", "Configure > Profiles > Used By", "Diagnostics > Diagnostic Bundles > Request PCAP Bundle"]}
+  answer={0}
+>
+  The Edge's **QoE** tab shows quality scores for voice, video and transactional traffic, which is exactly the first question. The
+  **Links** and **Paths** tabs would be the next stops if the score is poor.
+</Predict>
+
+## Configure
+
+The pages we read show:
+
+- **Configure > Edges**: the list of Edges. Each Edge has an Overview tab (where the activation email is sent) and a **Business Policy**
+  tab.
+- **Configure > Profiles**: templates (a <Term id="profile" />) applied to many Edges. The list shows how many Edges use each Profile and has *View* links for
+  device settings, business policy and firewall. A Profile opens on a **Device** tab, where options such as Cloud VPN live, and also has
+  an Overview tab. A default **Quick Start Profile** exists after installation.
+- **Business Policy** (<Term id="business-policy" />) rules, with an **Action** tab where you choose link steering: **Auto** (the default), **Transport Group**,
+  **Interface** or **WAN Link**.
+- **Configure > Overlay Flow Control**: the overlay's routing view.
+
+<Callout variant="warning" title="Menu paths we could not confirm">
+  The guide has chapters for **Segments** and **Network Services**, but we did not read which menu path leads to them. The same is true
+  for where **Link Insights** sits, and for the user-management and licensing pages. They exist; treat their locations as unverified
+  until you find them in your own Orchestrator.
+</Callout>
+
+## Diagnostics
+
+The Testing and Troubleshooting chapter names the entry point the **Diagnostics** tab. It contains:
+
+- **Remote Diagnostics**: pick an Edge and run tests on it.
+- **Diagnostic Bundles**: **Request PCAP Bundle** (a packet capture from a chosen Edge interface or VLAN for a set time) and **Request
+  Diagnostic Bundle** (configuration files and logs from one Edge, as a ZIP; restricted to operator users).
+- **Remote Actions** (reached from an Edge's Shortcuts menu): Identify (flashes the Edge's lights), Restart Service, Reboot, Shutdown,
+  Deactivate (resets the Edge to factory defaults) and, for HA pairs, Force HA Failover.
+
+<Callout variant="warning" title="Diagnostics or Test & Troubleshoot?">
+  The Testing and Troubleshooting chapter says **Diagnostics**, while a permissions table in the same guide set labels the same area
+  **Test & Troubleshoot > Remote Diagnostics**, and an **Administration > System Settings** area. We could not confirm which label the 7.0
+  screen shows. Look for either name in your own Orchestrator.
+</Callout>
+
+<Predict
+  prompt="You want to power-cycle the services on a remote Edge without touching the device. What do you use?"
+  choices={["Business Policy", "Remote Actions (Restart Service or Reboot), reached from the Edge's Shortcuts", "Configure > Profiles", "The Gateway's console"]}
+  answer={1}
+>
+  Remote Actions lets you act on a connected Edge: Identify, Restart Service, Reboot, Shutdown, Deactivate or, for HA pairs, Force HA
+  Failover. Use Deactivate with care: it resets the Edge to factory defaults.
+</Predict>
+
+## Settings and onboarding
+
+- **Service Settings > Edge Auto-activation** has *Available Inventory* and *Assigned Inventory* tabs for Edges waiting to auto-activate.
+- **Global Settings > Enterprise Settings** holds user information, privacy settings and primary contact details. Global settings are
+  documented in a separate Global Settings Guide.
+
+## What question does each area answer?
+
+| Your question | Where to look |
+|---|---|
+| Is the network healthy overall? | Monitor > Network Overview |
+| Why is this one site slow or choppy? | Monitor > Edges > (Edge) > QoE, then Links and Paths |
+| Who or what is using the bandwidth? | The Edge's Applications, Sources and Destinations tabs |
+| Which Profile does this Edge use? | Configure > Profiles (Used By), or View Profile in the Edge's Shortcuts |
+| How should this application use the links? | An Edge's or Profile's Business Policy |
+| Can I test, capture or restart on this Edge? | Diagnostics: Remote Diagnostics, Diagnostic Bundles, Remote Actions |
+| Why has a new Edge not come online? | Service Settings > Edge Auto-activation, and the Edge's activation in Configure > Edges |
+
+<Callout variant="tip" title="Your homework for this lesson">
+  If you have access to an Orchestrator, open it now and find each item in the table. If a name differs, write down both names. That list
+  of differences is more useful than any guide.
+</Callout>
+
+## Key takeaways
+
+- Monitor shows state, Configure sets state, Diagnostics tests and acts, and settings pages handle onboarding and the enterprise.
+- Monitor > Edges, then an Edge's tabs, is where most investigations start: QoE, Links, Paths, Applications.
+- Profiles are templates; Business Policy decides link steering; Overlay Flow Control is the routing view.
+- Some labels and paths are unconfirmed: the warning boxes say which.

@@ -1,0 +1,140 @@
+---
+id: arch-mtu-overhead
+title: Overhead and MTU
+summary: Where the bytes go, why the effective MTU is smaller than the link's, the verified numbers for Internet Multipath and VPN traffic, a worked calculation, and the symptoms of getting it wrong.
+estimated_minutes: 12
+topics: [mtu-overhead]
+---
+
+**By the end of this lesson you will be able to:**
+
+- explain what <Term id="overhead">tunnel overhead</Term> is and list the headers that make it up;
+- calculate the effective <Term id="mtu" /> for Internet Multipath traffic and for IPsec VPN traffic from a given path MTU;
+- explain how <Term id="path-mtu-discovery" /> chooses the MTU and what its limits are;
+- recognise the symptoms of an MTU problem and know the limits the guides state.
+
+## Where the bytes go
+
+Every packet that enters a tunnel gets extra headers in front of it, like adding an outer envelope to a letter. The outer envelope has to fit through the underlay as
+one packet, so the **overhead** reduces how much of the user's data can travel in each packet. The result is the **effective MTU**: the largest user packet that
+fits.
+
+Arista's guide gives the overhead for the two kinds of traffic:
+
+| Header | **Internet Multipath** traffic | **VPN (IPsec)** traffic |
+|---|---|---|
+| IP header | 20 | 20 |
+| UDP header | 8 | 8 |
+| IPsec sequence number | | 4 |
+| IPsec SPI | | 4 |
+| <Term id="vcmp" /> header | 23 | 23 |
+| VCMP data header | 8 | 8 |
+| Initialization vector | | 16 |
+| Padding | | 0 to 15 |
+| Padding length | | 1 |
+| Next header | | 1 |
+| Authentication data | | 12 |
+| **Total** | **59** | **97 to 112** |
+
+Notice that VCMP itself accounts for 31 of those bytes (23 + 8) in both columns, and that the VPN column is a *range* because the padding field varies from 0 to 15
+bytes.
+Notice that the Internet Multipath column has no IPsec fields at all, which is why its total is so much smaller.
+
+## The calculation
+
+The guide says the effective packet MTU is the path MTU with the overhead subtracted, depending on whether the destination is VPN or Internet Multipath.
+
+**Worked example 1: a normal Internet path.** The path MTU is 1500.
+
+- Internet Multipath: 1500 - 59 = **1441**
+- VPN, smallest overhead: 1500 - 97 = **1403**
+- VPN, largest overhead: 1500 - 112 = **1388**
+
+**Worked example 2: a smaller path.** Suppose discovery finds a path MTU of 1400. Then Internet Multipath leaves 1400 - 59 = **1341**, and VPN leaves between 1400 - 112 = **1288** and 1400 - 97 = **1303**.
+
+**Worked example 3: IPv6.** The guide says an IPv6 underlay tunnel adds 20 more bytes (the larger IPv6 header), so the effective path MTU is reduced by 20. A
+1500-byte IPv6 path would give 1441 - 20 = 1421 for Internet Multipath (try the VPN numbers yourself).
+
+<Predict
+  prompt="The path MTU is 1500 bytes. What is the effective MTU for **Internet Multipath** traffic?"
+  choices={["1500", "1441", "1403", "1388"]}
+  answer={1}
+>
+  1500 minus the 59 bytes of overhead (IP 20 + UDP 8 + VCMP 23 + VCMP data 8) is 1441. The 1403 and 1388 figures are the VPN (IPsec) results.
+</Predict>
+
+<Callout variant="gotcha" title="One number does not fit all traffic">
+  You will see "the VeloCloud MTU is 1441" quoted in various places. That number is a *derived* value, 1500 minus 59, and it applies to Internet Multipath traffic
+  on a 1500-byte path. IPsec VPN traffic leaves 1388 to 1403. The guide itself prints the overhead and says to subtract it; it does not print 1441.
+</Callout>
+
+## How the MTU is chosen
+
+The Edge does not guess. It runs **path MTU discovery**: it first tries the method in RFC 1191 (sending packets with the Don't Fragment bit set and adjusting from the
+ICMP replies), starting from a default link MTU of 1500, and if that fails it falls back to RFC 4821. The two kinds of link are treated differently:
+
+- on **public Internet** links the Edge runs discovery toward all the Gateways and every tunnel uses the **minimum** MTU found;
+- on **private WAN** links it runs discovery toward all the other Edges and each tunnel gets its own result.
+
+The limits stated in the guide:
+
+- the maximum supported IP MTU across the overlay without fragmentation is **1500**;
+- RFC 4821 measures only down to **1300** bytes, so if a link's MTU is below 1300 you must configure it manually;
+- **jumbo frames are not supported**;
+- if a packet is too large, the Edge automatically performs IP <Term id="fragmentation" /> as per RFC 791.
+
+<Predict
+  prompt="Which of these does the guide state about the overlay's MTU?"
+  choices={["Jumbo frames are supported up to 9000 bytes", "The maximum supported IP MTU across the overlay without fragmentation is 1500", "Path MTU discovery measures down to 500 bytes", "The effective MTU is always 1441"]}
+  answer={1}
+>
+  The maximum supported IP MTU across the overlay without fragmentation is 1500, and jumbo frames are not supported. RFC 4821 probing measures only down
+  to 1300 bytes, and 1441 applies only to Internet Multipath traffic on a 1500-byte path.
+</Predict>
+
+## From MTU to MSS
+
+TCP does not send a packet bigger than it believes the path allows. The size it uses is the **<Term id="mss" />**: the largest amount of TCP data in one segment. For plain IPv4 and
+TCP with no options, the headers take 40 bytes (20 + 20), so an effective MTU of 1441 would give an MSS of 1401. This arithmetic is general TCP knowledge, not
+something from the VeloCloud guides.
+
+## When it goes wrong
+
+These symptoms are general networking behaviour (the VeloCloud guides do not list them), but they are what an MTU problem looks like in practice:
+
+- small packets work and large ones do not: a ping succeeds, but a file transfer or a web page stalls;
+- the problem appears only on some paths, for example only on the tunnel over one particular circuit;
+- throughput is far below the link speed, because the Edge is fragmenting large packets, which costs time and processing.
+
+<Callout variant="tip" title="A fast check">
+  Compare a small test with a large one over the same path. If only the large one fails, suspect MTU. Then work out the expected effective MTU for that
+  path from the table above and compare it with what is actually being sent.
+</Callout>
+
+<Predict
+  prompt="The path MTU is 1500 and the traffic is IPsec VPN traffic whose packets get the maximum padding (112 bytes of overhead in total). What is the effective MTU?"
+  choices={["1441", "1403", "1388", "1500"]}
+  answer={2}
+>
+  1500 minus 112 is 1388. With the minimum overhead of 97 bytes it would be 1403, and 1441 belongs to Internet Multipath traffic.
+</Predict>
+
+<Callout variant="warning" title="What we could not confirm">
+  Where in the Orchestrator you can read the MTU that discovery chose for each path, and exactly how DMPO decides which tunnels use which size in every case,
+  were not covered by the pages we read. The numbers above come from the Administration Guide's overhead tables.
+</Callout>
+
+## What you would see in the VCO
+
+- **Monitor > Edges > (an Edge) > Links** and **Paths**: look for the per-link and per-path details, and compare them across links when one tunnel behaves
+  differently from another. (The exact MTU field and its location were not confirmed, so look for it in your own release.)
+- **Remote Diagnostics**: tests such as List Paths and the WAN Link Bandwidth Test help you compare circuits. Check in your release whether a ping-style test lets
+  you choose the packet size; if it does, repeat a large-packet test across paths.
+- A link whose MTU is below 1300 bytes needs to be **configured by hand**; (we did not confirm where that setting lives; look in the Edge's interface and link settings).
+
+## Key takeaways
+
+- Overhead: 59 bytes for Internet Multipath traffic (IP 20 + UDP 8 + VCMP 31), 97 to 112 bytes for IPsec VPN traffic.
+- Effective MTU = path MTU - overhead: 1441 for Internet Multipath on 1500, 1388 to 1403 for VPN.
+- Discovery uses RFC 1191 then RFC 4821 (not below 1300); max supported IP MTU is 1500; no jumbo frames; IP fragmentation per RFC 791.
+- The classic symptom is "small works, large stalls".

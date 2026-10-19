@@ -1,0 +1,14 @@
+# SD-WAN concepts (as VeloCloud describes them)
+
+| claim | source URL | doc version | status |
+|---|---|---|---|
+| VeloCloud SD-WAN aims to improve the economics and flexibility of a hybrid WAN with the deployment speed and low maintenance of a cloud-based service, with policy-based, network-wide application performance, visibility and control. | https://www.arista.com/assets/data/pdf/SD-WAN-Solution-Overview.pdf | solution brief (undated) | VERIFIED |
+| An Edge aggregates multiple links (the brief lists private line, cable, DSL, 4G-LTE or 5G, and satellite) and steers traffic over the optimal links. | https://www.arista.com/assets/data/pdf/SD-WAN-Solution-Overview.pdf | solution brief (undated) | VERIFIED |
+| The SD-WAN overlay with DMPO gives application-specific quality of experience through a virtual overlay across multiple links, including private and Internet broadband. | https://www.arista.com/assets/data/pdf/SD-WAN-Solution-Overview.pdf | solution brief (undated) | VERIFIED |
+| Business-level policies are defined once, centrally, in the Orchestrator and apply across many Edges; link steering, link remediation and QoS are applied automatically from the policy, and specific overrides are possible. | https://www.arista.com/assets/data/pdf/SD-WAN-Solution-Overview.pdf | solution brief (undated) | VERIFIED |
+| The Orchestrator gives an enterprise-wide view of routing in an "overlay flow control" table instead of node-by-node route configuration. | https://www.arista.com/assets/data/pdf/SD-WAN-Solution-Overview.pdf | solution brief (undated) | VERIFIED |
+| Zero-touch deployment: the Edge is shipped to the branch, a non-technical person plugs in power and a network cable, and activation, configuration and ongoing management happen from the cloud. | https://www.arista.com/assets/data/pdf/SD-WAN-Solution-Overview.pdf | solution brief (undated) | VERIFIED |
+| Edge activation has two methods: auto-activation (push; the Edge only needs outbound Internet connectivity via DHCP) and email activation (pull; an administrator sends an activation email from the Orchestrator). | https://www.arista.com/en/admin-guide-vc-7-0/sd-wan-7-0-activate-edges | 7.0 | VERIFIED |
+| The Edge is also available as a virtual network function (VNF) for customer premises equipment, and as virtual Edge software. | https://www.arista.com/assets/data/pdf/SD-WAN-Solution-Overview.pdf | solution brief (undated) | VERIFIED |
+| Arista says the Edge's built-in enhanced firewall lets customers eliminate legacy branch firewalls without sacrificing security (a vendor claim, not an independent finding). | https://www.arista.com/assets/data/pdf/SD-WAN-Solution-Overview.pdf | solution brief (undated) | VERIFIED |
+| "Transport independence" is not a phrase used in the sources read; the course uses it to mean that policy and the overlay do not depend on which kind of WAN link carries the packets. | none | n/a | VERIFY |

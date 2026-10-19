@@ -1,0 +1,80 @@
+---
+id: dmpo-together
+title: Putting it together
+summary: Three end-to-end scenarios (a voice call across a brownout, a bulk transfer using aggregation, a critical application under Mandatory steering during a link failure) and how to tell which mechanism is acting.
+estimated_minutes: 11
+topics: [dmpo-scenarios]
+---
+
+**By the end of this lesson you will be able to:**
+
+- walk through what DMPO does in three realistic situations;
+- tell which mechanism acts from the symptoms and the VCO views;
+- say which claims about aggregation are legacy rather than current.
+
+## Scenario 1: a voice call across a brownout
+
+A branch has an MPLS and an Internet link; voice is under Auto. The Internet link develops a <Term id="brownout" />: it stays up but starts to lose packets.
+
+1. DMPO measures the loss within its normal exchange interval.
+2. A healthy link exists (MPLS), so the flow is **steered** to it. This takes 300 to 500 ms.
+3. If MPLS then degrades too, steering has nowhere to go. <Term id="fec" /> switches on, with copies on both links; if jitter is high, the <Term id="jitter-buffer" /> switches on.
+4. When loss falls below the threshold, FEC switches off. After the one-minute <Term id="hold-time">hold</Term> the flow may move back to a preferred link.
+
+## Scenario 2: a bulk transfer using aggregation
+
+A branch uploads a large file over two links. Older VeloCloud material says DMPO can use **all available links** for one flow (<Term id="per-packet" /> load balancing) and resequence the packets at the receiver, so two 50 Mbps links give about
+100 Mbps for one flow.
+
+<Callout variant="warning" title="Legacy claim">
+  The per-packet load balancing and the 100 Mbps example come from the 2017 white paper. We did not find the conditions for bandwidth aggregation in the current guides we could read. Treat it as a
+  design idea to verify in your release, not as a promise.
+</Callout>
+
+If this upload suffers loss, <Term id="nack" /> asks for retransmission. Remediation applies to this flow the same way.
+
+## Scenario 3: a critical app with Mandatory steering and a link failure
+
+A payment application is set to <Term id="mandatory" /> on the MPLS link, because the business wants it kept off the Internet.
+
+- MPLS healthy: the traffic flows.
+- MPLS brownout: it stays; remediation helps.
+- MPLS outage: no steering. The policy table says packets are dropped when the link is inactive.
+
+The application is protected from the Internet and exposed to MPLS failure: Mandatory is a trade-off.
+
+<Predict
+  prompt="In scenario 3, the MPLS link fails completely. What would you expect?"
+  choices={["DMPO moves the traffic to the Internet", "The traffic is dropped, by policy", "The Orchestrator reroutes it", "The traffic is slowed down"]}
+  answer={1}
+>
+  Mandatory traffic does not steer away, and the policy table says the packet is dropped if the link is inactive.
+</Predict>
+
+## Which mechanism is acting?
+
+| Symptom | Likely mechanism | Look at |
+|---|---|---|
+| A flow changed links | steering | Paths, Flows |
+| Same link, choppy voice at high jitter | jitter buffer | Links jitter |
+| Loss on every link, voice clean | FEC | Links loss |
+| TCP fast despite loss | NACK | Links loss, Flows |
+| Traffic gone after a link failure | Mandatory | rule strictness |
+
+This table is our own diagnostic heuristic, not Arista's. Whether the VCO tells you directly that a mechanism is on was not confirmed.
+
+## What you would see in the VCO
+
+- **Monitor > Edges > (Edge) > Flows** (live mode in 6.1 and later, up to four flows) shows what a flow is doing now.
+- The **Links** and **Paths** tabs show measurements per link and per path.
+
+## Key takeaways
+
+- Steering first, remediation when it cannot help.
+- Mandatory trades resilience for control.
+- Aggregation claims are legacy until confirmed.
+
+## What would you look for in the VCO
+
+- Which link is each of the four live flows on?
+- Do the Links tab numbers explain the flow's behaviour?

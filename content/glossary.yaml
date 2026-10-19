@@ -1,0 +1,1076 @@
+# PLACEHOLDER glossary entries used only to exercise the glossary engine. Not real VeloCloud terms.
+- id: placeholder-term
+  term: Placeholder term
+  short: A made-up term used to test the glossary popover.
+  long: |
+    This entry is **placeholder** content. It has a long definition so the glossary page can show more than one line,
+    including *Markdown*.
+  related: [placeholder-alpha]
+  lesson_ref: sample-markdown
+
+- id: placeholder-alpha
+  term: Placeholder alpha
+  aliases: [PA, alpha thing]
+  short: A second made-up term that can also be found by its aliases.
+  long: Search for "PA" or "alpha thing" on the glossary page to find this entry.
+  related: [placeholder-term, placeholder-beta]
+
+- id: placeholder-beta
+  term: Placeholder beta
+  short: A third made-up term with no long definition.
+  related: [placeholder-alpha]
+  lesson_ref: sample-components
+
+- id: placeholder-gamma
+  term: Placeholder gamma
+  aliases: [gamma]
+  short: A fourth made-up term that is not related to the others.
+  long: Used to prove alphabetical ordering and filtering.
+
+# ---- Section 1 vocabulary (real content) ----
+- id: wan
+  term: "WAN"
+  aliases: ["wide area network"]
+  short: "A network that joins sites that are far apart, such as branches, offices and data centers."
+  long: "Branch offices are usually not in the same building as the applications they need, so they reach them over a **WAN**. The links that make up a WAN (carrier circuits, Internet connections) are rented or provided by other companies, which is why cost, capacity and reliability matter so much in this course."
+  related: [branch, data-center, mpls]
+  lesson_ref: intro-why-wans-fall-short
+
+- id: branch
+  term: "Branch"
+  aliases: ["branch office", "remote site"]
+  short: "A smaller site, such as a shop or office, that connects to the rest of the company over the WAN."
+  long: "In a hub-and-spoke design the branches are the spokes. A branch typically has users, a few local devices and one or more WAN circuits, and little or no IT staff on site."
+  related: [hub-and-spoke, wan]
+  lesson_ref: intro-why-wans-fall-short
+
+- id: data-center
+  term: "Data center"
+  aliases: ["datacenter", "DC", "headquarters data center"]
+  short: "A site that hosts company applications and servers, and is often the hub of a traditional WAN."
+  long: "In a traditional WAN the data center is where branch traffic is delivered. Sometimes it is also the only place where traffic leaves for the Internet, which is the root of the backhauling problem."
+  related: [hub-and-spoke, backhauling]
+  lesson_ref: intro-why-wans-fall-short
+
+- id: hub-and-spoke
+  term: "Hub-and-spoke"
+  aliases: ["hub and spoke"]
+  short: "A WAN layout where every branch (spoke) connects to a central site (the hub) rather than to each other."
+  long: "It is simple to build and to secure, and it fits applications that live in one data center. It fits cloud applications poorly, because traffic has to go through the hub to get anywhere else."
+  related: [backhauling, hub, branch]
+  lesson_ref: intro-why-wans-fall-short
+
+- id: mpls
+  term: "MPLS"
+  aliases: ["multiprotocol label switching", "carrier MPLS"]
+  short: "A carrier-run private network service that has long been used to join branches to a data center."
+  long: "In this course \"MPLS\" mostly means the private circuits a carrier provides. Arista's own overview says MPLS typically gives high-quality service, with the trade-offs of limited capacity, higher cost and long deployment lead times."
+  related: [wan, broadband, underlay]
+  lesson_ref: intro-why-wans-fall-short
+
+- id: broadband
+  term: "Broadband"
+  aliases: ["Internet circuit", "DSL", "cable"]
+  short: "An ordinary Internet connection such as DSL, cable or LTE: quick to get and high in capacity, but without assured performance."
+  long: "Broadband is cheaper and faster to deploy than a private circuit, but it can lack reliability, security and predictable performance. SD-WAN is largely about using broadband safely and well, alongside or instead of private circuits."
+  related: [mpls, dia]
+  lesson_ref: intro-why-wans-fall-short
+
+- id: backhauling
+  term: "Backhauling"
+  aliases: ["backhaul", "backhauled"]
+  short: "Sending a branch's Internet or cloud traffic across the WAN to the data center first, and out to the Internet from there."
+  long: "Backhauling adds distance and delay to every cloud request, and it concentrates all branches' Internet traffic on the data center's Internet link. Organizations sometimes do it on purpose, for example to inspect traffic in one place, but it is hard on cloud and SaaS applications."
+  related: [saas, dia, hub-and-spoke]
+  lesson_ref: intro-why-wans-fall-short
+
+- id: saas
+  term: "SaaS"
+  aliases: ["software as a service", "cloud application"]
+  short: "Software you use over the Internet from a provider's servers, such as email, video meetings or a CRM."
+  long: "SaaS traffic does not go to your data center; it goes to the provider. That is why the traditional WAN, designed for applications inside private data centers, struggles with it."
+  related: [backhauling, dia]
+  lesson_ref: intro-why-wans-fall-short
+
+- id: dia
+  term: "DIA"
+  aliases: ["direct Internet access", "local Internet breakout", "local breakout"]
+  short: "Letting a branch send Internet-bound traffic straight out to the Internet instead of backhauling it to the data center."
+  long: "DIA shortens the path to cloud and SaaS applications. It also moves a question to the branch: who decides which traffic goes out locally and which travels the private circuit, and how is it kept secure? Centralized policy is one answer."
+  related: [backhauling, saas, business-policy]
+  lesson_ref: intro-problems-sdwan-solves
+
+- id: sd-wan
+  term: "SD-WAN"
+  aliases: ["software-defined WAN", "software-defined wide area network"]
+  short: "A WAN where an overlay and central, policy-based management decide how traffic uses the available links."
+  long: "Instead of configuring each branch device separately, you describe what you want once and the system applies it. VeloCloud's version uses Edges at the sites, Gateways in the cloud, and an Orchestrator to manage them."
+  related: [overlay, underlay, business-policy]
+  lesson_ref: intro-problems-sdwan-solves
+
+- id: underlay
+  term: "Underlay"
+  aliases: ["transport", "transport network"]
+  short: "The physical or carrier networks that actually carry packets, such as an Internet circuit or an MPLS circuit."
+  long: "This is course vocabulary: Arista's guides do not necessarily use the word. The underlay is whatever the site is plugged into; the overlay is what VeloCloud builds on top of it."
+  related: [overlay, tunnel, mpls]
+  lesson_ref: intro-how-velocloud-solves
+
+- id: overlay
+  term: "Overlay"
+  aliases: ["overlay network", "virtual overlay"]
+  short: "The tunnels and routing that the SD-WAN builds on top of the underlay circuits."
+  long: "Traffic between Edges and Gateways rides inside tunnels. Because the overlay is independent of which circuit carries the tunnel, policy can talk about applications and quality rather than about individual cables."
+  related: [underlay, tunnel, vcmp]
+  lesson_ref: intro-how-velocloud-solves
+
+- id: tunnel
+  term: "Tunnel"
+  aliases: ["overlay tunnel", "DMPO tunnel"]
+  short: "A logical connection between two endpoints, carried inside ordinary packets across the underlay."
+  long: "In VeloCloud SD-WAN each Edge builds tunnels to one or more Gateways, and Edges can build direct tunnels to each other. A tunnel is what the overlay is made of."
+  related: [overlay, vcmp, dmpo]
+  lesson_ref: intro-how-velocloud-solves
+
+- id: transport-independence
+  term: "Transport independence"
+  aliases: ["link independence"]
+  short: "Policy and the overlay do not depend on which type of WAN link carries the packets."
+  long: "This is course vocabulary for a core SD-WAN idea. An Edge uses whatever circuits are present (private line, cable, DSL, LTE or 5G, satellite) and the same policy applies. Adding or swapping a circuit should not mean redesigning the network."
+  related: [underlay, overlay, business-policy]
+  lesson_ref: intro-how-velocloud-solves
+
+- id: vce
+  term: "VCE"
+  aliases: ["Edge", "VeloCloud Edge"]
+  short: "The VeloCloud Edge: the device or virtual machine at a site that connects local users to the WAN."
+  long: "\"VCE\" is the abbreviation this course uses. Current Arista documents mostly write simply \"Edge\". An Edge is activated with no manual setup at the site (zero-touch), uses the site's WAN circuits, and builds tunnels to Gateways and to other Edges."
+  related: [vco, vcg, zero-touch-provisioning, hub]
+  lesson_ref: intro-how-velocloud-solves
+
+- id: vco
+  term: "VCO"
+  aliases: ["Orchestrator", "VeloCloud Orchestrator", "SASE Orchestrator"]
+  short: "The VeloCloud Orchestrator: the multi-tenant cloud portal where you configure and monitor the SD-WAN."
+  long: "\"VCO\" is the abbreviation this course uses. In the 7.0 documentation the same component is introduced as the \"SASE Orchestrator\". It is where profiles, business policy and monitoring live, and where Edges get their configuration."
+  related: [vce, vcg, profile, business-policy]
+  lesson_ref: intro-how-velocloud-solves
+
+- id: vcg
+  term: "VCG"
+  aliases: ["Gateway", "VeloCloud Gateway"]
+  short: "The VeloCloud Gateway: a cloud-delivered service that Edges connect to for cloud access and route exchange."
+  long: "\"VCG\" is the abbreviation this course uses. Gateways are shared by many customers, deployed in different regions for low latency, and pass routes between Edges so that Edges do not need a full mesh of tunnels."
+  related: [vce, vco, tunnel]
+  lesson_ref: intro-how-velocloud-solves
+
+- id: hub
+  term: "Hub"
+  aliases: ["hub Edge"]
+  short: "An Edge designated in the Profile's Hub settings that branch Edges build permanent tunnels to; typically placed in a data center."
+  long: "When hubs are configured, the Orchestrator tells all Edges to build secure tunnels to them. Arista describes a Hub as an Edge deployed in a data center for branches to reach data center resources; the pages read do not say a non-data-center Edge cannot be designated. Hubs can also relay traffic between branches."
+  related: [vce, hub-and-spoke, tunnel]
+  lesson_ref: intro-how-velocloud-solves
+
+- id: management-plane
+  term: "Management plane"
+  short: "The part of the system used to configure and monitor it. In this course, the Orchestrator."
+  long: "Arista's on-premises Orchestrator guide uses this wording too, but it is not a menu name in the product. The management plane answers \"what should the network be, and how is it doing?\"."
+  related: [control-plane, data-plane, vco]
+  lesson_ref: intro-how-velocloud-solves
+
+- id: control-plane
+  term: "Control plane"
+  short: "The part of the system that works out and shares routes and policy. In this course, route exchange between Edges and Gateways."
+  long: "Arista's on-premises Orchestrator guide uses this wording too, but it is not a menu name in the product. The control plane answers \"where should traffic go?\". Gateways pass routes between Edges."
+  related: [management-plane, data-plane, vcg]
+  lesson_ref: intro-how-velocloud-solves
+
+- id: data-plane
+  term: "Data plane"
+  short: "The part of the system that carries user traffic. In this course, the traffic flowing through the tunnels."
+  long: "Arista's on-premises Orchestrator guide uses this wording too, but it is not a menu name in the product. The data plane is the packets themselves, moving through Edges, tunnels and Gateways."
+  related: [management-plane, control-plane, tunnel]
+  lesson_ref: intro-how-velocloud-solves
+
+- id: dmpo
+  term: "DMPO"
+  aliases: ["Dynamic Multipath Optimization"]
+  short: "The mechanism that measures every WAN link and steers or protects application traffic across them."
+  long: "DMPO continuously measures loss, latency and jitter on each path, can steer traffic to a better link within a few hundred milliseconds when one degrades, and can switch on error correction when steering is not enough. It runs between Edges and Gateways, and between Edges."
+  related: [vcmp, brownout, outage, sla]
+  lesson_ref: intro-how-velocloud-solves
+
+- id: vcmp
+  term: "VCMP"
+  short: "The protocol used by DMPO tunnels; it runs over UDP port 2426."
+  long: "VCMP adds a small header to user packets (31 bytes) to support things like resequencing and error correction. Firewalls in front of an Edge need to allow outbound UDP 2426."
+  related: [dmpo, tunnel]
+  lesson_ref: intro-how-velocloud-solves
+
+- id: business-policy
+  term: "Business Policy"
+  aliases: ["policy", "business policies"]
+  short: "Rules, set once in the Orchestrator, that say how applications should use the available links."
+  long: "A rule can match an application and say, for example, which link or transport group to use and how strictly. Policy is defined centrally and applies to many Edges, instead of being re-typed on each device."
+  related: [vco, profile, dmpo]
+  lesson_ref: intro-problems-sdwan-solves
+
+- id: profile
+  term: "Profile"
+  aliases: ["configuration profile"]
+  short: "A template configuration in the Orchestrator that is applied to many Edges at once."
+  long: "You define settings once in a Profile and assign it to Edges. The Profiles list shows how many Edges use each Profile, and a Profile that Edges use cannot be deleted. A default Quick Start Profile exists after installation."
+  related: [vco, business-policy]
+  lesson_ref: intro-problems-sdwan-solves
+
+- id: zero-touch-provisioning
+  term: "Zero-touch provisioning"
+  aliases: ["ZTP", "zero-touch", "zero-touch deployment"]
+  short: "Setting up a branch device without anyone configuring it on site: it is plugged in and set up from the cloud."
+  long: "The Edge is shipped to the branch, someone plugs in power and a network cable, and activation, configuration and management are handled from the cloud. Activation can be push (auto-activation) or pull (an activation email)."
+  related: [vce, vco]
+  lesson_ref: intro-problems-sdwan-solves
+
+- id: sla
+  term: "Application SLA"
+  aliases: ["SLA", "service level"]
+  short: "The quality an application needs from a link, in terms of loss, latency and jitter."
+  long: "DMPO compares each link's measured quality with what each application needs. A link that cannot deliver that quality for an application is in a brownout for that application."
+  related: [brownout, outage, dmpo]
+  lesson_ref: intro-how-velocloud-solves
+
+- id: brownout
+  term: "Brownout"
+  short: "A link is still up but cannot deliver the quality an application needs (loss, latency or jitter)."
+  long: "The Arista guides use \"outage\" for a link that is down completely and \"brownout\" for one that is up but degraded. A brownout is often harder to notice than an outage."
+  related: [outage, sla, dmpo]
+  lesson_ref: intro-how-velocloud-solves
+
+- id: outage
+  term: "Outage"
+  short: "A link that has failed completely and cannot pass traffic."
+  long: "DMPO detects an SLA failure or an outage within roughly 300 to 500 milliseconds and steers affected flows to a healthy link, where one exists."
+  related: [brownout, dmpo]
+  lesson_ref: intro-how-velocloud-solves
+
+- id: qoe
+  term: "QoE"
+  aliases: ["quality of experience"]
+  short: "A score of how good a type of traffic, such as voice or video, is experiencing the network."
+  long: "In the Orchestrator an Edge has a QoE tab that shows quality scores for voice, video and transactional traffic."
+  related: [sla, vco]
+  lesson_ref: intro-vco-orientation
+
+# ---- Section 2 vocabulary (real content) ----
+- id: activation
+  term: "Activation"
+  aliases: ["Edge activation"]
+  short: "The step that joins a provisioned Edge to the Orchestrator so it can receive its configuration and software."
+  long: "An Edge is first provisioned in the Orchestrator (name, model, Profile, and optionally a serial number) and given an activation key that expires after one month if unused. It is then activated either by pushing (auto-activation, which needs outbound Internet through DHCP) or by pulling (an activation email). After activation the Edge keeps a heartbeat connection to the Orchestrator."
+  related: [zero-touch-provisioning, heartbeat, profile]
+  lesson_ref: arch-edge
+
+- id: heartbeat
+  term: "Heartbeat"
+  short: "A regular signal an Edge or Gateway sends to the Orchestrator to show it is alive."
+  long: "On activation an Edge sets up a persistent WebSocket connection to the Orchestrator that carries its heartbeats. If the Orchestrator sees no heartbeat for a configured time, it shows the Edge as OFFLINE. Gateways also send heartbeats to the Orchestrator."
+  related: [activation, vco]
+  lesson_ref: arch-orchestrator
+
+- id: override
+  term: "Override"
+  short: "A setting changed on one Edge that differs from what it would inherit from its Profile."
+  long: "Edges inherit their settings from their Profile by default. Ticking the Override checkbox next to a setting on an Edge lets you change it for that Edge only. The detail of which settings can be overridden comes in a later section."
+  related: [profile, vce]
+  lesson_ref: arch-edge
+
+- id: segment
+  term: "Segment"
+  aliases: ["network segment"]
+  short: "A logical sub-network used to keep groups of traffic isolated from each other."
+  long: "The guide describes network segmentation as splitting a network into distinct logical sub-networks by applying isolation techniques on forwarding devices. In the Orchestrator, segments are configured under Configure > Segments, and features such as Cloud VPN are set per segment."
+  related: [profile, cloud-vpn]
+  lesson_ref: arch-orchestrator
+
+- id: dcc
+  term: "DCC"
+  aliases: ["Distributed Cost Calculation"]
+  short: "A mechanism that moves route-preference calculation to the Edges and Gateways so lost contact with the Orchestrator does not delay route updates."
+  long: "Without it, route preferences would be calculated centrally and an Edge or Gateway that loses contact with the Orchestrator would miss updates. The mechanism is described in the 7.0 Administration Guide overview."
+  related: [vco, vcg]
+  lesson_ref: arch-orchestrator
+
+- id: spoke
+  term: "Spoke"
+  aliases: ["spoke Edge"]
+  short: "A branch Edge that connects to a Hub."
+  long: "In a hub-and-spoke layout the Hub is typically placed in a data center and the spokes are the branch Edges that build tunnels to it. In VeloCloud SD-WAN an Edge can act as a regular Edge, a Hub or a spoke."
+  related: [hub, branch-to-hub-vpn, hub-and-spoke]
+  lesson_ref: arch-tunnels
+
+- id: cloud-vpn
+  term: "Cloud VPN"
+  short: "The Orchestrator setting, per segment, that turns on the tunnels between Edges and to Hubs and Gateways."
+  long: "Cloud VPN offers three tunnel types: Branch to Hub VPN, Branch to Branch VPN, and Edge to Non SD-WAN via Gateway. You enable it in the device settings of a Profile."
+  related: [branch-to-hub-vpn, dynamic-branch-to-branch, non-sd-wan-destination]
+  lesson_ref: arch-tunnels
+
+- id: branch-to-hub-vpn
+  term: "Branch to Hub VPN"
+  aliases: ["Branch to Hubs"]
+  short: "A Cloud VPN option in which every Edge builds a permanent tunnel to the Hubs you choose."
+  long: "After you designate the Hubs (Edges, typically in data centers), the Orchestrator tells all Edges to build secure overlay tunnels to them. The tunnels are permanent, unlike dynamic branch-to-branch tunnels."
+  related: [hub, spoke, cloud-vpn]
+  lesson_ref: arch-tunnels
+
+- id: dynamic-branch-to-branch
+  term: "Dynamic Branch to Branch"
+  aliases: ["dynamic tunnel", "dynamic branch-to-branch VPN"]
+  short: "A setting that lets two branches build a direct tunnel on demand after their first traffic goes through a Gateway or Hub."
+  long: "The 7.0 Profile settings page says the Orchestrator configures it for all Edges by default (it can instead be set per Profile). Initial traffic goes through the Gateway or Hub; if the initiating Edge determines that a secure multipath tunnel is possible it creates a direct one; the direct tunnel is torn down after 180 seconds of traffic silence."
+  related: [cloud-vpn, tunnel, nat-traversal]
+  lesson_ref: arch-tunnels
+
+- id: non-sd-wan-destination
+  term: "Non SD-WAN Destination"
+  aliases: ["NSD"]
+  short: "A site or service that does not run VeloCloud SD-WAN and is reached over an IPsec tunnel."
+  long: "The tunnel can start from a Gateway (the Gateway is the initiator) or, for AWS and Azure data centers only, from an Edge. The tunnel type is IPsec; the other end is the remote site's own VPN device."
+  related: [ipsec, vcg]
+  lesson_ref: arch-gateway
+
+- id: gateway-pool
+  term: "Gateway Pool"
+  short: "A logical grouping of Gateways."
+  long: "Gateways are organized into pools in the Orchestrator's operator view, where they are also shown with a status such as Connected, Degraded, Never Activated, Not in Use, Offline, Out of Service or Quiesced."
+  related: [vcg, partner-gateway]
+  lesson_ref: arch-gateway
+
+- id: partner-gateway
+  term: "Partner Gateway"
+  short: "A Gateway that a service provider deploys in its own infrastructure, tailored to on-premise operation."
+  long: "A Partner Gateway is installed with two interfaces: one receives VCMP traffic from remote Edges (and IPsec from Non SD-WAN Destinations), the other faces the data center and connects to a PE router for managed services or a private MPLS or IP-VPN core."
+  related: [vcg, gateway-pool, vcmp]
+  lesson_ref: arch-gateway
+
+- id: ipsec
+  term: "IPsec"
+  short: "A set of protocols for encrypting and authenticating IP traffic."
+  long: "VeloCloud encrypts VCMP with transport-mode IPsec, and Non SD-WAN Destinations are reached over IPsec tunnels. The guides name IKEv2 for key management and list UDP 500 and 4500 for IKEv2 and NAT transparency, and ESP (IP protocol 50) for IPsec when no NAT is present."
+  related: [vcmp, nat-traversal, non-sd-wan-destination]
+  lesson_ref: arch-tunnels
+
+- id: nat
+  term: "NAT"
+  aliases: ["network address translation"]
+  short: "A device or feature that rewrites IP addresses (and often ports) as packets pass through it."
+  long: "Branch routers and firewalls often use NAT between the private LAN and the Internet. NAT matters to SD-WAN because it can stop incoming tunnels from reaching an Edge unless it is configured to allow them."
+  related: [nat-traversal, ipsec]
+  lesson_ref: arch-ports-firewall
+
+- id: nat-traversal
+  term: "NAT traversal"
+  aliases: ["NAT-T", "UDP hole punching"]
+  short: "Techniques that let tunnel traffic pass through NAT devices."
+  long: "The 7.0 guide says VeloCloud forces NAT-T on, using the special port 2426, so its behaviour is the same with or without NAT. A separate Edge option, UDP hole punching, tries to work around NAT devices that block incoming connections, but it does not suit every type of NAT."
+  related: [nat, vcmp, dynamic-branch-to-branch]
+  lesson_ref: arch-ports-firewall
+
+- id: overhead
+  term: "Tunnel overhead"
+  aliases: ["encapsulation overhead"]
+  short: "The extra bytes that tunnel headers add to every packet."
+  long: "For VeloCloud, VCMP adds 31 bytes; for Internet Multipath traffic the total with IP and UDP headers is 59 bytes, and for IPsec VPN traffic it is 97 to 112 bytes. Overhead reduces how much user data fits in one packet."
+  related: [mtu, vcmp, path-mtu-discovery]
+  lesson_ref: arch-mtu-overhead
+
+- id: mtu
+  term: "MTU"
+  aliases: ["maximum transmission unit", "effective MTU"]
+  short: "The largest packet, in bytes, that a link or path can carry without splitting it."
+  long: "On a 1500-byte path, the effective MTU for user packets is 1500 minus the tunnel overhead. The 7.0 guide says the maximum supported IP MTU across the overlay without fragmentation is 1500, and jumbo frames are not supported."
+  related: [overhead, mss, fragmentation, path-mtu-discovery]
+  lesson_ref: arch-mtu-overhead
+
+- id: mss
+  term: "MSS"
+  aliases: ["maximum segment size"]
+  short: "The largest amount of TCP data in one segment, normally the MTU minus the IP and TCP headers."
+  long: "For plain IPv4 and TCP without options the headers are 20 bytes each, so a 1441-byte effective MTU gives an MSS of 1401. This is general TCP knowledge rather than something specific to VeloCloud documentation."
+  related: [mtu, overhead]
+  lesson_ref: arch-mtu-overhead
+
+- id: path-mtu-discovery
+  term: "Path MTU discovery"
+  aliases: ["PMTUD"]
+  short: "Finding the largest packet size a path supports."
+  long: "The Edge first tries RFC 1191 (packets with the Don't Fragment bit set, adjusting on ICMP replies), then falls back to RFC 4821, which measures only down to 1300 bytes. On public Internet links discovery runs toward the Gateways and all tunnels use the minimum found; on private links it runs toward other Edges and each tunnel gets its own result."
+  related: [mtu, fragmentation]
+  lesson_ref: arch-mtu-overhead
+
+- id: fragmentation
+  term: "Fragmentation"
+  aliases: ["IP fragmentation"]
+  short: "Splitting a packet that is too large into smaller pieces."
+  long: "The 7.0 guide says the Edge automatically performs IP fragmentation per RFC 791 when a packet is too large. Fragmenting costs processing and can hurt performance, which is why getting the MTU right matters."
+  related: [mtu, path-mtu-discovery]
+  lesson_ref: arch-mtu-overhead
+
+# ---- Section 3 vocabulary (DMPO). Facts: reference/dmpo*.md ----
+- id: probe
+  term: "Probe"
+  aliases: ["active probe"]
+  short: "A small test packet DMPO sends on a path that has no user traffic, so the path can still be measured."
+  long: "While user traffic flows, DMPO measures the path from that traffic. With none, an active probe is sent every 100 ms; after five minutes with no high-priority user traffic the interval becomes 500 ms."
+  related: [dmpo, loss, latency, jitter]
+  lesson_ref: dmpo-monitoring
+
+- id: loss
+  term: "Packet loss"
+  aliases: ["loss"]
+  short: "The share of packets that are sent but never arrive."
+  long: "One of the three measurements DMPO makes on every path. The receiving endpoint finds lost packets from the sequence numbers in the tunnel header."
+  related: [latency, jitter, sla]
+  lesson_ref: dmpo-monitoring
+
+- id: latency
+  term: "Latency"
+  aliases: ["delay"]
+  short: "How long a packet takes to cross a path."
+  long: "One of the three measurements DMPO makes on every path, using timestamps carried in the tunnel header. Voice and video are especially sensitive to it."
+  related: [loss, jitter, sla]
+  lesson_ref: dmpo-monitoring
+
+- id: jitter
+  term: "Jitter"
+  short: "The variation in delay from one packet to the next."
+  long: "A path can have low average latency and still have high jitter, which is what makes voice sound choppy. DMPO measures it on every path and can switch on a jitter buffer for real-time traffic."
+  related: [latency, jitter-buffer, loss]
+  lesson_ref: dmpo-monitoring
+
+- id: fec
+  term: "FEC"
+  aliases: ["forward error correction"]
+  short: "In Arista's DMPO description, sending duplicate copies of packets so that a lost one can be recovered."
+  long: "On a single link the duplicate is sent next to the original; with two or more links the copies go on separate links, and DMPO uses up to two of the best links. The receiver discards duplicates. FEC is switched on per flow when loss crosses a threshold and off when it does not."
+  related: [on-demand-remediation, jitter-buffer, nack]
+  lesson_ref: dmpo-remediation
+
+- id: jitter-buffer
+  term: "Jitter buffer"
+  short: "A short hold at the receiver that evens out packet arrival for real-time traffic."
+  long: "Enabled for real-time traffic when jitter exceeds 7 ms for voice or 5 ms for video. The receiving endpoint buffers up to 10 packets or 200 ms, and the buffer is disabled if the flow is not constant."
+  related: [jitter, fec, on-demand-remediation]
+  lesson_ref: dmpo-remediation
+
+- id: nack
+  term: "NACK"
+  aliases: ["negative acknowledgement"]
+  short: "A message from the receiving DMPO endpoint asking the sender to retransmit a missing packet."
+  long: "Used for TCP applications such as file transfer. The retransmission happens between the two DMPO endpoints, so the end hosts do not see the loss. It is enabled when loss exceeds a threshold for the application type."
+  related: [fec, on-demand-remediation]
+  lesson_ref: dmpo-remediation
+
+- id: on-demand-remediation
+  term: "On-demand remediation"
+  aliases: ["error correction", "remediation"]
+  short: "Error correction that DMPO turns on only while a link problem lasts and steering cannot fix it."
+  long: "Typical cases are a single link, or several links degraded at once. The mechanisms are FEC and the jitter buffer for real-time traffic and NACK for TCP traffic."
+  related: [fec, jitter-buffer, nack, premium-service]
+  lesson_ref: dmpo-remediation
+
+- id: premium-service
+  term: "Premium Service"
+  short: "A customer setting, on by default, that enables the On-Demand Remediation feature."
+  long: "With it on, the Gateway applies FEC to impaired traffic that cannot be steered. With it off, continuous monitoring, dynamic steering and secure transmission still apply, but there is no Gateway error correction."
+  related: [on-demand-remediation, vcg]
+  lesson_ref: dmpo-remediation
+
+- id: link-steering
+  term: "Link steering"
+  aliases: ["steering"]
+  short: "Choosing which link or links a given application's traffic uses."
+  long: "A business-policy rule has four steering modes: Auto, Transport Group, Interface and WAN Link. For Interface and WAN Link you also pick Mandatory, Preferred or Available."
+  related: [business-policy-rule, transport-group, mandatory, preferred, available]
+  lesson_ref: dmpo-steering
+
+- id: transport-group
+  term: "Transport group"
+  short: "A set of links of the same kind that a rule can steer to as one choice."
+  long: "The Orchestrator's Links view groups links as Public Wired, Public Wireless and Private Wired. A rule can name a transport group instead of one link."
+  related: [link-steering, business-policy-rule]
+  lesson_ref: dmpo-steering
+
+- id: mandatory
+  term: "Mandatory"
+  short: "Steering strictness that pins traffic to the chosen link or group."
+  long: "Traffic does not steer away, even in an outage. Brownouts get remediation. If the link or group is inactive, the policy table says the packet is dropped."
+  related: [preferred, available, link-steering]
+  lesson_ref: dmpo-steering
+
+- id: preferred
+  term: "Preferred"
+  short: "Steering strictness that uses the chosen link while it meets the SLA, then moves to another public link."
+  long: "It does not move to a private link because of an SLA failure; that happens only when the preferred link and the other public links are unstable or down."
+  related: [mandatory, available, link-steering]
+  lesson_ref: dmpo-steering
+
+- id: available
+  term: "Available"
+  short: "Steering strictness that keeps the chosen link while it is up, whatever the SLA."
+  long: "If the SLA is missed, remediation is applied instead of moving. Flows move only if the link goes down."
+  related: [mandatory, preferred, link-steering]
+  lesson_ref: dmpo-steering
+
+- id: business-policy-rule
+  term: "Business policy rule"
+  aliases: ["rule"]
+  short: "One entry in a business policy: it matches traffic and says how to steer and treat it."
+  long: "Rules live on the Business Policy tab of a Profile (Configure > Profiles) or of an Edge (Configure > Edges). A rule's Link Steering setting is where Auto, Transport Group, Interface or WAN Link is chosen."
+  related: [business-policy, link-steering]
+  lesson_ref: dmpo-steering
+
+- id: flow
+  term: "Flow"
+  short: "A stream of packets between the same two endpoints for one conversation, such as one call or one download."
+  long: "DMPO decisions are made per flow. A flow can be moved to another tunnel mid-session."
+  related: [per-flow, per-packet]
+  lesson_ref: dmpo-overview
+
+- id: per-flow
+  term: "Per-flow"
+  short: "Handling all packets of one flow the same way, for example on the same link."
+  long: "Opposite of per-packet. Spreading different flows over different links is per-flow load balancing. Whether current releases still do this for traffic sent directly was not confirmed."
+  related: [per-packet, flow]
+  lesson_ref: dmpo-overview
+
+- id: per-packet
+  term: "Per-packet"
+  short: "Making a separate choice for each packet, so one flow can use several links at once."
+  long: "The legacy 2017 white paper describes per-packet load balancing for bulk traffic, with resequencing at the receiver. Current documentation was not confirmed on the exact conditions."
+  related: [per-flow, flow]
+  lesson_ref: dmpo-overview
+
+- id: bandwidth-discovery
+  term: "Bandwidth discovery"
+  aliases: ["Automated Bandwidth Discovery"]
+  short: "A short test an Edge runs against the nearest Gateway to measure a new link's bandwidth."
+  long: "After the Edge detects a WAN link it sends short bursts of bidirectional traffic and measures the arrival rate at each end."
+  related: [dmpo, vcg]
+  lesson_ref: dmpo-monitoring
+
+- id: link-quality
+  term: "Link quality"
+  short: "How well a link is currently performing, in loss, latency and jitter."
+  long: "DMPO judges link quality continuously and per application SLA. The Orchestrator's QoE tab shows it as Good, Fair or Poor scores."
+  related: [loss, latency, jitter, qoe, sla]
+  lesson_ref: dmpo-monitoring
+
+- id: hold-time
+  term: "Hold time"
+  short: "The one-minute wait after a brownout or outage clears before DMPO steers traffic back to the preferred link."
+  long: "It applies when the business policy names a preferred link."
+  related: [outage, brownout, preferred]
+  lesson_ref: dmpo-outage-brownout
+
+- id: blackout
+  term: "Blackout"
+  short: "Older and common industry wording for a link that has failed completely."
+  long: "Arista's current guides use the word outage for this. The word blackout appears in the legacy 2017 VeloCloud white paper. The course uses outage."
+  related: [outage, brownout]
+  lesson_ref: dmpo-outage-brownout
+
+# ---- Section 4 vocabulary (configuration model). Facts: reference/segments.md, profiles.md, edge-overrides.md, business-policy.md, firewall.md, applications-qos.md ----
+- id: global-segment
+  term: "Global Segment"
+  short: "The segment every Enterprise has; its type can be set to Regular or Private."
+  long: "Business policy and other pages show the Global Segment [Regular] by default in their Segment drop-down. Other segments are created under Configure > Segments."
+  related: [segment, private-segment]
+  lesson_ref: cfg-segments
+
+- id: private-segment
+  term: "Private segment"
+  short: "A segment type for which the Orchestrator changes Internet Multipath business policies to Direct."
+  long: "Arista says that for Private segments the Orchestrator automatically overrides all business policies set to Internet Multipath and changes them to Direct."
+  related: [segment, global-segment, network-service-action]
+  lesson_ref: cfg-segments
+
+- id: quick-start-profile
+  term: "Quick Start Profile"
+  short: "The default Profile that exists when the Orchestrator is installed."
+  long: "Its default contents and whether it can be edited or deleted were not confirmed in the pages we read."
+  related: [profile]
+  lesson_ref: cfg-profiles
+
+- id: inheritance
+  term: "Inheritance"
+  short: "An Edge taking its settings from its Profile unless an Override says otherwise."
+  long: "On the Edge Device tab, some settings are inherited from the Profile, and ticking Override lets you edit the setting for that Edge."
+  related: [profile, override, effective-configuration]
+  lesson_ref: cfg-model
+
+- id: effective-configuration
+  term: "Effective configuration"
+  short: "What an Edge actually ends up using: its Profile's settings plus its own overrides."
+  long: "Course vocabulary, not an Arista menu name. It is the answer to the question this section keeps asking: where is this setting coming from?"
+  related: [inheritance, override, profile]
+  lesson_ref: cfg-model
+
+- id: firewall-policy
+  term: "Firewall policy"
+  aliases: ["firewall rules"]
+  short: "The firewall rules, at Profile and Edge level, that decide whether traffic is allowed, dropped or rejected."
+  long: "Rules match parameters such as IP addresses, ports, VLAN IDs, interfaces, MAC addresses, applications and protocols. Edge override rules take priority over inherited Profile rules."
+  related: [stateful-firewall, inbound-acl, business-policy]
+  lesson_ref: cfg-firewall
+
+- id: stateful-firewall
+  term: "Stateful firewall"
+  short: "A firewall option that tracks sessions: matching is directional, and Reject and Skip actions become available."
+  long: "By default the Orchestrator deactivates Stateful Firewall for an Enterprise. A stateful firewall enforces symmetric routing and is not supported with asymmetric routing."
+  related: [firewall-policy]
+  lesson_ref: cfg-firewall
+
+- id: inbound-acl
+  term: "Inbound ACL"
+  aliases: ["ACL"]
+  short: "The Edge setting, under Firewall, for Port Forwarding and 1:1 NAT rules that admit inbound traffic."
+  long: "By default the Edge blocks all inbound traffic except self-destined traffic unless Port Forwarding or 1:1 NAT rules are configured (Configure > Edges > Firewall > Additional Settings)."
+  related: [firewall-policy]
+  lesson_ref: cfg-firewall
+
+- id: match
+  term: "Match"
+  short: "The part of a rule that says which traffic it applies to."
+  long: "In a business policy rule the Match tab has Source, Destination and Application sections; a firewall rule has a Match section with similar fields."
+  related: [action, business-policy-rule]
+  lesson_ref: cfg-business-policy
+
+- id: action
+  term: "Action"
+  short: "The part of a rule that says what to do with matching traffic."
+  long: "A business policy action sets priority, network service, link steering, service class, rate limit, NAT or DSCP. A firewall action is Allow, Drop, Reject or Skip."
+  related: [match, business-policy-rule]
+  lesson_ref: cfg-business-policy
+
+- id: network-service-action
+  term: "Network service (rule action)"
+  short: "A business policy action choosing how traffic is carried: Direct, Multi-Path or Internet Backhaul."
+  long: "Not the same as the Configure > Network Services area, which holds shared services. Internet Backhaul applies only when the destination is Internet."
+  related: [action, link-steering]
+  lesson_ref: cfg-business-policy
+
+- id: traffic-class
+  term: "Traffic class"
+  short: "A Priority (High, Normal, Low) combined with a Service Class: nine classes in all."
+  long: "Scheduler weights and optional policers apply per traffic class, through Overlay QoS CoS Mapping."
+  related: [service-class, business-priority, qos]
+  lesson_ref: cfg-apps-qos
+
+- id: service-class
+  term: "Service class"
+  short: "Real-time, Transactional or Bulk: how DMPO handles an application's traffic."
+  long: "Users cannot change the service class for default applications but can set it for their own custom applications."
+  related: [traffic-class, business-priority, on-demand-remediation]
+  lesson_ref: cfg-apps-qos
+
+- id: business-priority
+  term: "Business priority"
+  aliases: ["priority"]
+  short: "High, Normal or Low: how important an application is, used when QoS is applied."
+  long: "Users can change the business priority of any application."
+  related: [service-class, traffic-class]
+  lesson_ref: cfg-apps-qos
+
+- id: smart-defaults
+  term: "Smart Defaults"
+  short: "A ready-made business policy that supports over 2500 applications."
+  long: "It maps applications to traffic classes with default scheduler weights, so the network has sensible behaviour before you write any rule."
+  related: [business-policy, traffic-class]
+  lesson_ref: cfg-apps-qos
+
+- id: dpi
+  term: "DPI"
+  aliases: ["deep packet inspection"]
+  short: "Looking beyond addresses and ports to recognise which application a flow belongs to."
+  long: "Firewall rules that match an application depend on the DPI engine. DMPO identifies traffic using Layer 2 through Layer 7 attributes."
+  related: [service-class, firewall-policy]
+  lesson_ref: cfg-apps-qos
+
+- id: dscp
+  term: "DSCP"
+  aliases: ["DSCP tag"]
+  short: "A marking in the IP header that says what treatment a packet wants."
+  long: "A business policy rule can match a DSCP value on incoming traffic and has Inner and Outer Packet DSCP tag fields to set on the way out."
+  related: [qos, business-policy-rule]
+  lesson_ref: cfg-apps-qos
+
+- id: qos
+  term: "QoS"
+  aliases: ["quality of service"]
+  short: "Treating traffic classes differently when a link is busy: scheduling, weights and policing."
+  long: "QoS does not make a link faster. In business policy it works through traffic classes, scheduler weights and optional policers, and it is separate from link steering."
+  related: [traffic-class, business-priority]
+  lesson_ref: cfg-apps-qos
+
+# ---- Section 5 vocabulary (overlay connectivity). Facts: reference/cloud-vpn.md, hubs-and-branches.md, non-sdwan-destinations.md, network-services-other.md ----
+- id: branch-to-branch-vpn
+  term: "Branch to Branch VPN"
+  short: "A Cloud VPN option, under Branch to Branch VPN (Transit & Dynamic), that lets branch Edges talk to each other through Gateways or Hubs."
+  long: "Two choices: Cloud Gateways (each Edge tunnels to the closest Gateway and connections go through it) and Hubs for VPN (connections between branch Edges go through a Hub). It also stops Edges in the Profile learning routes from Edges outside it."
+  related: [cloud-vpn, hubs-for-vpn, dynamic-branch-to-branch]
+  lesson_ref: ov-cloud-vpn
+
+- id: hubs-for-vpn
+  term: "Hubs for VPN"
+  short: "The Branch to Branch VPN choice that sends connections between branches through a Hub."
+  long: "In 6.4 documentation, enabling Hubs for VPN deactivates the data plane through the Gateway for Branch to Branch VPN, and traffic transits a Hub in the order you specify."
+  related: [branch-to-branch-vpn, hub]
+  lesson_ref: ov-hubs
+
+- id: static-tunnel
+  term: "Static tunnel"
+  short: "A tunnel that is always up, such as an Edge's tunnel to a Gateway or a branch's permanent tunnel to a Hub."
+  long: "List Paths shows each tunnel's mode as Static (always up) or Dynamic (established on a need basis for branch-to-branch communication)."
+  related: [dynamic-branch-to-branch, branch-to-hub-vpn]
+  lesson_ref: ov-hubs
+
+- id: backhaul-hub
+  term: "Backhaul Hub"
+  short: "A Hub that carries cloud-bound or Internet traffic for branches, chosen through business policy."
+  long: "Backhaul Hubs are picked in the same Edit Hubs window. The firewall log names such traffic Internet-BH-via-<backhaul hub name>."
+  related: [hub, branch-to-hub-vpn]
+  lesson_ref: ov-hubs
+
+- id: hub-cluster
+  term: "Hub cluster"
+  aliases: ["Edge cluster"]
+  short: "A logical group of Edges that other Edges treat as a single Hub, to add tunnel capacity and Active/Active high availability."
+  long: "Configured under Configure > Network Services > Clusters and Hubs. The Gateway assigns an Edge to a member using the Edge's logical ID modulo the number of Hubs. Each Hub's Cluster Score above 70 means over capacity."
+  related: [hub, backhaul-hub]
+  lesson_ref: ov-hubs
+
+- id: nsd-via-gateway
+  term: "NSD via Gateway"
+  short: "A Non SD-WAN Destination reached through an IPsec tunnel that a Gateway builds."
+  long: "Defined at the Profile level only and not overridable on an Edge. Supported types include AWS VPN Gateway, Check Point, Cisco ASA, Cisco ISR, Generic IKEv1 and IKEv2, Azure Virtual Hub, Palo Alto, SonicWALL, Zscaler and Generic Firewall (policy-based)."
+  related: [non-sd-wan-destination, nsd-via-edge, ipsec]
+  lesson_ref: ov-nsd
+
+- id: nsd-via-edge
+  term: "NSD via Edge"
+  short: "A Non SD-WAN Destination reached through an IPsec tunnel that an Edge builds itself."
+  long: "Types listed are Generic IKEv1 (route-based), Generic IKEv2 (route-based) and Microsoft Azure Virtual WAN. Added under Configure > Network Services > Non SD-WAN Destinations via Edges, then enabled in the Profile's VPN Services; one such service per segment."
+  related: [non-sd-wan-destination, nsd-via-gateway, ipsec]
+  lesson_ref: ov-nsd
+
+- id: netflow
+  term: "NetFlow"
+  aliases: ["IPFIX"]
+  short: "Exporting records of the flows an Edge carries to a collector."
+  long: "The Edge sends IPFIX flow information, aggregated by source IP, destination IP, destination port and protocol. Configured under Configure > Network Services > Network Management > NetFlow."
+  related: [collector]
+  lesson_ref: ov-services
+
+- id: collector
+  term: "Collector"
+  short: "The server that receives exported flow records, with a name, an IP address and a port."
+  long: "Limits: 2 NetFlow collectors per segment, 8 per Profile and Edge, 16 filters per collector."
+  related: [netflow]
+  lesson_ref: ov-services
+
+- id: private-network-name
+  term: "Private network name"
+  short: "A name for a private network, assigned to individual private WAN overlays."
+  long: "Defined under Network Management > Private Network Names. Only names not used by an Edge can be deleted."
+  related: [overlay]
+  lesson_ref: ov-services
+
+- id: prefix-delegation-tag
+  term: "Prefix delegation tag"
+  short: "A tag that lets a LAN interface receive IPv6 prefixes from a WAN interface sharing the same tag."
+  long: "Tags attach to Profiles and Edges through their DHCPv6 settings."
+  related: [profile]
+  lesson_ref: ov-services
+
+- id: authentication-service
+  term: "Authentication service"
+  aliases: ["RADIUS service"]
+  short: "A configured RADIUS server (address, shared secret, authentication port 1812 by default) used to authenticate access."
+  long: "Created under Network Management > Authentication Services. TACACS Services is a separate service, hidden by default and activated by the Operator."
+  related: [vnf]
+  lesson_ref: ov-services
+
+- id: vnf
+  term: "VNF"
+  aliases: ["virtual network function"]
+  short: "A software-only network function, such as a firewall, run as part of an Edge service."
+  long: "Under Configure > Network Services > Edge Services > VNFs. Documented types include Check Point, Fortinet and Palo Alto Networks firewalls; Palo Alto needs a VNF licence."
+  related: [authentication-service]
+  lesson_ref: ov-services
+
+- id: api-credential
+  term: "API credential"
+  short: "Stored credentials the Orchestrator uses to talk to a cloud provider's API: Azure subscriptions and Zscaler subscriptions."
+  long: "Under Configure > Network Services > API Credentials; a Validate Subscription option checks the details."
+  related: [nsd-via-gateway]
+  lesson_ref: ov-services
+
+# Section 6: routing
+- id: route
+  term: "Route"
+  short: "An entry saying that traffic for a prefix goes to a given next hop or interface."
+  long: "On an Edge a route can be local (connected, static, or learned from OSPF or BGP) or remote (learned through VCRP from another Edge). Route Table Dump shows each route with its type, cost, preference, reachability and next hop."
+  related: [prefix, routing-table, route-type, vcrp]
+  lesson_ref: rt-big-picture
+
+- id: prefix
+  term: "Prefix"
+  aliases: ["subnet prefix", "network prefix"]
+  short: "An address range written with a length, such as a /24, that a route covers."
+  long: "A longer prefix is more specific: the most specific matching prefix always wins before any other route comparison (longest prefix match, the first step in the documented order of operations). The course's example prefixes are illustrative."
+  related: [route, longest-prefix-match, route-summarization]
+  lesson_ref: rt-big-picture
+
+- id: longest-prefix-match
+  term: "Longest prefix match"
+  short: "The rule that, of all routes matching a destination, the one with the longest prefix length wins."
+  long: "In the 7.0 order of operations it is the first criterion: the most specific mask always wins, before connected, static or dynamic routes are compared."
+  related: [prefix, route-preference]
+  lesson_ref: rt-redistribution
+
+- id: vcrp
+  term: "VCRP"
+  aliases: ["VeloCloud Routing Protocol"]
+  short: "The proprietary overlay routing protocol used between Edges and Gateways to exchange routes."
+  long: "The 7.0 Overview describes VCRP as supporting multi-path, with Edges connected by VCRP similar to an iBGP full mesh, and the Gateway acting as a route reflector. It is not the BGP session you configure with a LAN router."
+  related: [route, route-reflector, overlay]
+  lesson_ref: rt-big-picture
+
+- id: route-reflector
+  term: "Route reflector"
+  short: "A device that passes routes it learns from one peer on to others so a full mesh is not needed."
+  long: "In VeloCloud the Gateway acts as a BGP route reflector for overlay routes: it reflects routes from one Edge to the others based on Profile settings."
+  related: [vcrp, vcg]
+  lesson_ref: rt-big-picture
+
+- id: routing-table
+  term: "Routing table"
+  aliases: ["RIB", "FIB", "route table"]
+  short: "The Edge's list of routes; the guides call the two stages RIB and FIB."
+  long: "Diagnostics > Route Table Dump lists the table (output limited to 16000 routes), for one segment or all, for one prefix or all, and either all routes or only the preferred route used for forwarding."
+  related: [route, route-type, route-preference]
+  lesson_ref: rt-big-picture
+
+- id: route-type
+  term: "Route type"
+  short: "Where a route comes from or what it is: connected, static, OSPF, BGP, overlay, NSD, cloud."
+  long: "Route Table Dump shows a Type column (for example Cloud, Edge2Edge, or any for underlay or connected). OSPF routes further have intra-area, inter-area, E1 or E2 types, and BGP routes are iBGP or eBGP."
+  related: [route, route-preference, ospf-e1-e2]
+  lesson_ref: rt-big-picture
+
+- id: route-preference
+  term: "Route preference"
+  short: "The number the Edge compares to choose between dynamic routes: the lower value wins."
+  long: "The 7.0 Overview states that the lower the preference value the higher the priority. Defaults printed for Edges include 1001 for OSPF intra-area, 1002 for inter-area, 1003 for eBGP and 1004 for iBGP. Overlay Flow Control or distributed cost calculation sets the values."
+  related: [administrative-distance, overlay-flow-control, route-pinning]
+  lesson_ref: rt-redistribution
+
+- id: administrative-distance
+  term: "Administrative distance"
+  aliases: ["AD"]
+  short: "The general routing term for ranking route sources; the Arista guides use route preference instead."
+  long: "The Arista pages read do not use the term administrative distance. They use a fixed order of operations and numeric route preference (lower wins). Do not assume values such as 110 for OSPF carry over."
+  related: [route-preference]
+  lesson_ref: rt-redistribution
+
+- id: route-pinning
+  term: "Route pinning"
+  aliases: ["Pin Learned Route Preference"]
+  short: "Overriding the default preference of a dynamic route in Overlay Flow Control."
+  long: "Select routes in the Overlay Flow Control Routes List and choose Pin Learned Route Preference; pinned routes get preference values starting from 1, the highest priority."
+  related: [overlay-flow-control, route-preference]
+  lesson_ref: rt-ofc
+
+- id: static-route
+  term: "Static route"
+  short: "A route you configure by hand on an Edge: subnet, next hop, cost, Preferred, Advertise and an ICMP probe."
+  long: "Configured under Configure > Edges > Device > Routing & NAT > Static Route Settings. Preferred is a local choice; Advertise shares the route over the VPN."
+  related: [next-hop, icmp-probe, default-route]
+  lesson_ref: rt-static
+
+- id: next-hop
+  term: "Next hop"
+  short: "The address or device a route sends traffic to next."
+  long: "For a static route it is the Next Hop IP. In Route Table Dump, the Next Hop column is the exit interface for local routes and the kind of overlay next hop (Cloud gateway, Cloud VPN, edge to edge) for overlay routes."
+  related: [static-route, route]
+  lesson_ref: rt-static
+
+- id: icmp-probe
+  term: "ICMP probe"
+  short: "A reachability check on a static route's next hop that triggers failover when it fails."
+  long: "The guide says to always configure one; without it traffic can be black-holed. A failed probe shows as SLA_STATE_DOWN in the route's reachable reason."
+  related: [static-route]
+  lesson_ref: rt-static
+
+- id: default-route
+  term: "Default route"
+  aliases: ["0.0.0.0/0"]
+  short: "The route used when no more specific route matches; the catch-all prefix."
+  long: "OSPF can inject a default route with type O1 or O2 (None by default, Advertise Conditional means only when the Edge learns it). BGP's Default Route option adds a network statement for it, and per-neighbor and global settings combine."
+  related: [static-route, network-statement, ospf]
+  lesson_ref: rt-static
+
+- id: ospf
+  term: "OSPF"
+  aliases: ["Open Shortest Path First"]
+  short: "A link-state routing protocol the Edge can run with LAN routers."
+  long: "Enabled in the Profile (Routing & NAT > OSPF) and then on Edge interfaces, on the Global Segment only. Full functionality needs routed interfaces; on switched interfaces it is passive only."
+  related: [ospf-area, ospf-e1-e2, redistribution]
+  lesson_ref: rt-ospf
+
+- id: ospf-area
+  term: "OSPF area"
+  aliases: ["Area ID"]
+  short: "A group of OSPF routers sharing a link-state database, identified by an Area ID."
+  long: "In the VCO each area has an Area ID and the Normal type is the only supported one."
+  related: [ospf, abr]
+  lesson_ref: rt-ospf
+
+- id: abr
+  term: "ABR"
+  aliases: ["Area Border Router"]
+  short: "A general OSPF router that connects two or more areas."
+  long: "The VeloCloud pages read do not discuss ABRs for the Edge; this entry is general OSPF vocabulary. Inter-area routes (O IA) are those learned from another area."
+  related: [ospf-area, ospf]
+  lesson_ref: rt-ospf
+
+- id: ospf-e1-e2
+  term: "E1 and E2"
+  aliases: ["OE1", "OE2", "external type 1", "external type 2"]
+  short: "The two metric types of OSPF external (redistributed) routes; the VCO default is E2."
+  long: "When routes are redistributed into OSPF the Profile sets metric (default 20) and metric type E1 or E2 (default E2). Among OSPF routes the preference order is intra-area, inter-area, E1, E2; external routes are kept out of the overlay by default."
+  related: [ospf, redistribution, global-advertise-flags]
+  lesson_ref: rt-ospf
+
+- id: route-summarization
+  term: "Route summarization"
+  aliases: ["summarization", "supernet"]
+  short: "Replacing several prefixes with one covering prefix (a supernet)."
+  long: "The OSPF Route Summarization table (Subnet, No Advertise, Tag, Metric Type, Metric) acts on external Type-5 routes under a supernet. Summarizing OSPF routes before the overlay is not documented in the pages read."
+  related: [prefix, ospf]
+  lesson_ref: rt-ospf
+
+- id: redistribution
+  term: "Redistribution"
+  short: "Copying routes learned one way (connected, static, a protocol or the overlay) into another protocol or into the overlay."
+  long: "Each direction is its own switch in the VCO. The system only redistributes the best route from its routing table to the destination protocol, and OSPF and BGP can be enabled independently."
+  related: [ospf, ibgp, ebgp, global-advertise-flags]
+  lesson_ref: rt-redistribution
+
+- id: ibgp
+  term: "iBGP"
+  short: "A BGP session with a neighbor in the same ASN as yours."
+  long: "In the VCO the form treats a neighbor with the same ASN as iBGP; multi-hop is inherent and Max-hop is not configurable. Overlay iBGP preference default is 1004. For BGP over IPsec to a non SD-WAN site only eBGP is supported."
+  related: [ebgp, asn, bgp-neighbor]
+  lesson_ref: rt-bgp
+
+- id: ebgp
+  term: "eBGP"
+  short: "A BGP session with a neighbor in a different ASN."
+  long: "Max-hop is available only for eBGP (default 1). Arista recommends eBGP between the Gateway and NSD sites. Default route preference printed for Edges is 1003."
+  related: [ibgp, asn, bgp-neighbor]
+  lesson_ref: rt-bgp
+
+- id: asn
+  term: "ASN"
+  aliases: ["Autonomous System Number", "AS number"]
+  short: "The number identifying a BGP autonomous system; you set a local ASN and one per neighbor."
+  long: "VeloCloud supports 4-byte ASNs. Equal local and neighbor ASNs make a session iBGP; different ones eBGP."
+  related: [ibgp, ebgp, as-path-prepend]
+  lesson_ref: rt-bgp
+
+- id: bgp-neighbor
+  term: "BGP neighbor"
+  aliases: ["BGP peer"]
+  short: "A router the Edge has a BGP session with: IP, ASN, inbound and outbound filter, timers."
+  long: "Keep-alive defaults to 60 seconds and Hold to 180. The Uplink flag marks a neighbor as the WAN overlay towards MPLS. Show BGP Summary and Show BGP Neighbor Details check it."
+  related: [ibgp, ebgp, bgp-filter]
+  lesson_ref: rt-bgp
+
+- id: network-statement
+  term: "Network statement"
+  short: "A BGP instruction to advertise a named prefix, as opposed to redistributing a whole source."
+  long: "In the VCO the Default Route option adds a network statement for the default route and the Networks field lists network addresses BGP advertises. Redistribution (Connected Routes, OSPF, Overlay Prefix) instead names a source."
+  related: [redistribution, default-route]
+  lesson_ref: rt-bgp
+
+- id: bgp-filter
+  term: "BGP filter"
+  aliases: ["filter list", "route map"]
+  short: "A list of match and action rules attached to a neighbor to accept, deny or change routes; the VCO's counterpart to a route map."
+  long: "Match on Prefix, Community, AS Path, Metric or Local preference; Permit or Deny; set Local Preference, Community, Metric, As-Path-Prepend or As-Path-Exclude. Attached as the neighbor's Inbound or Outbound Filter. Limit 512 rules."
+  related: [local-preference, med, as-path-prepend, community]
+  lesson_ref: rt-filters
+
+- id: local-preference
+  term: "Local preference"
+  short: "A BGP attribute: between two BGP routes the higher value wins."
+  long: "A BGP filter can set it. The diagnostic reason LR_BGP_LOCAL_PREF records a route losing on it. For iBGP to a non SD-WAN site it cannot be set by an outbound filter."
+  related: [bgp-filter, med, as-path-prepend]
+  lesson_ref: rt-filters
+
+- id: med
+  term: "MED"
+  aliases: ["metric", "multi-exit discriminator"]
+  short: "A BGP attribute that suggests which of several entry points to prefer: the lower value wins."
+  long: "In a BGP filter the Metric match and action use the MED value. The reason code LR_BGP_METRIC records a route losing on it."
+  related: [local-preference, bgp-filter]
+  lesson_ref: rt-filters
+
+- id: as-path-prepend
+  term: "AS-path prepend"
+  aliases: ["prepend"]
+  short: "Adding extra copies of an AS number to a BGP route's path so it looks longer and is less preferred."
+  long: "The As-Path-Prepend action set is available in BGP filters; a shorter AS path wins between two BGP routes (LR_BGP_ASPATH_LEN). As-Path-Exclude removes listed AS numbers instead."
+  related: [bgp-filter, asn, local-preference]
+  lesson_ref: rt-filters
+
+- id: community
+  term: "BGP community"
+  aliases: ["community"]
+  short: "A tag attached to BGP routes that filters can match or set."
+  long: "A filter can match a community or set one (optionally Additive). Uplink Community marks routes treated as uplink routes, and Overlay Route Control appends a community to prefixes advertised to the overlay."
+  related: [bgp-filter, overlay-route-control]
+  lesson_ref: rt-filters
+
+- id: overlay-route-control
+  term: "Overlay Route Control"
+  aliases: ["ORC"]
+  short: "A setting for the community and AS-path action on prefixes advertised to the overlay, without enabling BGP on the Edges."
+  long: "Profile settings apply to all Edges of the Profile; an Edge can override them at Device > Routing & NAT > Overlay Route Control."
+  related: [community, overlay-flow-control]
+  lesson_ref: rt-ofc
+
+- id: overlay-flow-control
+  term: "Overlay Flow Control"
+  aliases: ["OFC"]
+  short: "The Configure > Overlay Flow Control page: Preferred VPN Exits, Global Advertise Flags and the overlay's Routes List."
+  long: "Its configuration determines the initial preference values of routes and orders the dynamic routes. You can reorder exits for a subnet, pin routes, and Refresh Routes when distributed cost calculation is on."
+  related: [global-advertise-flags, preferred-vpn-exits, route-preference]
+  lesson_ref: rt-ofc
+
+- id: global-advertise-flags
+  term: "Global Advertise Flags"
+  short: "Overlay Flow Control settings deciding which kinds of routes enter the overlay."
+  long: "Cover static, connected, internal, external and uplink routes. By default External OSPF routes and NSD iBGP routes are kept out until their flags are enabled. A hybrid Hub and Branch Edge uses the Branch Profile's flags."
+  related: [overlay-flow-control, ospf-e1-e2]
+  lesson_ref: rt-ofc
+
+- id: preferred-vpn-exits
+  term: "Preferred VPN Exits"
+  short: "The ordered list of destinations that traffic for a route is sent to, editable per subnet."
+  long: "Edit changes the order for a particular subnet; the Orchestrator sends the change to the relevant Edges, which override their previous preferences."
+  related: [overlay-flow-control, route-pinning, hub]
+  lesson_ref: rt-ofc

@@ -1,0 +1,116 @@
+---
+id: intro-problems-sdwan-solves
+title: The business and operational problems SD-WAN solves
+summary: Cost, agility, visibility, branch rollout and transport choice, and what "SD-WAN" actually means.
+estimated_minutes: 10
+topics: [sdwan-benefits]
+---
+
+**By the end of this lesson you will be able to:**
+
+- name the five problems SD-WAN is meant to address and explain each in one sentence;
+- say what <Term id="sd-wan" /> means in plain language;
+- describe how <Term id="zero-touch-provisioning" /> and the two Edge activation methods work;
+- explain why a central <Term id="business-policy" /> matters once a branch has more than one kind of link.
+
+## Five problems, one idea
+
+Lesson 1 left us with a list of frustrations. Here they are grouped the way a business would raise them. The right-hand column is the
+**vendor's view** of how SD-WAN responds, taken from Arista's own overview.
+
+| Problem | What hurts today | What SD-WAN promises |
+|---|---|---|
+| Cost | Leased lines are cost-prohibitive and slow to deploy for the bandwidth branches need | Lower cost of ownership, by using Internet circuits alongside private ones (vendor's claim) |
+| Agility | Architectural complexity makes branch changes slow | One central place to define how the network behaves |
+| Visibility | Many tools, no single view, hard to troubleshoot | A single management portal with network-wide monitoring |
+| Branch rollout | New circuits have long lead times and sites need hands-on setup | Ship a device, plug it in, finish setup from the cloud |
+| Transport choice | Neither private circuits nor Internet connections are ideal on their own | Use whatever links a site has and choose per application |
+
+The common idea behind all five: **separate "what I want" from "which cable carries it"**. That separation is what the
+<Term id="sd-wan" /> name points at. You describe intent once, centrally, and software works out how to use the circuits at each site.
+
+## Same sites, now with direct Internet access
+
+Step through this second diagram, which reuses the sites from lesson 1.
+
+<Diagram id="wan-direct-internet" />
+
+<Predict
+  prompt="With direct Internet access in place, which traffic should most plausibly leave the branch straight to the Internet?"
+  choices={["Traffic to company applications in the data center", "Traffic to SaaS applications such as email or video meetings", "All traffic, because MPLS is obsolete", "No traffic, because the data center must inspect everything"]}
+  answer={1}
+>
+  SaaS traffic is the natural candidate: the provider is on the Internet, not in your data center. Company applications still live
+  behind the data center, so they keep using the private circuit unless there is a reason not to. The interesting question, which the
+  next lesson starts to answer, is *who decides that, and how is it applied to every branch?*
+</Predict>
+
+## What "SD-WAN" means here
+
+Put simply, an <Term id="sd-wan" /> adds a layer of software over the WAN circuits. Arista describes the goal as improving the economics
+and flexibility of a hybrid WAN (one with both private and Internet circuits), with the deployment speed and low maintenance of a
+cloud-based service, and with policy-based, network-wide control over application performance and visibility.
+
+Two ideas to keep:
+
+1. **Central policy.** Rules about applications and links are written once and applied to many sites. Arista says link steering, link
+   remediation and QoS are applied automatically from the business policy, with room for site-specific overrides.
+2. **Many links, one network.** An Edge can aggregate multiple links (Arista's overview lists private line, cable, DSL, 4G or 5G and
+   satellite) and steer traffic over the best ones. We call the property of not caring which kind of link it is
+   <Term id="transport-independence" />.
+
+<Callout variant="tip" title="Course vocabulary">
+  "Transport independence" and "underlay" are our own teaching words for ideas that Arista's guides describe in other terms. If you
+  search the documentation for them you may not find them. The ideas are real; the labels are ours.
+</Callout>
+
+## Rolling out a branch without an engineer
+
+The branch-rollout row deserves a closer look because it is one of the things you can see directly in the VCO. Arista's overview
+describes <Term id="zero-touch-provisioning" />: the Edge is shipped to the branch, a person with no networking skills plugs in power
+and a network cable, and activation, configuration and ongoing management are handled from the cloud.
+
+The Orchestrator documentation describes two ways an Edge can be **activated**:
+
+- **Push (auto-activation).** The Edge is powered on and connected to the Internet and activates itself. The branch only needs
+  outbound Internet connectivity through DHCP. No activation link is involved, because the Edge is identified by its serial number and
+  model, which an administrator has already assigned to a profile and a license in the Orchestrator.
+- **Pull (activation email).** An administrator sends an activation email from the Orchestrator to a contact at the site. The contact
+  connects the Edge and opens the link. The Edge then downloads its configuration and software from the Orchestrator and reboots
+  several times to apply them.
+
+<Predict
+  prompt="A new Edge is auto-activated (push). What does the branch network need to provide?"
+  choices={["A technician with a laptop on site", "Outbound Internet connectivity via DHCP", "A static IP address and a private circuit", "An MPLS circuit to the data center"]}
+  answer={1}
+>
+  Push activation only needs the Edge to reach the Internet through DHCP. Everything else, including which configuration the Edge
+  gets, was decided ahead of time in the Orchestrator.
+</Predict>
+
+<Callout variant="gotcha" title="Vendor claims are not your results">
+  This lesson leans on Arista's own overview, which is a marketing-adjacent document. For example, it says the built-in firewall lets
+  customers eliminate legacy branch firewalls without sacrificing security. That is the vendor's claim. A real design review would test
+  it against your requirements. Throughout this course, we mark what is claimed versus what is documented behavior.
+</Callout>
+
+## What you would see in the VCO
+
+- **Configure > Profiles.** A **Profile** is a template configuration that you define once and apply to many Edges. The list shows
+  how many Edges use each Profile (the *Used By* column). After installation a default **Quick Start Profile** exists.
+- **Configure > Edges.** The list of Edges. From an Edge's Overview you can send the activation email described above.
+- **Service Settings > Edge Auto-activation.** The inventory of Edges waiting to auto-activate (*Available Inventory*) and those already
+  assigned (*Assigned Inventory*).
+- **Monitor > Network Overview.** A summary of activated Edges, links and the busiest applications: the "visibility" row of the table.
+
+<Callout variant="warning" title="Menu names can vary">
+  Menu and tab names above come from the 7.0 documentation. Labels differ between releases and between guides, so treat them as a map,
+  not a script. Lesson 5 lists what is and is not confirmed.
+</Callout>
+
+## Key takeaways
+
+- The five problems: cost, agility, visibility, branch rollout, and transport choice.
+- SD-WAN separates intent (central policy) from transport (whichever links a site has).
+- Zero-touch means a non-expert plugs the Edge in; activation is either pushed (auto) or pulled (email).
+- In the VCO, Profiles and Edge activation are where the rollout story becomes visible.

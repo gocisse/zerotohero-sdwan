@@ -1,0 +1,143 @@
+---
+id: intro-how-velocloud-solves
+title: How VeloCloud SD-WAN solves them
+summary: The three components (Edge, Gateway, Orchestrator), overlay and underlay, transport independence, policy-based control, and the three-planes way of thinking.
+estimated_minutes: 12
+topics: [velocloud-components, overlay-and-tunnels]
+---
+
+**By the end of this lesson you will be able to:**
+
+- describe what the <Term id="vce">Edge</Term>, the <Term id="vcg">Gateway</Term> and the <Term id="vco">Orchestrator</Term> each do;
+- say which component talks to which, and which firewall ports an Edge needs open;
+- explain <Term id="underlay" /> versus <Term id="overlay" /> and name the kinds of <Term id="tunnel">tunnels</Term> an Edge builds;
+- explain in one sentence how policy and <Term id="dmpo" /> choose a link;
+- use the management, control and data "planes" as a mental model, and know that they are descriptive wording, not menu names.
+
+## The three components
+
+VeloCloud SD-WAN is built from three kinds of component. This course abbreviates them **VCE**, **VCO** and **VCG** (the next lesson
+explains the names), but Arista's documents mostly just write Edge, Orchestrator and Gateway.
+
+| Component | What it is | What it does |
+|---|---|---|
+| **Edge** (<Term id="vce" />) | Hardware appliance or virtual software at a site | Connects local users to the WAN, uses the site's circuits, builds tunnels, applies policy |
+| **Orchestrator** (<Term id="vco" />) | Multi-tenant, cloud-based configuration and monitoring portal | Where you configure Edges, write policy and watch the network; Edges get their configuration from it |
+| **Gateway** (<Term id="vcg" />) | Cloud-delivered service shared by many customers, deployed in many regions | Gives Edges a nearby on-ramp to cloud services; passes routes between Edges so they do not need a full mesh |
+
+Arista describes the Gateway as autonomous, stateless and horizontally scalable, deployed geographically for low latency. Its brief adds
+that Gateways implement the same DMPO (covered below) and give cloud services (SaaS, IaaS) a way to reach each Edge.
+
+<Diagram id="vc-components" />
+
+<Callout variant="warning" title="About the abbreviations">
+  We could not find "VCE" and "VCG" used in the current Arista pages we read; "VCO" does appear in an Arista security advisory. They
+  are old, widely used shorthand and handy for this course, but do not be surprised if the product screens and guides say Edge,
+  Gateway and Orchestrator instead.
+</Callout>
+
+<Predict
+  prompt="You need to change how video traffic is treated at **200 branches**. Which component do you open?"
+  choices={["Each Edge, one at a time", "The Gateway", "The Orchestrator", "The carrier's portal"]}
+  answer={2}
+>
+  The Orchestrator is the central configuration and monitoring portal. Policy is defined there once and applied to many Edges, which is
+  the whole point of the "central policy" idea from the last lesson.
+</Predict>
+
+## Underlay and overlay
+
+The circuits a site is plugged into (an Internet line, an MPLS circuit, LTE) are what we call the <Term id="underlay" />. VeloCloud
+builds an <Term id="overlay" /> on top of them: a set of **tunnels** between Edges and Gateways, and directly between Edges. User
+traffic travels inside those tunnels.
+
+Which tunnels exist? From Arista's Administration Guide:
+
+- every Edge creates tunnels to one or more **Gateways**;
+- Edges can also create **direct tunnels to each other**;
+- with **Branch to Hub VPN** enabled, the Orchestrator tells all Edges to build permanent tunnels to the **Hub** Edges you choose; a Hub
+  is an Edge you designate in the Profile, typically placed in a data center;
+- with **Branch to Branch VPN** the traffic between branches goes via a Gateway or via a Hub, and with **Dynamic Branch to Branch**
+  (the Orchestrator configures it for all Edges by default, per the 7.0 Profile page) the first packets go that way, then, if a direct tunnel is possible, the initiating Edge builds one
+  and tears it down after 180 seconds of traffic silence.
+
+Because the overlay is independent of the underlay, we say the design has <Term id="transport-independence" />: the same policy and the
+same tunnels work whichever kinds of circuit a site happens to have.
+
+## What runs inside the tunnels
+
+The tunnels use a protocol called <Term id="vcmp" /> and run on **UDP port 2426**. Arista's guide says VCMP is encrypted with
+transport-mode IPsec, and it adds a small header to user packets (31 bytes) to support things like resequencing and error correction.
+The mechanism that makes the tunnels clever is <Term id="dmpo" />:
+
+- it **measures** loss, latency and jitter on every path, continuously, by tagging packets and, when no user traffic is flowing,
+  sending probes every 100 ms;
+- it **steers** traffic: a link that cannot deliver what an application needs (an <Term id="sla" /> failure, or an <Term id="outage" />)
+  is detected within 300 to 500 ms and the flow is moved to a healthy link;
+- it can **protect** traffic when steering is not enough, for example when there is only one link: correction techniques are switched
+  on for as long as the link has problems.
+
+A link that is up but degraded is in a <Term id="brownout" />; a link that has failed completely is in an outage. The guides use
+those two words, so we do too. Later sections go deep on all of this. For now, remember the shape: **measure, steer, protect**.
+
+## Policy-based control
+
+What decides which link an application uses? A <Term id="business-policy" />, written once in the Orchestrator. Every application gets
+**Auto** link steering by default, meaning DMPO picks the best links for that type of application. A rule can instead steer by
+**Transport Group**, **Interface** or **WAN Link**. Policy applies to many Edges at once, which is how one change reaches 200 branches.
+
+<Callout variant="tip" title="Two firewall facts worth memorizing">
+  If an Edge will not come up behind a firewall, remember what it needs outbound: **TCP 443** to reach the Orchestrator, and
+  **UDP 2426** (VCMP) for the tunnels. Arista states both for a virtual Edge. Inbound rules for hubs and NAT are covered later and are
+  not fully confirmed in our sources yet.
+</Callout>
+
+<Predict
+  prompt="Which firewall port must a virtual Edge be able to reach **outbound** to communicate with the Orchestrator?"
+  choices={["UDP 2426", "TCP 443", "UDP 500", "IP protocol 50 (ESP)"]}
+  answer={1}
+>
+  Arista's guide says the firewall must allow outbound TCP 443 from the virtual Edge for communication with the Orchestrator, and
+  outbound UDP 2426 for VCMP. UDP 500, UDP 4500 and ESP are about IPsec between tunnel endpoints (Edges and Gateways), not about the
+  Orchestrator connection.
+</Predict>
+
+## Three planes: a mental model
+
+Network engineers often split any system into three jobs. We will use that split throughout the course.
+
+- <Term id="management-plane" />: configure and monitor. In our picture, the Orchestrator.
+- <Term id="control-plane" />: work out and share routes and policy. In our picture, route exchange between Edges and Gateways.
+- <Term id="data-plane" />: carry user traffic. In our picture, packets moving through Edges and tunnels.
+
+<Callout variant="gotcha" title="Arista's words, but not menu names">
+  Arista's on-premises Orchestrator guide does use these words: the Orchestrator is the management plane, the Gateway (called a Controller there)
+  is the control and routing plane, and the Hub cluster is the data plane. So the split is not something we invented, but you will not find a
+  "control plane" menu in the product, and in the cloud-delivered service the Gateway also carries optional user traffic.
+</Callout>
+
+<Predict
+  prompt="In the three-planes model used in this course, which plane carries your users' actual traffic?"
+  choices={["Management plane", "Control plane", "Data plane", "None: the Orchestrator carries it"]}
+  answer={2}
+>
+  The data plane is the traffic itself. The management plane is where you configure and monitor, and the control plane is where routes
+  and policy are worked out and shared.
+</Predict>
+
+## What you would see in the VCO
+
+- **Monitor > Edges** lists your Edges with their status, links and the **Gateways** they use, so the three components appear on one
+  screen.
+- Opening an Edge shows a **Links** tab (the WAN circuits and their measurements, including a transport-group view) and a **Paths**
+  tab (the paths from this Edge to its SD-WAN peers, with quality scores). Roughly speaking, links are the underlay and paths are the overlay.
+- **Configure > Profiles**, then the device settings, is where the Cloud VPN options (Branch to Hub, Branch to Branch, Dynamic Branch to
+  Branch) are switched on, per segment.
+- Business policy lives on an Edge's **Business Policy** tab (and for Profiles under **Configure > Profiles**).
+
+## Key takeaways
+
+- Edge at the site, Gateway in the cloud, Orchestrator as the portal: three components, three jobs.
+- The underlay is the circuits; the overlay is the tunnels built on top, over UDP 2426 (VCMP).
+- DMPO measures, steers and protects; policy, defined centrally, tells it what each application needs.
+- Management, control and data planes are wording from Arista's on-premises guide, not menu names in the Orchestrator.

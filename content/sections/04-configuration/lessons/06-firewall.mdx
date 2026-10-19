@@ -1,0 +1,75 @@
+---
+id: cfg-firewall
+title: Firewall policy
+summary: How firewall rules differ from business policy, stateful behaviour, rule structure, logging and scope.
+estimated_minutes: 10
+topics: [config-firewall]
+---
+
+**By the end of this lesson you will be able to:**
+
+- explain how <Term id="firewall-policy" /> differs from business policy;
+- describe the firewall rule fields and the four actions;
+- explain what <Term id="stateful-firewall" /> changes;
+- say where firewall logs and inbound rules are found, and what the firewall does not cover.
+
+## Permission, not treatment
+
+Business policy answers *how should this traffic be treated?* (priority, link, service). The firewall answers *may this traffic pass?*. Both match traffic and both exist at Profile and Edge level, which is why they get confused.
+
+<Diagram id="cfg-fw-vs-bp" />
+
+## Rule structure
+
+A firewall rule matches parameters such as IP addresses, ports, VLAN IDs, interfaces, MAC addresses, domain names, protocols (GRE, ICMP, TCP, UDP) and applications; an application match depends on the <Term id="dpi" /> engine. Its **action** is:
+
+| Action | Meaning |
+|---|---|
+| **Allow** | permits the packets |
+| **Drop** | drops silently, no notice to the source |
+| **Reject** | drops and tells the source with a reset |
+| **Skip** | skips the rule and processes the next one |
+
+Reject and Skip are available only when **Stateful Firewall** is activated.
+
+## Stateful behaviour
+
+A stateful firewall enforces symmetric routing and matching is **directional**: you can allow VLAN 1 hosts to start sessions to VLAN 2 and deny the reverse. Asymmetric routing is not supported on Edges with it activated. By default the Orchestrator deactivates Stateful Firewall for an Enterprise.
+
+<Callout variant="gotcha" title="Inbound traffic is blocked by default">
+  By default the Edge blocks all inbound traffic except self-destined traffic, unless you configure Port Forwarding or 1:1 NAT (<Term id="inbound-acl">Inbound ACLs</Term>, under Configure > Edges > Firewall > Additional Settings). Edge firewalls apply to traffic passing through the Edge, not to self-originating or self-destined traffic.
+</Callout>
+
+<Predict
+  prompt="You want a blocked source to be told the connection was refused, not left hanging. Which action, and what does it require?"
+  choices={["Drop, no requirements", "Reject, with Stateful Firewall activated", "Allow, with Skip", "Skip, with Smart Defaults"]}
+  answer={1}
+>
+  Reject drops the packets and sends the source an explicit reset; Reject and Skip need Stateful Firewall activated.
+</Predict>
+
+## Profile, Edge and logging
+
+Edges inherit the firewall rules, security settings and Stateful Firewall settings from the Profile. Profile rules cannot be updated at the Edge, and **Edge override rules take priority**. Logs: the Edge can send firewall logs to the Orchestrator and to a syslog collector, and you view them at **Monitor > Firewall Logs**.
+
+<Callout variant="warning" title="What we could not confirm">
+  How firewall rules are ordered when several match, the default action when none matches, whether the firewall or business policy is applied first, and whether general firewall rules are scoped to a segment were not stated in the pages we read. The diagram is therefore illustrative.
+</Callout>
+
+## What you would see in the VCO
+
+- **Configure > Profiles > Firewall** (Configure Firewall, Firewall Rules, + NEW RULE) and **Configure > Edges > (Edge) > Firewall** with an **Override** checkbox.
+- **Monitor > Firewall Logs**.
+
+## Key takeaways
+
+- Firewall = permission (Allow, Drop, Reject, Skip); business policy = treatment.
+- Stateful Firewall is off by default; it makes matching directional and enables Reject and Skip.
+- Inbound traffic is blocked by default unless Port Forwarding or 1:1 NAT is set.
+- Edge override rules beat Profile rules.
+
+## What would you look for in the VCO
+
+- Is Stateful Firewall on for this customer?
+- Is there an Edge-level firewall rule above or instead of the Profile rule?
+- What do the Firewall Logs say for the blocked flow?

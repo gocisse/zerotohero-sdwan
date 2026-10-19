@@ -1,0 +1,13 @@
+id: configuration
+title: "Configuration: how an Edge gets its settings"
+summary: How an Edge's effective configuration is layered from segments, a Profile, Edge overrides, business policy and firewall rules, and how to work out where a given behaviour is set.
+estimated_minutes: 80
+lessons:
+  - cfg-model
+  - cfg-segments
+  - cfg-profiles
+  - cfg-overrides
+  - cfg-business-policy
+  - cfg-firewall
+  - cfg-apps-qos
+  - cfg-diagnosis

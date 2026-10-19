@@ -1,0 +1,56 @@
+# Section 5, lesson 4: Dynamic Branch to Branch over time. Facts: reference/hubs-and-branches.md (180 seconds is a documented figure).
+id: ov-dynamic-b2b
+title: A dynamic tunnel over time
+alt: >-
+  Two branches start talking. The first packets go through a Gateway or Hub. The initiating Edge decides a secure overlay
+  tunnel is possible and builds a direct tunnel. Traffic then goes directly. After 180 seconds of silence the initiating Edge
+  tears the direct tunnel down.
+width: 900
+height: 500
+
+nodes:
+  - { id: a, label: Branch A (initiating), kind: vce, x: 160, y: 330 }
+  - { id: relay, label: Gateway or Hub, kind: vcg, x: 450, y: 110 }
+  - { id: b, label: Branch B, kind: vce, x: 740, y: 330 }
+
+links:
+  - { id: a-r, from: a, to: relay, style: overlay-tunnel, label: static }
+  - { id: r-b, from: relay, to: b, style: overlay-tunnel, label: static }
+  - { id: a-b, from: a, to: b, style: overlay-tunnel, label: dynamic }
+
+steps:
+  - title: No direct tunnel yet
+    narration: >-
+      Both Edges already have **static** tunnels to the Gateway or Hub. There is no tunnel between the two branches. In List Paths such a tunnel shows Mode: Dynamic, and while it does not exist, it is simply absent.
+    highlight: [a, a-r, relay, r-b, b]
+    show: [a-b]
+
+  - title: First packets go via the Gateway or Hub
+    narration: >-
+      When Dynamic Branch to Branch is on, "the first packet goes through the Cloud Gateway (or the Hub)".
+    highlight: [a, a-r, relay, r-b, b]
+    packets:
+      - { path: [a, a-r, relay, r-b, b], label: first packets, color_style: overlay-tunnel }
+
+  - title: The initiating Edge builds a direct tunnel
+    narration: >-
+      If the initiating Edge determines that traffic can be routed through a secure overlay multi-path tunnel, it builds a direct tunnel. We did not find further conditions in the documentation.
+    show: [a-b]
+    highlight: [a, a-b, b]
+    callouts:
+      - { target: a-b, text: "Built on demand by the initiating Edge." }
+
+  - title: Traffic goes direct
+    narration: >-
+      Packets now go straight from Edge to Edge, without the detour.
+    highlight: [a, a-b, b]
+    packets:
+      - { path: [a, a-b, b], label: direct, color_style: overlay-tunnel }
+
+  - title: After 180 seconds of silence
+    narration: >-
+      After 180 seconds of traffic silence the initiating Edge tears the tunnel down. The next conversation starts again via the Gateway or Hub.
+    hide: [a-b]
+    highlight: [a, relay, b]
+    callouts:
+      - { target: a, text: "180 seconds without traffic: tunnel removed." }

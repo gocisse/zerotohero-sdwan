@@ -1,0 +1,97 @@
+---
+id: dmpo-monitoring
+title: Monitoring and link quality
+summary: What DMPO measures, how often, with and without user traffic, how a new link's bandwidth is discovered, and how to read a table of measurements.
+estimated_minutes: 10
+topics: [dmpo-monitoring]
+---
+
+**By the end of this lesson you will be able to:**
+
+- name the three measurements DMPO makes and say how each is obtained;
+- state the probe and exchange intervals;
+- describe what <Term id="bandwidth-discovery" /> does when a link appears;
+- read a small table of measurements and say which link suits which traffic.
+
+## Three measurements
+
+On every path, DMPO measures <Term id="loss" />, <Term id="latency" /> and <Term id="jitter" />. The measurements are **one-way**: the uplink and downlink of
+a path are judged separately, so a link can look fine in one direction and poor in the other.
+
+## Where the numbers come from
+
+When user traffic is flowing, DMPO adds a **sequence number** and a **timestamp** to the tunnel header. The receiving endpoint uses them to spot lost and out-of-order
+packets and to compute jitter and latency. The numbers ride on the user's own packets.
+
+When there is no user traffic, DMPO sends an active <Term id="probe">probe</Term> every 100 ms. After five minutes with no high-priority user traffic, the probe interval
+becomes 500 ms. Either way, the two endpoints exchange their measurements every 100 ms.
+
+<Diagram id="dmpo-probes" />
+
+<Callout variant="gotcha" title="Probes mean idle links are still measured">
+  A link that carries nothing is still checked. That is why DMPO can move traffic to a link that has been idle: it already has recent numbers for it.
+</Callout>
+
+## A new link is measured too
+
+When an Edge detects a WAN link it sets up tunnels to Gateways and runs a short **bandwidth test** against the closest one: bursts of traffic in both directions,
+measuring the rate that arrives at each end. This is called Automated Bandwidth Discovery.
+
+## Loss over a window
+
+Arista's text describes packet loss as computed over a one-minute window, using counts the endpoints exchange every second. We read this through a summarising tool and not in a PDF, so treat the exact window as
+"as documented" rather than something you should test for.
+
+<Predict
+  prompt="A link carries no user traffic at all. Does DMPO know anything about it?"
+  choices={["No, it only measures links carrying traffic", "Yes, it sends probes on it", "Only if the Orchestrator asks", "Only at activation"]}
+  answer={1}
+>
+  With no user traffic, DMPO sends an active probe every 100 ms, so the link is measured anyway.
+</Predict>
+
+## Worked example: reading a measurement table (illustrative numbers)
+
+These figures are invented to practise reading; they are not Arista defaults or limits.
+
+| Link | Loss | Latency | Jitter |
+|---|---|---|---|
+| MPLS | 0.0 % | 38 ms | 1 ms |
+| Internet | 0.8 % | 22 ms | 9 ms |
+| LTE | 2.5 % | 60 ms | 15 ms |
+
+- **MPLS** is slower but steady: no loss, tiny jitter. A voice call that dislikes jitter and loss would be happiest here.
+- **Internet** has the best latency but some loss and noticeable jitter. A bulk download does not mind the jitter and cares about throughput.
+- **LTE** is worst on all three. It is the last resort, or a backup.
+
+Which link is *best* depends on the application: that is why DMPO compares each link with each application's SLA instead of ranking links in general. Whether a link is "good enough" for a given application
+comes from the SLA values, which Arista documents in tables we could not read as text, so we do not quote them.
+
+## Link states you may see
+
+The 7.0 documentation lists link events. One is raised when no packets are received on a link for seven seconds (LINK_DEAD). Links are also described as usable or unusable
+for steering.
+
+<Callout variant="warning" title="What we could not confirm">
+  The exact probe packet size, the exact algorithms for the three measurements, and the per-application loss and jitter thresholds were not found in readable sources.
+  The older white paper mentions marking a link unusable after three missed heartbeats; we did not find that in the current guides, so we do not teach it as current.
+</Callout>
+
+## What you would see in the VCO
+
+- **Monitor > Edges > (an Edge) > Links**: per-link measurements, with a **Transport Groups** view (Public Wired, Public Wireless, Private Wired).
+- **Paths**: the paths to peers, so you can compare the same link toward different peers.
+- **QoE**: scores of Good, Fair or Poor for traffic types, a summary of how the links are serving each.
+
+## Key takeaways
+
+- Loss, latency, jitter, one direction at a time, on every path.
+- Sequence numbers and timestamps on user traffic; probes when idle (100 ms, then 500 ms after five minutes).
+- Metrics are exchanged every 100 ms; a new link gets a bandwidth test.
+- Link quality is always relative to what an application needs.
+
+## What would you look for in the VCO
+
+- On the Links tab, which link has the highest loss right now?
+- Does the same link look worse toward one peer than another on the Paths tab?
+- What does the QoE tab say for voice at this branch?

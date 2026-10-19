@@ -1,0 +1,49 @@
+# Section 6, lesson 6: BGP attribute selection between two exits. Illustrative values; documented rules in reference/bgp.md.
+id: rt-bgp-attributes
+title: BGP picks between two exits (illustrative values)
+alt: >-
+  Two BGP neighbors advertise the same prefix to one Edge. The Edge prefers the route with the higher local preference. If those
+  tie, a shorter AS path wins, then a lower metric. The winner is advertised into the overlay.
+width: 960
+height: 460
+
+nodes:
+  - { id: r1, label: Neighbor 1 (site A), kind: router, x: 120, y: 110 }
+  - { id: r2, label: Neighbor 2 (site D), kind: router, x: 120, y: 350 }
+  - { id: edge, label: Edge, kind: vce, x: 480, y: 230 }
+  - { id: ov, label: Overlay, kind: cloud, x: 830, y: 230 }
+
+links:
+  - { id: r1-e, from: r1, to: edge, style: lan, label: eBGP }
+  - { id: r2-e, from: r2, to: edge, style: lan, label: eBGP }
+  - { id: e-ov, from: edge, to: ov, style: overlay-tunnel }
+
+steps:
+  - title: Same prefix from two neighbors
+    narration: >-
+      Both neighbors advertise 10.30.0.0/24 (illustrative). The Edge has two BGP routes and must choose one.
+    highlight: [r1, r2, r1-e, r2-e, edge]
+    packets:
+      - { path: [r1, r1-e, edge], label: 10.30.0.0/24, color_style: lan }
+      - { path: [r2, r2-e, edge], label: 10.30.0.0/24, color_style: lan, delay_ms: 300 }
+
+  - title: Local preference first
+    narration: >-
+      An inbound filter on Neighbor 1 sets Local Preference 200 (illustrative); Neighbor 2 keeps a lower value. The **higher** local preference wins (diagnostic reason LR_BGP_LOCAL_PREF).
+    highlight: [r1, r1-e, edge]
+    callouts:
+      - { target: r1, text: "Local Preference 200 beats 100 (illustrative)" }
+
+  - title: Then AS-path length, then metric
+    narration: >-
+      If local preference ties, the route with the **shorter AS path** wins (LR_BGP_ASPATH_LEN); **As-Path-Prepend** lengthens a path to make it less attractive. Then the **lower metric (MED)** wins (LR_BGP_METRIC). The order the Edge applies these in is not stated; standard BGP uses this order.
+    highlight: [r1, r2, edge]
+    callouts:
+      - { target: r2, text: "Prepend makes this path longer, so less attractive" }
+
+  - title: The winner goes into the overlay
+    narration: >-
+      Only the best route is redistributed. If it is advertise True and reachable Yes, the Edge sends it into the overlay.
+    highlight: [r1, r1-e, edge, e-ov, ov]
+    packets:
+      - { path: [edge, e-ov, ov], label: best route, color_style: overlay-tunnel }

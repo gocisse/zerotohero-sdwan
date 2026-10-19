@@ -1,0 +1,61 @@
+# Section 3, lesson 5: FEC as packet duplication on two links. Facts: reference/dmpo-remediation.md. Packet numbers are illustrative.
+id: dmpo-brownout-fec
+title: Brownout on both links, FEC duplicates the packets
+alt: >-
+  A voice flow leaves a phone through a branch Edge. Both the Internet and the MPLS paths are losing packets, so steering cannot
+  help. DMPO sends each packet on both paths, and the receiving Edge keeps the first copy of each packet and discards the
+  duplicate, so a packet lost on one path still arrives.
+width: 900
+height: 500
+
+nodes:
+  - { id: phone, label: IP phone, kind: host, x: 60, y: 250 }
+  - { id: edge-a, label: Branch Edge, kind: vce, x: 230, y: 250 }
+  - { id: edge-b, label: Hub Edge, kind: vce, x: 680, y: 250 }
+  - { id: pbx, label: Voice server, kind: host, x: 840, y: 250 }
+
+links:
+  - { id: lan-a, from: phone, to: edge-a, style: lan }
+  - { id: lan-b, from: edge-b, to: pbx, style: lan }
+  - { id: path-inet, from: edge-a, to: edge-b, style: underlay-internet, label: Internet path, curve: -100 }
+  - { id: path-mpls, from: edge-a, to: edge-b, style: underlay-mpls, label: MPLS path, curve: 100 }
+
+steps:
+  - title: Both paths are degraded
+    narration: >-
+      Both links are up but both are losing packets: a **brownout** on every path. Steering has nowhere better to go, which is exactly when on-demand remediation is
+      used.
+    highlight: [edge-a, edge-b, path-inet, path-mpls]
+    callouts:
+      - { target: path-inet, text: "Loss above the threshold." }
+      - { target: path-mpls, text: "Loss here too: no clean link to move to." }
+
+  - title: FEC switches on for this flow
+    narration: >-
+      DMPO turns on **FEC** for the flow when measured loss crosses its threshold. In Arista's description FEC is **packet duplication**: with two or more
+      links the copies travel on separate links, and DMPO picks up to two of the best links.
+    highlight: [phone, lan-a, edge-a, path-inet, path-mpls, edge-b]
+    packets:
+      - { path: [phone, lan-a, edge-a], label: "voice #1", color_style: overlay-tunnel }
+    callouts:
+      - { target: edge-a, text: "FEC on: each packet is sent twice." }
+
+  - title: Each packet goes on both paths
+    narration: >-
+      The original goes on one path and a duplicate on the other. This costs extra bandwidth, which is why it is on only while the problem lasts.
+    highlight: [edge-a, edge-b, path-inet, path-mpls]
+    packets:
+      - { path: [edge-a, path-inet, edge-b], label: "#1", color_style: overlay-tunnel }
+      - { path: [edge-a, path-mpls, edge-b], label: "#1 copy", color_style: overlay-tunnel }
+    callouts:
+      - { target: path-mpls, text: "In this picture the copy on MPLS is lost; the Internet one arrives." }
+
+  - title: The receiver keeps one
+    narration: >-
+      The receiving endpoint discards duplicates and puts packets back in order before passing them on. The voice server gets a clean stream even though a
+      packet was lost on one path.
+    highlight: [edge-b, lan-b, pbx]
+    packets:
+      - { path: [edge-b, lan-b, pbx], label: "#1 (once)", color_style: overlay-tunnel }
+    callouts:
+      - { target: edge-b, text: "Duplicates dropped, order restored." }

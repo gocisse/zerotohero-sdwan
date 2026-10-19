@@ -1,0 +1,76 @@
+---
+id: cfg-business-policy
+title: Business policy
+summary: Rules as match and action, rule order, what can be matched and set, Profile and Edge rules, and how this connects to link steering and DMPO.
+estimated_minutes: 12
+topics: [config-business-policy]
+---
+
+**By the end of this lesson you will be able to:**
+
+- describe a <Term id="business-policy-rule">business policy rule</Term> as a <Term id="match" /> plus an <Term id="action" />;
+- list what can be matched and what an action can set;
+- explain rule precedence, <Term id="smart-defaults" /> and how Profile and Edge rules combine;
+- connect the rule's actions to the link steering and remediation you met in Section 3.
+
+## Match and action
+
+The business policy lets the administrator control QoS, steering and services for application traffic. A rule has a **Match** and an **Action**: *which traffic, and what to do with it*.
+
+<Diagram id="cfg-bp-classify" />
+
+**Match** (the Match tab):
+- **Source**: Any, an object group, or Define (VLAN, interface, IP address, ports, operating system).
+- **Destination**: Any, an object group, or Define (Internet, Edge, Non SD-WAN Destination, domain name, protocol, ports).
+- **Application**: Any, or a specific application, optionally with a DSCP value to match.
+- Protocols you can match: GRE, ICMP, TCP and UDP.
+
+**Action** (the Action tab):
+- **Priority**: High, Normal or Low.
+- **Network service**: Direct, Multi-Path or Internet Backhaul (the last only when the destination is Internet).
+- **Link steering**: Auto, Transport Group, Interface or WAN Link, with Mandatory, Preferred or Available. Interface and WAN Link are allowed only at the Edge override level; Transport Group works at both Profile and Edge.
+- **Service class**: Real-time, Transactional or Bulk, for custom applications only.
+- Rate limit (per flow, in both directions), NAT, and inner and outer DSCP tags.
+
+## Order and defaults
+
+Rules are listed in order of highest precedence, and traffic is matched to the rule with the highest precedence. **Smart Defaults** is a ready-made business policy for over 2500 applications, so traffic is treated sensibly before you write a rule.
+
+<Callout variant="warning" title="What we could not confirm">
+  The pages do not say whether evaluation is a simple first match from the top, how ties are resolved, or what the default action is when no rule matches. When two rules could match, test or read the list order rather than guessing.
+</Callout>
+
+## Profile rules and Edge rules
+
+Rules at the Profile are pushed to all of its Edges. An Edge cannot edit them; it creates an identical rule with new parameters, and that Edge-level rule supersedes the Profile configuration. Rules are also **segment aware**: pick the segment in the Segment drop-down first.
+
+<Predict
+  prompt="The Profile has a rule sending voice over MPLS, but Branch X needs voice on its LTE link. What does the documentation say to do?"
+  choices={["Edit the Profile rule on the Edge", "Create an identical rule at the Edge with new parameters", "Delete the Profile", "Turn off Smart Defaults"]}
+  answer={1}
+>
+  Edge-level configuration cannot update Profile rules; creating the same rule at the Edge with new parameters supersedes it.
+</Predict>
+
+## Connection to Section 3
+
+Link steering is just one **action**. The Mandatory, Preferred and Available choice, and the DMPO behaviour that follows from it, live inside the rule. The service class of an application is what DMPO uses when it handles that traffic.
+
+## What you would see in the VCO
+
+- **Configure > Profiles > (Profile) > Business Policy**, and the **Biz. Pol** column on the Profiles list.
+- **Configure > Edges > (Edge) > Business Policy**, with **Rules From Profile** and **Edge Overrides**.
+- A **Segment** drop-down at the top; **Create Business Policy Rule** with Match and Action tabs.
+
+## Key takeaways
+
+- A rule is match plus action; precedence orders the list.
+- Match: source, destination, application, DSCP, ports, protocols, domain names.
+- Actions include priority, network service, link steering, service class, rate limit, NAT and DSCP.
+- Edge rules supersede Profile rules by being re-created at the Edge.
+
+## What would you look for in the VCO
+
+- Which rule matches this application, and where in the list is it?
+- Is the rule under Rules From Profile or Edge Overrides?
+- Which segment was selected when you looked?

@@ -1,0 +1,69 @@
+---
+id: ov-cloud-vpn
+title: Cloud VPN
+summary: What enabling Cloud VPN does, branch-to-hub and branch-to-branch, what the Orchestrator and Gateway do, and where you configure it.
+estimated_minutes: 10
+topics: [overlay-cloud-vpn]
+---
+
+**By the end of this lesson you will be able to:**
+
+- explain what <Term id="cloud-vpn" /> switches on and at which level it is set;
+- describe the two Branch to Branch options and what each does to traffic;
+- say what the Orchestrator and the Gateway each do;
+- find the settings in the VCO.
+
+## What it is
+
+Enabling Cloud VPN lets an Edge **initiate and respond to VPN connection requests**. The tunnel types it covers are Branch to Hub VPN, Branch to Branch VPN and Edge to Non SD-WAN via Gateway, and you tick the ones you need and fill in their parameters. It is set in the Profile (Configure > Profiles > the Profile > Device tab > **VPN Services** > Cloud VPN), **per segment**, and an Edge can override it on its own Device tab.
+
+## Branch to Hub
+
+Under **Branch to Hub Site (Permanent VPN)** (<Term id="branch-to-hub-vpn" />) you tick **Enable Branch to Hubs** and use **Edit Hubs** to choose the <Term id="hub">Hubs</Term> (next lesson). In 6.4 documentation, the branch-to-hub tunnel comes up only once Cloud VPN is enabled.
+
+## Branch to Branch
+
+Under **Branch to Branch VPN (Transit & Dynamic)** (<Term id="branch-to-branch-vpn" />) you tick **Enable Branch to Branch VPN** and choose:
+
+| Option | What happens |
+|---|---|
+| **Cloud Gateways** | Edges establish a VPN tunnel with the closest Gateway and connections between Edges go through that Gateway |
+| **Hubs for VPN** | Connections between branch Edges go through the Hub |
+
+The option also prevents Edges in the Profile from learning routes from Edges outside it, and Dynamic Branch to Branch VPN can be activated for all Edges or for Edges in a Profile.
+
+<Diagram id="ov-cloud-vpn-gateway" />
+
+## Who does what
+
+- The **Orchestrator** holds the settings and tells the Edges (the management role).
+- The **Edges** build the tunnels, to the closest Gateway in the Cloud Gateways case.
+- The **Gateway** carries the traffic between the Edges and passes routes (Section 2).
+
+<Predict
+  prompt="Where is Cloud VPN turned on?"
+  choices={["In the Profile's Device tab under VPN Services, per segment", "On the Gateway only", "In the firewall rules", "In the WAN link settings of each Edge only"]}
+  answer={0}
+>
+  Cloud VPN is activated under VPN Services on the Profile's Device tab, and must be configured per segment. An Edge can override it for itself.
+</Predict>
+
+<Callout variant="warning" title="What we could not confirm">
+  Whether Cloud VPN is on by default and what an Edge-level override can and cannot enable were not stated in the pages we read. Check the VPN Services section of your own Profile.
+</Callout>
+
+## What you would see in the VCO
+
+- **Configure > Profiles > (Profile) > Device > VPN Services**: Cloud VPN, Branch to Hub Site, Branch to Branch VPN, Edge to Non SD-WAN Sites.
+- **Configure > Edges > (Edge) > Device**: the same section with an **Override** checkbox.
+
+## Key takeaways
+
+- Cloud VPN per segment lets Edges initiate and respond to VPN requests.
+- Branch to Branch has two options: Cloud Gateways or Hubs for VPN.
+- Profile first, Edge override second.
+
+## What would you look for in the VCO
+
+- Is Cloud VPN on for the segment the traffic is in?
+- Which Branch to Branch option is selected, and is it overridden on this Edge?

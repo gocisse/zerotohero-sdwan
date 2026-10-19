@@ -1,0 +1,84 @@
+---
+id: rt-static
+title: Static routes and default routes
+summary: Configuring a static route on an Edge, what Preferred and Advertise do, why an ICMP probe matters, and the typical uses and pitfalls.
+estimated_minutes: 8
+topics: [rt-static]
+---
+
+**By the end of this lesson you will be able to:**
+
+- say where <Term id="static-route">static routes</Term> are configured and what each field means;
+- explain the difference between **Preferred** and **Advertise**;
+- say why every static route should have an <Term id="icmp-probe">ICMP probe</Term>;
+- name typical uses and pitfalls.
+
+## Where and what
+
+On an Edge, open **Configure > Edges > (Edge) > Device**, then **Routing & NAT > Static Route Settings**. There are separate tabs for IPv4 and IPv6. The guide's own example use is a device that sits behind a LAN router, such as a printer.
+
+| field | meaning |
+|---|---|
+| Subnet | the prefix |
+| Next Hop IP | where to send matching traffic (the <Term id="next-hop" />) |
+| Interface | the WAN interface the route binds to (shows N/A if the next hop is in the Edge's VLAN) |
+| VLAN, Source IP | choose a VLAN, and the address of that VLAN |
+| Cost | weight, 0 to 255 |
+| Preferred | match this static route before a VPN route, even if the VPN route has a lower cost |
+| Advertise | tell other Edges about this route over the VPN (IPv4 only) |
+| ICMP Probe | check the next hop; fail over if it stops answering |
+
+You can add several routes for the same network with different metrics; the Edge advertises only one of them to the overlay.
+
+## Preferred and Advertise are different questions
+
+<Diagram id="rt-static-flags" />
+
+- **Preferred** is about the *local* decision on this Edge: with it, the static route wins over a route learned through the VPN; without it, any available VPN route can match first, and the static route is a last resort.
+- **Advertise** is about *global reachability*: with it, the route is shared over VCRP so other Edges can reach the prefix, and it can be redistributed into BGP or OSPF. Without it, the route stays local. Leave it off for private resources.
+
+<Predict
+  prompt="You add a static route for 192.168.50.0/24 behind a LAN router and tick Preferred but not Advertise. What can reach that prefix through this Edge?"
+  choices={["Only traffic that originates at this Edge's own site; other sites get no route", "Every site, because Preferred shares the route", "No one, because static routes need an interface", "Every site, but only for voice traffic"]}
+  answer={0}
+>
+  Preferred only decides what this Edge does when it has several candidate routes. Advertise is what puts the route into the overlay for other Edges.
+</Predict>
+
+## Default routes
+
+A <Term id="default-route" /> is the catch-all prefix. The Edge pages we read describe an IPv6 default (::/0) as a Subnet option, but give no separate IPv4 default-route procedure. Default routes towards a LAN router are covered under OSPF (the default route type and Advertise setting) and BGP (the Default Route option), in lessons 3 and 4.
+
+## Typical uses and pitfalls
+
+- **Use:** a subnet that sits behind a LAN router that does not run a dynamic protocol.
+- **Pitfall: no probe.** The guide says to always configure an ICMP probe; without it an Edge cannot notice a dead next hop and may black-hole traffic.
+- **Pitfall: forgetting Advertise.** The remote sites have no route even though the local Edge reaches the prefix perfectly.
+- **Pitfall: Preferred everywhere.** A static route marked Preferred beats VPN routes locally, so it can pull traffic away from the overlay.
+- **IPv6** does not support Preferred, Advertise or the probe on the page we read.
+
+<Callout variant="tip" title="Several routes, one advertised">
+  Adding two static routes for the same prefix with different costs gives you a primary and a backup, but only one is advertised to the overlay. Remote sites see one exit.
+</Callout>
+
+<Callout variant="warning" title="Not confirmed">
+  The default cost, whether Static Route Settings is per segment, and whether a Profile can hold static routes were not stated in the pages we read.
+</Callout>
+
+## What you would see in the VCO
+
+- **Configure > Edges > (Edge) > Device > Routing & NAT > Static Route Settings**: the table above.
+- Routes from Non SD-WAN Destinations appear in the same table (IPv4), where Cost, Preferred and Advertise can be edited.
+- **Diagnostics > Route Table Dump**: the route with its Type and Reachable reason. If the probe fails, the reason shows SLA_STATE_DOWN.
+
+## Key takeaways
+
+- Static Route Settings live on the Edge's Device tab under Routing & NAT.
+- Preferred = local choice over VPN routes; Advertise = other Edges can reach the prefix.
+- Always add an ICMP probe.
+
+## What would you look for in the VCO
+
+- Is Advertise ticked on the Edge that owns the prefix?
+- Is the probe up, or does the route show SLA_STATE_DOWN?
+- Is another route for the same prefix winning because of Preferred?

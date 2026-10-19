@@ -1,0 +1,51 @@
+# Section 4, lesson 6: firewall and business policy answer different questions. The ORDER between them is not documented in the pages we read, so this is illustrative.
+id: cfg-fw-vs-bp
+title: Firewall versus business policy (illustrative; order not documented)
+alt: >-
+  A packet reaches an Edge. The firewall answers whether to allow or drop it, and the business policy answers how to treat it,
+  which link and which priority. The documentation we read does not say in which order the two are applied, so the picture shows
+  two separate questions rather than a sequence.
+width: 900
+height: 460
+
+nodes:
+  - { id: host, label: Host, kind: host, x: 80, y: 230 }
+  - { id: edge, label: Branch Edge, kind: vce, x: 330, y: 230 }
+  - { id: fw, label: Firewall rule, kind: firewall, x: 540, y: 110 }
+  - { id: bp, label: Business policy rule, kind: generic, x: 540, y: 350 }
+  - { id: wan, label: WAN link, kind: internet, x: 800, y: 230 }
+
+links:
+  - { id: lan, from: host, to: edge, style: lan }
+  - { id: q-fw, from: edge, to: fw, style: control, label: "allow or drop?" }
+  - { id: q-bp, from: edge, to: bp, style: control, label: "which link?" }
+  - { id: out, from: edge, to: wan, style: underlay-internet }
+
+steps:
+  - title: A packet reaches the Edge
+    narration: >-
+      Two different parts of the configuration look at it.
+    highlight: [host, lan, edge]
+    packets:
+      - { path: [host, lan, edge], label: packet, color_style: overlay-tunnel }
+
+  - title: "Firewall: may it pass?"
+    narration: >-
+      A firewall rule matches things such as addresses, ports, VLAN, application and protocol, and its action is **Allow**, **Drop**, **Reject** or **Skip**. It is about permission.
+    highlight: [edge, q-fw, fw]
+    callouts:
+      - { target: fw, text: "Actions: Allow, Drop, Reject, Skip." }
+
+  - title: "Business policy: how is it treated?"
+    narration: >-
+      A business policy rule matches traffic and sets priority, network service, link steering, service class, rate limit and DSCP marking. It is about treatment, not permission.
+    highlight: [edge, q-bp, bp]
+    callouts:
+      - { target: bp, text: "Priority, network service, link steering, rate limit." }
+
+  - title: Both questions, one packet
+    narration: >-
+      A packet that is allowed and then classified leaves on the chosen link. **We did not find which of the two is applied first**, so do not read an order into this picture.
+    highlight: [edge, out, wan]
+    packets:
+      - { path: [edge, out, wan], label: steered, color_style: overlay-tunnel }

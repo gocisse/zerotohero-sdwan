@@ -1,0 +1,71 @@
+# Section 1, lesson 2: the same sites, with direct Internet access added at each branch.
+id: wan-direct-internet
+title: The same sites with direct Internet access
+alt: >-
+  The same two branch sites and data center, now with an Internet connection at each branch as well as the MPLS circuits.
+  SaaS traffic leaves each branch straight to the Internet and the SaaS provider, while company-application traffic still
+  uses the private MPLS circuits to the data center.
+width: 900
+height: 520
+
+groups:
+  - { id: branch-a, label: Branch A, nodes: [host-a, rtr-a] }
+  - { id: branch-b, label: Branch B, nodes: [host-b, rtr-b] }
+  - { id: hq, label: Headquarters data center, nodes: [dc-edge, dc-apps] }
+
+nodes:
+  - { id: host-a, label: Branch A user, kind: host, x: 70, y: 120 }
+  - { id: rtr-a, label: Branch router, kind: router, x: 210, y: 120 }
+  - { id: host-b, label: Branch B user, kind: host, x: 70, y: 410 }
+  - { id: rtr-b, label: Branch router, kind: router, x: 210, y: 410 }
+  - { id: mpls, label: Carrier MPLS network, kind: mpls, x: 450, y: 420 }
+  - { id: dc-edge, label: DC router, kind: router, x: 690, y: 330 }
+  - { id: dc-apps, label: Company apps, kind: datacenter, x: 810, y: 430 }
+  - { id: inet, label: Internet, kind: internet, x: 450, y: 110 }
+  - { id: saas, label: SaaS provider, kind: saas, x: 800, y: 110 }
+
+links:
+  - { id: lan-a, from: host-a, to: rtr-a, style: lan }
+  - { id: lan-b, from: host-b, to: rtr-b, style: lan }
+  - { id: circuit-a, from: rtr-a, to: mpls, style: underlay-mpls }
+  - { id: circuit-b, from: rtr-b, to: mpls, style: underlay-mpls }
+  - { id: circuit-dc, from: mpls, to: dc-edge, style: underlay-mpls }
+  - { id: lan-apps, from: dc-edge, to: dc-apps, style: lan }
+  - { id: net-a, from: rtr-a, to: inet, style: underlay-internet }
+  - { id: net-b, from: rtr-b, to: inet, style: underlay-internet }
+  - { id: net-saas, from: inet, to: saas, style: underlay-internet }
+
+steps:
+  - title: Start from the traditional design
+    narration: >-
+      These are the same sites as before: branches connected to the data center over private MPLS circuits. For now nothing
+      has changed.
+    highlight: [host-a, host-b, rtr-a, rtr-b, mpls, dc-edge, dc-apps, circuit-a, circuit-b, circuit-dc, lan-apps]
+    show: [inet, saas, net-a, net-b, net-saas]
+
+  - title: Add direct Internet access at each branch
+    narration: >-
+      Each branch now also has an ordinary Internet connection. Sending Internet-bound traffic straight out of the branch,
+      without a detour through the data center, is often called **direct Internet access**, or DIA.
+    highlight: [rtr-a, rtr-b, inet, net-a, net-b, net-saas, saas]
+
+  - title: SaaS traffic goes straight out
+    narration: >-
+      The branch A user opens the same SaaS application as before. This time the request leaves the branch on the local
+      Internet connection and goes directly to the provider. The data center is not involved, so the trip is shorter and the
+      data center's Internet link is no longer the funnel for everyone's cloud traffic.
+    highlight: [host-a, lan-a, rtr-a, net-a, inet, net-saas, saas]
+    packets:
+      - { path: [host-a, rtr-a, inet, saas], label: to SaaS, color_style: underlay-internet }
+    callouts:
+      - { target: net-a, text: "No detour through the data center." }
+  - title: Company applications still use the private circuits
+    narration: >-
+      Traffic from branch B to a company application still travels over the MPLS circuit to the data center. Notice what has
+      appeared: two different paths and a decision to make for every kind of traffic. In a traditional setup that decision is
+      usually built into each branch device's own configuration.
+    highlight: [host-b, lan-b, rtr-b, circuit-b, mpls, circuit-dc, dc-edge, lan-apps, dc-apps]
+    packets:
+      - { path: [host-b, rtr-b, mpls, dc-edge, dc-apps], label: to company app, color_style: underlay-mpls }
+    callouts:
+      - { target: rtr-b, text: "Who decides which traffic takes which path?" }

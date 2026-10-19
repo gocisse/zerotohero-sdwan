@@ -1,0 +1,13 @@
+# VCO UI for overlay connectivity (target 7.0, new UI)
+
+| claim | source URL | doc version | status |
+|---|---|---|---|
+| Cloud VPN: Configure > Profiles > Profile > Device tab > VPN Services > Cloud VPN; on an Edge: Configure > Edges > Edge > Device tab, VPN Services, with Override. | https://www.arista.com/en/admin-guide-vc-7-0/sd-wan-7-0-configure-device-settings-for-profiles | 7.0 | VERIFIED |
+| Branch to Hub Site (Permanent VPN): Enable Branch to Hubs, Edit Hubs (Add Hubs window), Enable Conditional BackHaul; Branch to Branch VPN (Transit & Dynamic): Enable Branch to Branch VPN, Cloud Gateways or Hubs for VPN, Dynamic Branch To Branch VPN option; Edge to Non SD-WAN Sites. | https://www.arista.com/en/admin-guide-vc-7-0/sd-wan-7-0-configure-device-settings-for-profiles | 7.0 | VERIFIED |
+| Configure > Network Services: NSD via Gateway, NSD via Edge, API Credentials, Clusters and Hubs, Network Management (NetFlow, DNS Services, Private Network Names, Prefix Delegation Tags, Authentication Services, TACACS Services), Edge Services (VNFs). | https://www.arista.com/en/admin-guide-vc-7-0/sd-wan-7-0-configure-network-services | 7.0 | VERIFIED |
+| Observing tunnels: Diagnostics > Remote Diagnostics > List Paths (WAN link, local and remote IP, state Stable / Unstable / BW_Measurement / Quiet, VPN state, bandwidth, latency, jitter, loss, uptime, mode Static or Dynamic). | https://www.arista.com/assets/data/pdf/qsg/VC-SD-WAN-7.0-Troubleshooting-Guide.pdf | 7.0 (local PDF, printed pages 75-76) | VERIFIED |
+| Diagnostics > Remote Diagnostics > VPN Test (branch-to-branch connectivity between Edges, Pass or Fail, latency), Gateway test (change cloud traffic path), MTR (path Direct, Multipath, NVS via Edge or Gateway). | https://www.arista.com/assets/data/pdf/qsg/VC-SD-WAN-7.0-Troubleshooting-Guide.pdf | 7.0 (local PDF) | VERIFIED |
+| Monitor > Edges > Edge tabs: QoE, Links, Paths, Flows, System; the Paths tab shows paths to peers; Flows has a live mode (6.1 and later, up to four flows). | https://www.arista.com/en/admin-guide-vc-7-0/sd-wan-7-0-monitor-enterprise | 7.0 (read in step 7) | VERIFIED |
+| Monitor > Firewall Logs records VPN traffic via Hub (DEST_NAME values). | https://www.arista.com/en/admin-guide-vc-7-0/sd-wan-7-0-configure-device-settings-for-profiles | 7.0 | VERIFIED |
+| Events: the Appendix lists link and Edge events; tunnel-specific event names for dynamic tunnels coming up or going down were not read. [needs observation] | none | 7.0 | VERIFY |
+| A hub's cluster status view (Cluster Score) location in Monitor: not found. [needs observation] | none | 7.0 | VERIFY |

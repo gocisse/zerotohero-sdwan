@@ -1,0 +1,71 @@
+---
+id: cfg-overrides
+title: Edge-level configuration and overrides
+summary: What is set per Edge, how Override works, when to override and when not to, and the risk of configuration drift.
+estimated_minutes: 10
+topics: [config-overrides]
+---
+
+**By the end of this lesson you will be able to:**
+
+- describe how an Edge override works on the Device tab;
+- name examples of settings that are Edge-only, overridable, or cannot be overridden;
+- say how business policy and firewall overrides differ from a Device-tab Override;
+- explain the risk of configuration drift and when to avoid overriding.
+
+## How Override works
+
+On an Edge's page, **Configure > Edges > the Edge > Device**, some settings are inherited (see <Term id="inheritance" />) from the <Term id="profile" />. To edit one for this Edge, tick the <Term id="override">Override</Term> checkbox next to it. Arista's examples include ARP timeouts, BFD, VLAN settings, LAN interfaces, Wi-Fi radio, Global IPv6, ECMP, SNMP and OSPF. For example, "by default the Edge inherits the ARP settings from the associated Profile."
+
+## What is set only on the Edge
+
+- **Loopback interfaces** apply exclusively to Edges and have no Profile-level configuration; configure them after activation.
+- The **Profile VLAN name and ID** cannot be overridden by the Edge.
+- Some features, such as RADIUS, can be set at either level.
+
+<Predict
+  prompt="Which of these can only be configured on an Edge, not in a Profile?"
+  choices={["Loopback interfaces", "OSPF areas", "VLANs", "Business policy rules"]}
+  answer={0}
+>
+  Loopback interfaces apply exclusively to Edges and do not support Profile-level configuration.
+</Predict>
+
+## Rules are different: you do not edit, you supersede
+
+Device settings use a checkbox. Rules work differently:
+
+- <Term id="business-policy">**Business policy**</Term>: the Edge's Business Policy tab has a **Rules From Profile** section and an **Edge Overrides** section. Profile rules cannot be updated at the Edge. To change one, create an identical rule at the Edge with new parameters; the Edge-level rule then supersedes the Profile configuration.
+- **Firewall**: rules created at Profile level cannot be updated at the Edge either, and **the Edge override rules take priority** over the inherited Profile rules. The Edge's Firewall tab has an Override checkbox.
+
+## Profile changes and overrides
+
+Switching an Edge to another Profile has documented side effects: VLANs inherited from the old Profile are removed, an interface tied to a removed VLAN reverts to the new Profile's configuration even if the Edge had overridden it, and Profile-level BGP filters on neighbours are removed and must be re-associated.
+
+## When to override, and when not to
+
+- Override when one site genuinely differs (a different ISP, a unique VLAN, a local printer rule).
+- Otherwise change the **Profile**: changing the Profile is the way to keep many Edges consistent (this is our good-practice advice, not a documented rule we could quote).
+- **Drift** is what happens when many Edges are overridden for small reasons. Each override is one more place to look when something behaves oddly, and the Edge no longer follows the Profile for that setting.
+
+<Callout variant="warning" title="What we could not confirm">
+  How the Orchestrator visibly marks an overridden setting, how to revert an override to the Profile value, and a complete list of settings that cannot be overridden are not in the pages we read. Whether later Profile edits still reach an Edge that overrides that setting is also unconfirmed.
+</Callout>
+
+## What you would see in the VCO
+
+- **Configure > Edges > (Edge) > Device**: an **Override** checkbox beside inherited settings.
+- **Business Policy** tab: **Rules From Profile** and **Edge Overrides**.
+- **Firewall** tab: an **Override** checkbox.
+
+## Key takeaways
+
+- Override is per setting on the Device tab; rules are superseded by creating a matching Edge rule.
+- Loopbacks are Edge-only; Profile VLAN name and ID cannot be overridden.
+- Edge firewall override rules take priority over Profile rules.
+- Every override is a place configuration can drift.
+
+## What would you look for in the VCO
+
+- Does this Edge have an Override ticked for the setting in question?
+- Is there an Edge-level rule matching a Profile rule?

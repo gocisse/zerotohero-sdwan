@@ -1,0 +1,394 @@
+# Section 6 quiz. Correct answers use only VERIFIED rows in content/reference/{routing-overview,static-routes,ospf,bgp,route-redistribution-and-precedence,overlay-flow-control,vco-routing-ui}.md.
+
+- id: rt-q-metric-type
+  topic: rt-ospf
+  difficulty: 1
+  type: single_choice
+  prompt: "In the Profile's OSPF settings, which metric type is the default for routes redistributed into OSPF?"
+  options:
+    - id: e2
+      text: "E2"
+    - id: e1
+      text: "E1"
+      explanation: "E1 can be chosen, but it is not the default."
+    - id: ia
+      text: "Inter-area (O IA)"
+      explanation: "O IA is a route type learned from another area, not a metric type for redistributed routes."
+    - id: none
+      text: "None"
+      explanation: "None is the default for the default-route setting, not for the metric type."
+  correct: e2
+  explanation: "Set Metric Type is E1 or E2 and the default is E2; the default metric is 20. 6.4 and 7.0 agree."
+  lesson_ref: rt-ospf
+
+- id: rt-q-stages
+  topic: rt-model
+  difficulty: 1
+  type: true_false
+  prompt: "**True or false:** An Edge sends its locally learned routes to the Gateway, and the Gateway acts as a route reflector so other Edges learn them without a full mesh of tunnels."
+  correct: true
+  explanation: "The 7.0 Overview says the Edge sends all locally learned routes to the Gateway based on its configuration, and the Gateway acts as a BGP route reflector."
+  lesson_ref: rt-big-picture
+
+- id: rt-q-longest-prefix
+  topic: rt-redistribution
+  difficulty: 2
+  type: single_choice
+  prompt: "Scenario: An Edge has 10.20.0.0/16 learned through OSPF (intra-area) and 10.20.5.0/24 learned through BGP. A packet arrives for 10.20.5.9. Which route is used?"
+  options:
+    - id: bgp24
+      text: "The BGP /24, because longest prefix length is compared first"
+    - id: ospf16
+      text: "The OSPF /16, because OSPF intra-area has a lower preference number"
+      explanation: "Preference numbers only order dynamic routes of the same prefix; the most specific prefix is compared first."
+    - id: both
+      text: "Both, shared equally"
+      explanation: "ECMP applies to equal routes, not to different prefixes."
+    - id: none
+      text: "Neither, until the Orchestrator chooses"
+      explanation: "The Edge decides locally from its routing table."
+  correct: bgp24
+  explanation: "The documented order of operations starts with longest prefix length: the most specific mask always wins."
+  lesson_ref: rt-redistribution
+
+- id: rt-q-ospf-vs-bgp
+  topic: rt-redistribution
+  difficulty: 2
+  type: single_choice
+  prompt: "Scenario: The same prefix is learned as an OSPF inter-area route and as an eBGP route. Which does the Edge prefer?"
+  options:
+    - id: ospf
+      text: "The OSPF inter-area route"
+    - id: bgp
+      text: "The eBGP route"
+      explanation: "The diagnostics say an OSPF route with an intra- or inter-area metric beats a BGP route."
+    - id: tie
+      text: "Neither: it load-balances"
+      explanation: "The two routes have different preferences, so they are not equal."
+    - id: newest
+      text: "The newer route"
+      explanation: "Route age is only the final tie-breaker."
+  correct: ospf
+  explanation: "Reason code LR_EXT_OSPF_INTER: an OSPF route with an intra- or inter-area metric beats a BGP route. The default preference numbers agree (1002 for O IA, 1003 for eBGP, and lower wins)."
+  lesson_ref: rt-redistribution
+
+- id: rt-q-oe2-vs-bgp
+  topic: rt-redistribution
+  difficulty: 3
+  type: single_choice
+  prompt: "Scenario: The same prefix is learned from the LAN as an OSPF E2 route and over BGP. Which wins?"
+  options:
+    - id: bgp
+      text: "The BGP route"
+    - id: oe2
+      text: "The OSPF E2 route, because OSPF always beats BGP"
+      explanation: "OSPF intra- and inter-area routes beat BGP; external OE1 and OE2 routes lose to it."
+    - id: lower
+      text: "The one with the lower cost number, whatever its type"
+      explanation: "Costs are compared within a type; route type comes first."
+    - id: none
+      text: "The Edge installs neither"
+      explanation: "Both are candidates; one is chosen."
+  correct: bgp
+  explanation: "Reason code LR_EXT_BGP_RT: a BGP-learned route is selected over an OSPF route of metric type OE1 or OE2."
+  lesson_ref: rt-redistribution
+
+- id: rt-q-external-flag
+  topic: rt-ofc
+  difficulty: 2
+  type: single_choice
+  prompt: "Scenario: A LAN router sends an E2 route to Branch A, which learns it correctly. Remote sites never get it. Nothing is filtered. What is a documented reason?"
+  options:
+    - id: flag
+      text: "External OSPF routes are kept out of the overlay by default until the Global Advertise Flag for them is enabled"
+    - id: area
+      text: "E2 routes only work in NSSA areas"
+      explanation: "Normal is the only supported area type."
+    - id: hub
+      text: "E2 routes are only advertised to Hubs"
+      explanation: "No such rule is documented."
+    - id: dyn
+      text: "Dynamic Branch to Branch is off"
+      explanation: "That setting decides tunnels between branches, not whether a route enters the overlay."
+  correct: flag
+  explanation: "By default the system restricts certain route types, External OSPF routes and NSD iBGP routes among them, from entering the overlay until their flags are enabled."
+  lesson_ref: rt-ofc
+
+- id: rt-q-lan-no-routes
+  topic: rt-ospf
+  difficulty: 2
+  type: single_choice
+  prompt: "Scenario: OSPF is configured on an Edge, but the LAN router's routing table lacks the routes the Edge received from the overlay. Which Diagnostics test is documented for this?"
+  options:
+    - id: redist
+      text: "List OSPF Redistributed Routes"
+    - id: bgpsum
+      text: "Show BGP Summary"
+      explanation: "That checks BGP neighbors, not OSPF redistribution."
+    - id: mtr
+      text: "MTR"
+      explanation: "MTR tests a path to a destination; it does not list redistributed routes."
+    - id: vpn
+      text: "VPN Test"
+      explanation: "VPN Test checks tunnels between Edges."
+  correct: redist
+  explanation: "The Troubleshooting Guide says to run List OSPF Redistributed Routes when the LAN router is not able to see routes received from the overlay."
+  lesson_ref: rt-ospf
+
+- id: rt-q-missing-prefix
+  topic: rt-diagnosis
+  difficulty: 3
+  type: multi_choice
+  prompt: "Scenario: A prefix is in the LAN router's table at Branch A but not at remote sites. Which are plausible causes? (Select all that apply.)"
+  options:
+    - id: neighbor
+      text: "The OSPF neighbor is not in Full state, so the Edge never learned the route"
+    - id: ext
+      text: "The route is OSPF E1 or E2 and the External OSPF Global Advertise Flag is off"
+    - id: bgp
+      text: "The BGP route is not advertise True and reachable Yes in List BGP Routes"
+    - id: nssa
+      text: "The OSPF area is set to NSSA"
+      explanation: "Normal is the only supported area type, so this cannot be the cause."
+    - id: overlayprefix
+      text: "Overlay Prefix is off at Branch A"
+      explanation: "That setting redistributes prefixes learned from the overlay towards the LAN; it does not stop Branch A advertising its own prefix."
+  correct: [neighbor, ext, bgp]
+  explanation: "No neighbor means no route; External OSPF routes are held out of the overlay by default; a BGP route enters the overlay only when advertise is True and reachable is Yes."
+  lesson_ref: rt-diagnosis
+
+- id: rt-q-overlay-prefix
+  topic: rt-bgp
+  difficulty: 2
+  type: single_choice
+  prompt: "Scenario: You tick **Overlay Prefix** in the BGP Advanced Settings. What changes?"
+  options:
+    - id: to-lan
+      text: "The Edge redistributes prefixes learned from the overlay to its BGP neighbors"
+    - id: from-lan
+      text: "The Edge stops advertising its connected subnets"
+      explanation: "Connected subnets are controlled by the Connected Routes check box."
+    - id: ospf
+      text: "OSPF routes are injected into BGP"
+      explanation: "That is the OSPF check box."
+    - id: timer
+      text: "The hold timer changes"
+      explanation: "Timers are neighbor fields."
+  correct: to-lan
+  explanation: "Overlay Prefix is described as redistributing the prefixes learned from the overlay."
+  lesson_ref: rt-bgp
+
+- id: rt-q-switched-ospf
+  topic: rt-ospf
+  difficulty: 2
+  type: single_choice
+  prompt: "What does the Edge support for OSPF on a switched (VLAN) interface?"
+  options:
+    - id: passive
+      text: "OSPF only as a passive interface"
+    - id: full
+      text: "Full OSPF, the same as on a routed interface"
+      explanation: "Full OSPF functionality requires routed interfaces."
+    - id: none
+      text: "No OSPF at all"
+      explanation: "OSPF can be enabled on a switched interface, but only as passive."
+    - id: wan
+      text: "Only on WAN interfaces"
+      explanation: "OSPF can be enabled on LAN (routed or switched) or WAN interfaces."
+  correct: passive
+  explanation: "To get full OSPF functionality, use routed interfaces; the Edge only supports OSPF on a switched interface as a passive interface."
+  lesson_ref: rt-ospf
+
+- id: rt-q-advertise
+  topic: rt-static
+  difficulty: 1
+  type: true_false
+  prompt: "**True or false:** Ticking **Advertise** on a static route is what lets other Edges reach that prefix over the VPN."
+  correct: true
+  explanation: "Advertise advertises the route over the VPN so other Edges can reach it; without it the route stays local."
+  lesson_ref: rt-static
+
+- id: rt-q-preferred
+  topic: rt-static
+  difficulty: 2
+  type: single_choice
+  prompt: "What does **Preferred** do on a static route?"
+  options:
+    - id: local
+      text: "The route is matched before a VPN route, even if the VPN route has a lower cost"
+    - id: advertise
+      text: "It advertises the route to other Edges"
+      explanation: "That is Advertise."
+    - id: probe
+      text: "It adds an ICMP probe"
+      explanation: "The probe is a separate field."
+    - id: ipv6
+      text: "It makes the route work for IPv6"
+      explanation: "Preferred is not supported for IPv6."
+  correct: local
+  explanation: "Preferred controls local path selection: the static route matches before a VPN route even when the VPN route has a lower cost."
+  lesson_ref: rt-static
+
+- id: rt-q-maxhop
+  topic: rt-bgp
+  difficulty: 2
+  type: single_choice
+  prompt: "In the BGP neighbor form, what depends on whether the neighbor is iBGP or eBGP?"
+  options:
+    - id: maxhop
+      text: "Max-hop is configurable only for eBGP; for iBGP multi-hop is inherent"
+    - id: keepalive
+      text: "Keep-alive and Hold timers exist only for iBGP"
+      explanation: "Timers are neighbor fields for either kind."
+    - id: asn
+      text: "The ASN field is only for eBGP"
+      explanation: "Every neighbor has an ASN; if it equals the local ASN it is iBGP."
+    - id: filters
+      text: "Filters can only be attached to eBGP neighbors"
+      explanation: "Filters attach to neighbors in general."
+  correct: maxhop
+  explanation: "Max-hop applies only when the local and neighbor ASNs differ (eBGP); with iBGP multi-hop is inherent and the field is not configurable."
+  lesson_ref: rt-bgp
+
+- id: rt-q-edit-exits
+  topic: rt-ofc
+  difficulty: 2
+  type: single_choice
+  prompt: "You edit the Preferred VPN Exits for a subnet in Overlay Flow Control. What does the Orchestrator do?"
+  options:
+    - id: push
+      text: "Sends the change to the relevant Edges, which override their previous preferences"
+    - id: lan
+      text: "Reconfigures the LAN routers' OSPF costs"
+      explanation: "OFC works on the overlay's exits; it does not configure LAN routers."
+    - id: reboot
+      text: "Restarts the Edges"
+      explanation: "No restart is described."
+    - id: wait
+      text: "Holds the change until the next Profile change"
+      explanation: "The change is sent to the relevant Edges."
+  correct: push
+  explanation: "Selecting Edit and changing the order sends the change to the relevant Edges, which override their previous preferences."
+  lesson_ref: rt-ofc
+
+- id: rt-q-bgp-attrs
+  topic: rt-filters
+  difficulty: 3
+  type: multi_choice
+  prompt: "Between two BGP routes for the same prefix, which comparisons are named in the Edge's diagnostic reason codes? (Select all that apply.)"
+  options:
+    - id: lp
+      text: "A higher local preference wins"
+    - id: aspath
+      text: "A shorter AS path wins"
+    - id: metric
+      text: "A lower metric wins"
+    - id: med-high
+      text: "A higher metric wins"
+      explanation: "The reason code is that the route with the lower metric value is selected."
+    - id: longer
+      text: "A longer AS path wins"
+      explanation: "A shorter AS path is selected, which is why prepending makes a route less attractive."
+  correct: [lp, aspath, metric]
+  explanation: "Reason codes LR_BGP_LOCAL_PREF (higher), LR_BGP_ASPATH_LEN (lower AS path value) and LR_BGP_METRIC (lower metric)."
+  lesson_ref: rt-filters
+
+- id: rt-q-bgp-test
+  topic: rt-diagnosis
+  difficulty: 1
+  type: single_choice
+  prompt: "Which Remote Diagnostics test shows the best path and the BGP attributes compared for a prefix?"
+  options:
+    - id: perprefix
+      text: "Show BGP Routes per Prefix"
+    - id: summary
+      text: "Show BGP Summary"
+      explanation: "That tells you whether neighbors are up."
+    - id: ospfdb
+      text: "Show OSPF Database"
+      explanation: "That is an OSPF test."
+    - id: arp
+      text: "ARP Table Dump"
+      explanation: "That lists ARP entries, not routes."
+  correct: perprefix
+  explanation: "Show BGP Routes per Prefix gives the best path along with all other paths and the attributes used to choose."
+  lesson_ref: rt-diagnosis
+
+- id: rt-q-exstart
+  topic: rt-ospf
+  difficulty: 2
+  type: single_choice
+  prompt: "Scenario: Show OSPF Neighbors shows a neighbor stuck between 2-way and ExStart. What does the Troubleshooting Guide suggest checking?"
+  options:
+    - id: mtu
+      text: "MTU issues"
+    - id: asn
+      text: "The ASN of the neighbor"
+      explanation: "ASNs belong to BGP."
+    - id: ospfv3
+      text: "That OSPFv3 is enabled"
+      explanation: "OSPFv3 is the IPv6 version; it does not explain this state."
+    - id: nsd
+      text: "The Non SD-WAN Destination tunnel"
+      explanation: "Not related to a LAN-side OSPF neighbor."
+  correct: mtu
+  explanation: "If the neighbor is stuck between 2-way or ExStart, verify the MTU."
+  lesson_ref: rt-ospf
+
+- id: rt-q-order-ops
+  topic: rt-redistribution
+  difficulty: 2
+  type: ordering
+  prompt: "Put the documented order of operations for routing traffic in order, first compared first."
+  options:
+    - id: lpm
+      text: "Longest prefix length"
+    - id: conn
+      text: "Local connected routes"
+    - id: static
+      text: "Local static routes (Preferred)"
+    - id: remote
+      text: "Remote Edge routes"
+    - id: dynamic
+      text: "Dynamic routes (OFC or DCC order)"
+  correct: [lpm, conn, static, remote, dynamic]
+  explanation: "The 7.0 Overview lists a strict order: longest prefix, local connected, local static, NSD routes, remote Edge routes, Partner Gateway static, then dynamic routes ordered by Overlay Flow Control or distributed cost calculation."
+  lesson_ref: rt-redistribution
+
+- id: rt-q-order-types
+  topic: rt-ospf
+  difficulty: 2
+  type: ordering
+  prompt: "Put the OSPF route types in order of preference, most preferred first."
+  options:
+    - id: intra
+      text: "Intra-area (O)"
+    - id: inter
+      text: "Inter-area (O IA)"
+    - id: e1
+      text: "External type 1 (O E1)"
+    - id: e2
+      text: "External type 2 (O E2)"
+  correct: [intra, inter, e1, e2]
+  explanation: "The documented order is intra-area, inter-area, external type 1, external type 2; among equal types the lower cost wins."
+  lesson_ref: rt-ospf
+
+- id: rt-q-route-life
+  topic: rt-model
+  difficulty: 2
+  type: ordering
+  prompt: "Put the life of a prefix from a Branch A LAN to a Branch B LAN in order."
+  options:
+    - id: learn
+      text: "Branch A learns the prefix from its LAN router as a local route"
+    - id: send
+      text: "Branch A sends the locally learned route to the Gateway"
+    - id: reflect
+      text: "The Gateway reflects the route to Branch B"
+    - id: install
+      text: "Branch B installs it as a remote route"
+    - id: redist
+      text: "Branch B redistributes it to its LAN router, if enabled"
+  correct: [learn, send, reflect, install, redist]
+  explanation: "Edges send their locally learned routes to the Gateway, which acts as a route reflector; a receiving Edge holds a remote route and may redistribute it to its LAN."
+  lesson_ref: rt-big-picture

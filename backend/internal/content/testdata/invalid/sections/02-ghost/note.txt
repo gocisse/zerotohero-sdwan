@@ -1,0 +1,1 @@
+a section dir with no section.yaml

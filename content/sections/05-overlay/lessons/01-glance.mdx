@@ -1,0 +1,64 @@
+---
+id: ov-glance
+title: Overlay connectivity at a glance
+summary: The four ways two sites can talk, and a decision framework for working out which one applies in a given network.
+estimated_minutes: 9
+topics: [overlay-ways]
+---
+
+**By the end of this lesson you will be able to:**
+
+- name the four ways traffic can get from one site to another;
+- say which setting makes each way available;
+- use a short framework to decide which way applies to a given pair of sites;
+- say where in the VCO each setting lives.
+
+## Four ways
+
+<Diagram id="ov-four-ways" />
+
+1. **Via a Gateway.** With <Term id="branch-to-branch-vpn" /> set to the **Cloud Gateways** option, each Edge tunnels to the closest Gateway and connections between Edges go through it.
+2. **Directly.** With <Term id="dynamic-branch-to-branch" />, a direct tunnel can be built on demand once the first packets have gone through a Gateway or a Hub.
+3. **Via a Hub.** A <Term id="hub" /> is an Edge that spokes keep permanent tunnels to. With the **Hubs for VPN** option, connections between branch Edges go through a Hub.
+4. **To a non SD-WAN destination.** For a site or service that does not run VeloCloud, an IPsec tunnel is built from a Gateway (<Term id="nsd-via-gateway" />) or an Edge (<Term id="nsd-via-edge" />).
+
+They are not mutually exclusive: a branch can have tunnels to Gateways, to Hubs and to a non SD-WAN destination at once, and a direct tunnel can appear on top.
+
+<Callout variant="info" title="Two senses of the word 'tunnel'">
+  Every DMPO tunnel between Edges and Gateways is an overlay tunnel (VCMP over UDP 2426, Section 2). A tunnel to a non SD-WAN destination is an IPsec tunnel. The lessons here use "tunnel" for both and say which.
+</Callout>
+
+## A decision framework
+
+For any pair of sites, ask in order:
+
+1. **Is the other end running VeloCloud?** If not, only way 4 applies.
+2. **Is Cloud VPN on** for the segment, in the Profile (or Edge override)? Without it there are no branch-to-branch or branch-to-hub tunnels.
+3. **Which Branch to Branch option** is set, Cloud Gateways or Hubs for VPN? That decides whether the standing path runs through a Gateway or a Hub.
+4. **Is Dynamic Branch to Branch on?** If so, a direct tunnel may appear after the first traffic.
+5. **Can a direct tunnel actually come up?** NAT in front of an Edge can stop it (Section 2).
+
+<Predict
+  prompt="Site A and Site B both have Cloud VPN and Branch to Branch VPN on (Cloud Gateways option), no Hubs, Dynamic Branch to Branch on. How does the first packet travel?"
+  choices={["Directly between the Edges", "Through the Gateway, with a direct tunnel built afterwards if the initiating Edge decides one is possible", "Through the Orchestrator", "It is dropped until an administrator creates a tunnel"]}
+  answer={1}
+>
+  The first packet goes through the Cloud Gateway (or Hub). The initiating Edge then builds a direct tunnel if it determines a secure overlay tunnel is possible.
+</Predict>
+
+## What you would see in the VCO
+
+- **Configure > Profiles > (Profile) > Device > VPN Services**: Cloud VPN, Branch to Hub Site, Branch to Branch VPN and Edge to Non SD-WAN options.
+- **Configure > Network Services**: the destinations and Hubs themselves.
+- **Diagnostics > Remote Diagnostics > List Paths**: the tunnels that exist, each with a **Mode** of Static or Dynamic.
+
+## Key takeaways
+
+- Four ways: via Gateway, direct, via Hub, to a non SD-WAN destination.
+- Cloud VPN per segment switches the branch-level tunnels on; the Branch to Branch option picks Gateway or Hub.
+- The framework: is the peer VeloCloud, is Cloud VPN on, which option, is dynamic on, can a direct tunnel form.
+
+## What would you look for in the VCO
+
+- Which VPN Services options does this Profile have ticked?
+- What does List Paths show for the peer: which tunnels, Static or Dynamic?

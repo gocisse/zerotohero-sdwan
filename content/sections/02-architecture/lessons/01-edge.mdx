@@ -1,0 +1,114 @@
+---
+id: arch-edge
+title: The Edge (VCE)
+summary: What the Edge does between the LAN and the transports, what it builds, how it gets started, and which settings come from the Orchestrator.
+estimated_minutes: 10
+topics: [edge-role]
+---
+
+**By the end of this lesson you will be able to:**
+
+- describe where the <Term id="vce">Edge</Term> sits and what it connects;
+- list what the Edge builds on top of the circuits it is plugged into;
+- explain <Term id="activation" /> and what has to be true for a new Edge to come online;
+- tell which settings an Edge inherits from the Orchestrator and how one Edge can differ with an <Term id="override" />.
+
+## Between the LAN and the transports
+
+The Edge is the SD-WAN device at a site. Arista describes Edges as zero-touch, enterprise-class devices, or virtual software, that give
+secure and optimized connectivity. On one side it has the **LAN**: users, servers, printers, whatever the site contains. On the other it
+has the **WAN circuits**, which we call the transports: an Internet line, an MPLS circuit, a cellular connection.
+
+<Diagram id="arch-edge-between" />
+
+Two settings on the Edge's interfaces are worth knowing, because they explain a lot of what you see in the VCO:
+
+- **Switched or routed.** Switch ports are switched by default and can be converted to routed ports. Routed interfaces are their own
+  interface type, and that is where several of the Edge's local services (below) are configured.
+- **WAN overlay.** The WAN overlay is turned on per interface with a checkbox. The Edge settings also let an administrator add or modify
+  a user-defined WAN overlay, and modify or delete one the system detected automatically.
+
+<Callout variant="tip" title="Why it is useful to think of the Edge as 'two-faced'">
+  Nearly every configuration question about an Edge is either a LAN-side question (addressing, DHCP, NAT, VLANs) or a WAN-side question
+  (which circuits, which overlay, which policy). If you are unsure where a setting belongs, ask which side of the box it faces.
+</Callout>
+
+## What the Edge builds
+
+On top of its circuits the Edge builds <Term id="tunnel">tunnels</Term>: to one or more <Term id="vcg">Gateways</Term>, and directly to
+other Edges. User traffic is carried inside them, and <Term id="dmpo" /> monitors the paths they take. Edges can also take on a role
+in the layout: in routing terms an Edge can act as a regular Edge, a <Term id="hub" />, or a <Term id="spoke" />.
+
+<Predict
+  prompt="Which of these is something the Edge **builds**, rather than something it merely uses?"
+  choices={["The carrier's MPLS network", "Tunnels to Gateways and to other Edges", "The Internet circuit", "The Orchestrator's database"]}
+  answer={1}
+>
+  The circuits belong to the carriers and the Orchestrator is a separate component. The Edge builds the overlay tunnels: to one or more
+  Gateways, and directly to other Edges.
+</Predict>
+
+## Local services on the LAN side
+
+The 7.0 Edge settings describe a few services the Edge provides locally:
+
+- a **DHCP server** on a routed interface: the Edge hands the clients its own virtual IP address as their default gateway;
+- **NAT** options, including LAN-side NAT rules that inherit from the Profile and can be overridden per Edge;
+- a **DNS proxy** with local DNS entries.
+
+<Callout variant="warning" title="What we did not confirm">
+  We did not find a description of an Edge being configured through a local web page in the guides we read; the only mention is that
+  loopback interfaces are reachable by SSH and not through a local web UI. Treat the Orchestrator as the place where Edge configuration
+  lives, and check your own release's documentation before assuming a local interface.
+</Callout>
+
+## Getting started: provisioning and activation
+
+An Edge does not configure itself from scratch. An administrator **provisions** it in the Orchestrator: under **Configure > Edges**, Add
+Edge, choose a name, a model and a <Term id="profile" />, and optionally enter the serial number the device must present. The Edge is
+given an **activation key** that expires after one month if unused.
+
+The Edge is then <Term id="activation">activated</Term> in one of two ways, as you saw in Section 1: **push** (auto-activation, which needs
+only outbound Internet connectivity via DHCP) or **pull** (an activation email to someone at the site). Arista's description of the
+pull method adds that the Edge then downloads its configuration and software from the Orchestrator and reboots several times to apply them.
+This is the <Term id="zero-touch-provisioning" /> idea in practice: nothing about the Edge's configuration was typed at the site.
+
+<Predict
+  prompt="An administrator entered a serial number when provisioning an Edge. What does the documentation say about that serial number?"
+  choices={["The Edge must display this serial number on activation", "It is optional and ignored", "It is used as the activation key", "It must match the Gateway's serial number"]}
+  answer={0}
+>
+  The serial number is optional, but if it was specified, the Edge must show that serial number when it activates. The activation key is
+  a separate item and expires after one month if it is not used.
+</Predict>
+
+After activation the Edge stays in touch. It sets up a persistent connection to the Orchestrator and sends <Term id="heartbeat">heartbeats</Term>
+over it; if the Orchestrator sees no heartbeat for a configured time, it marks the Edge as OFFLINE.
+
+## Whose configuration is it?
+
+Most of an Edge's configuration is **inherited**. Edges inherit their settings from the Profile they are assigned to. When one site needs
+to be different, you tick the **Override** checkbox next to the setting and change it for that Edge only. Inheritance and overrides get a
+full treatment in a later section; for now the picture to keep is: **Profile by default, override by exception.**
+
+Edge software works the same way: images are managed from the Orchestrator, and per-Edge assignments are available too.
+
+<Callout variant="gotcha" title="What an Edge does when the Orchestrator is unreachable">
+  The pages we read describe monitoring data being cached during an Orchestrator outage and a mechanism that spares Edges from waiting on
+  the Orchestrator for route preferences. They do **not** state in so many words how an Edge forwards traffic or applies configuration
+  while it cannot reach the Orchestrator. We therefore do not claim a behaviour here. Lesson 2 collects what is documented.
+</Callout>
+
+## What you would see in the VCO
+
+- **Configure > Edges** lists the Edges. Opening one shows its configuration with the inherited values and the **Override** checkboxes.
+- **Configure > Edges > Add Edge** (the provisioning form) is where the name, model, Profile and optional serial number are entered.
+- **Monitor > Edges** shows each Edge's status, its links and its Gateways. An Edge that has stopped sending heartbeats is marked OFFLINE by the Orchestrator (where exactly that shows depends on your release).
+- The Edge's **Overview** tab in Configure > Edges is where the activation email is sent for the pull method.
+
+## Key takeaways
+
+- The Edge sits between the LAN and the transports, and builds tunnels over them.
+- The WAN overlay is enabled per interface; DHCP, NAT rules and a DNS proxy are examples of LAN-side services.
+- A new Edge is provisioned in the Orchestrator, gets an activation key valid for one month, and activates by push or pull.
+- Configuration is inherited from a Profile; an Override changes a setting for one Edge.

@@ -1,0 +1,60 @@
+---
+id: ov-diagnosis
+title: Choosing and reading paths
+summary: "A guided diagnostic: why does Branch A to Branch B go through the Hub, and why is there no direct tunnel? What to check, in what order, and what each reading means."
+estimated_minutes: 11
+topics: [overlay-diagnosis]
+---
+
+**By the end of this lesson you will be able to:**
+
+- turn "why does traffic take this path" into an ordered list of checks;
+- read List Paths, VPN Test and firewall logs for path evidence;
+- say what each reading means and what it cannot tell you.
+
+## Question 1: why does A to B go through the Hub?
+
+<Diagram id="ov-why-hub" />
+
+1. **Profile, VPN Services.** Open Configure > Profiles > the Profile > Device > VPN Services. Is <Term id="branch-to-branch-vpn">**Branch to Branch VPN**</Term> set to <Term id="hubs-for-vpn">**Hubs for VPN**</Term>? Then connections between branches go through the Hub by design. Is the Edge overriding it?
+2. **<Term id="dynamic-branch-to-branch">Dynamic Branch to Branch</Term>.** Is it on for these Edges? If not, no direct tunnel will be built.
+3. **List Paths on Branch A.** Diagnostics > Remote Diagnostics > List Paths. Is there a tunnel to Branch B with **Mode: Dynamic** (a <Term id="static-tunnel">static</Term> tunnel is always up), and is its State Stable? If yes, the direct path exists. If not, only the Hub path exists.
+4. **Hub order.** If several Hubs exist, routing attributes decide first and Hub order breaks ties. Firewall logs name traffic that went through a Hub as "...-via-Hub".
+
+## Question 2: why is there no direct tunnel?
+
+- Dynamic Branch to Branch **off**: none will be built.
+- **No recent traffic**: a dynamic tunnel is torn down after 180 seconds of silence.
+- The initiating Edge may have decided a secure overlay tunnel is **not possible**.
+- **NAT** in front of an Edge can block incoming tunnels on UDP 2426 (Section 2).
+- Use **VPN Test** to see whether Edges can reach each other and with what latency.
+
+<Predict
+  prompt="List Paths on Branch A shows a Static tunnel to the Hub and no tunnel to Branch B, although Branch A and B talked a minute ago. Which is a documented possible reason?"
+  choices={["Dynamic Branch to Branch is off or a secure direct tunnel was judged not possible", "The Profile was deleted", "Static tunnels always hide Dynamic ones", "The Orchestrator is the management plane"]}
+  answer={0}
+>
+  A direct tunnel is built only when Dynamic Branch to Branch is on and the initiating Edge determines a secure overlay tunnel is possible. After 180 seconds of silence it is torn down too.
+</Predict>
+
+<Callout variant="warning" title="Do not over-read">
+  We could not confirm whether a flow prefers an existing direct tunnel over the Hub path, nor tunnel-specific event names. Treat the order above as our suggested method, and use List Paths and flows in your own release to confirm.
+</Callout>
+
+## What you would see in the VCO
+
+- **Configure > Profiles > (Profile) > Device > VPN Services**; **Configure > Network Services** for Hubs and clusters.
+- **Diagnostics > Remote Diagnostics > List Paths**, **VPN Test**, **MTR**.
+- **Monitor > Edges > (Edge) > Paths** and **Flows**; **Monitor > Firewall Logs**.
+
+## Key takeaways
+
+- Check the Profile's Branch to Branch option, then Dynamic, then List Paths, then Hub order.
+- Static means always up, Dynamic means on demand.
+- 180 seconds of silence removes a dynamic tunnel.
+
+## What would you look for in the VCO
+
+- What is the Branch to Branch option, and is it overridden?
+- Does List Paths show a Dynamic tunnel to the peer?
+- Which Hub did the firewall log name?

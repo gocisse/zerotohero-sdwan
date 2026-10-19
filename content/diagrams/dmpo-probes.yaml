@@ -1,0 +1,63 @@
+# Section 3, lesson 2: DMPO monitoring on two paths. Facts: reference/dmpo-monitoring.md (100 ms exchange, 100 ms probes, 500 ms after 5 min).
+id: dmpo-probes
+title: Monitoring two paths
+alt: >-
+  A branch Edge and a hub Edge are joined by two paths, one over the Internet and one over MPLS. User packets carry a sequence
+  number and timestamp, the endpoints report measurements to each other every 100 ms, idle paths get a probe every 100 ms, and
+  after five minutes without high-priority traffic the probe interval becomes 500 ms.
+width: 900
+height: 460
+
+nodes:
+  - { id: edge-a, label: Branch Edge, kind: vce, x: 150, y: 230 }
+  - { id: edge-b, label: Hub Edge, kind: vce, x: 750, y: 230 }
+
+links:
+  - { id: path-inet, from: edge-a, to: edge-b, style: underlay-internet, label: Internet path, curve: -90 }
+  - { id: path-mpls, from: edge-a, to: edge-b, style: underlay-mpls, label: MPLS path, curve: 90 }
+
+steps:
+  - title: Two paths between two endpoints
+    narration: >-
+      DMPO runs between two endpoints, here a branch Edge and a hub Edge. Each WAN link gives one path. DMPO measures **every path
+      separately**, and in each direction separately.
+    highlight: [edge-a, edge-b, path-inet, path-mpls]
+
+  - title: User traffic carries the measurements
+    narration: >-
+      While user traffic flows, DMPO adds a **sequence number** and a **timestamp** to the tunnel header. The receiving endpoint uses them to spot lost and
+      out-of-order packets and to work out jitter and latency.
+    highlight: [edge-a, edge-b, path-inet]
+    packets:
+      - { path: [edge-a, path-inet, edge-b], label: data + seq + time, color_style: overlay-tunnel }
+      - { path: [edge-a, path-inet, edge-b], label: data + seq + time, color_style: overlay-tunnel, delay_ms: 600 }
+    callouts:
+      - { target: path-inet, text: "The numbers ride on the user's own packets." }
+
+  - title: Idle paths get probes
+    narration: >-
+      A path with no user traffic would tell DMPO nothing, so an **active probe** goes out every 100 ms. Both paths are measured, including the one
+      that currently carries nothing.
+    packets:
+      - { path: [edge-a, path-inet, edge-b], label: probe, color_style: control }
+      - { path: [edge-a, path-mpls, edge-b], label: probe, color_style: control }
+    callouts:
+      - { target: path-mpls, text: "Probe every 100 ms when there is no user traffic." }
+
+  - title: The endpoints compare notes
+    narration: >-
+      The two endpoints send each other the measured metrics for the path every 100 ms. That exchange is what lets each side know how the path
+      behaves in the direction it cannot see.
+    packets:
+      - { path: [edge-b, path-inet, edge-a], label: metrics, color_style: control }
+      - { path: [edge-b, path-mpls, edge-a], label: metrics, color_style: control }
+    callouts:
+      - { target: edge-a, text: "Metrics are exchanged every 100 ms." }
+
+  - title: Quiet for five minutes
+    narration: >-
+      After five minutes with no high-priority user traffic, the probe interval drops to every 500 ms. Probing still continues, only less often.
+    packets:
+      - { path: [edge-a, path-mpls, edge-b], label: probe (500 ms), color_style: control }
+    callouts:
+      - { target: path-mpls, text: "After 5 minutes without high-priority traffic: probe every 500 ms." }

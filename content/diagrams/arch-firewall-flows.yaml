@@ -1,0 +1,62 @@
+# Section 2, lesson 6: what an Edge behind a firewall needs to reach. See reference/ports-protocols.md.
+id: arch-firewall-flows
+title: What an Edge needs through its firewall
+alt: >-
+  A branch Edge sits behind a firewall that leads to the Internet. Across the Internet it needs to reach the Orchestrator over
+  TCP port 443 and a Gateway over UDP port 2426, and it can build a direct tunnel to another Edge over UDP port 2426, where
+  the other Edge's NAT must allow the incoming tunnel.
+width: 900
+height: 520
+
+groups:
+  - { id: branch, label: Branch, nodes: [edge-a, fw] }
+
+nodes:
+  - { id: edge-a, label: Branch Edge, kind: vce, x: 120, y: 270 }
+  - { id: fw, label: Firewall, kind: firewall, x: 290, y: 270 }
+  - { id: inet, label: Internet, kind: internet, x: 480, y: 270 }
+  - { id: vco, label: Orchestrator, kind: vco, x: 740, y: 90 }
+  - { id: gw, label: Gateway, kind: vcg, x: 740, y: 270 }
+  - { id: edge-b, label: Other Edge, kind: vce, x: 740, y: 450 }
+
+links:
+  - { id: lan-fw, from: edge-a, to: fw, style: lan }
+  - { id: fw-inet, from: fw, to: inet, style: underlay-internet }
+  - { id: inet-vco, from: inet, to: vco, style: underlay-internet }
+  - { id: inet-gw, from: inet, to: gw, style: underlay-internet }
+  - { id: inet-b, from: inet, to: edge-b, style: underlay-internet }
+
+steps:
+  - title: The Edge sits behind a firewall
+    narration: >-
+      Many branches put a firewall between the Edge and the Internet. For the SD-WAN to work, that firewall has to let a few
+      specific flows through. The following steps add them one at a time.
+    highlight: [edge-a, lan-fw, fw, fw-inet, inet]
+    show: [vco, inet-vco, gw, inet-gw, edge-b, inet-b]
+
+  - title: To the Orchestrator, TCP 443 outbound
+    narration: >-
+      The Edge talks to the Orchestrator over **TCP port 443**. The firewall must allow this connection outbound from the Edge.
+    show: [vco, inet-vco]
+    highlight: [edge-a, lan-fw, fw, fw-inet, inet, inet-vco, vco]
+    packets:
+      - { path: [edge-a, fw, inet, vco], label: TCP 443, color_style: control }
+
+  - title: To the Gateway, UDP 2426 outbound
+    narration: >-
+      The tunnels to the Gateway use VCMP on **UDP port 2426**. The firewall must allow it outbound from the Edge.
+    show: [gw, inet-gw]
+    highlight: [edge-a, lan-fw, fw, fw-inet, inet, inet-gw, gw]
+    packets:
+      - { path: [edge-a, fw, inet, gw], label: UDP 2426, color_style: overlay-tunnel }
+
+  - title: To another Edge, UDP 2426 again
+    narration: >-
+      A direct tunnel to another Edge also uses UDP port 2426. If the other Edge is behind a NAT device, that device has to allow
+      incoming tunnels on this port from other Edges, or the direct tunnel is not likely to come up.
+    show: [edge-b, inet-b]
+    highlight: [edge-a, lan-fw, fw, fw-inet, inet, inet-b, edge-b]
+    packets:
+      - { path: [edge-a, fw, inet, edge-b], label: UDP 2426, color_style: overlay-tunnel }
+    callouts:
+      - { target: edge-b, text: "Behind NAT, incoming UDP 2426 must be allowed." }

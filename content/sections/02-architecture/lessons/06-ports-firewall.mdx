@@ -1,0 +1,104 @@
+---
+id: arch-ports-firewall
+title: Ports, protocols and firewall planning
+summary: A per-flow table of what must be allowed for an Edge to reach the Orchestrator, a Gateway and other Edges, with the unconfirmed items marked.
+estimated_minutes: 10
+topics: [firewall-ports]
+---
+
+**By the end of this lesson you will be able to:**
+
+- list the flows an Edge needs through a firewall, with port, protocol and direction;
+- explain what <Term id="nat" /> and <Term id="nat-traversal" /> mean for those flows;
+- list what a Partner Gateway or an on-premises Orchestrator needs allowed;
+- tell the confirmed rules from the ones you must check in your own release's documentation.
+
+## Why a table
+
+Firewall requests are written as rows: from where, to where, port, direction. So this lesson is a table. **Only rows marked confirmed are definite
+statements**; the others are flagged so that you know to check your release documentation.
+
+<Diagram id="arch-firewall-flows" />
+
+## The flows of an Edge
+
+| Flow | Port / protocol | Direction | Status |
+|---|---|---|---|
+| Edge to the Orchestrator | **TCP 443** | outbound from the Edge | Confirmed (the virtual-Edge guide) |
+| Edge to a Gateway (tunnel, <Term id="vcmp" />) | **UDP 2426** | outbound from the Edge | Confirmed |
+| Edge to another Edge (direct tunnel) | **UDP 2426** | outbound; incoming 2426 must also reach the other Edge, even behind NAT | Confirmed |
+| Edge as a **Hub**, from the branches | UDP 2426 | inbound to the Hub | **Check your release docs** |
+| DNS and time | UDP 53, UDP 123 | outbound | **Check your release docs** |
+
+<Callout variant="warning" title="Two rows we could not confirm">
+  The inbound rule for an Edge that acts as a Hub, and the DNS and NTP rules, appear in a Broadcom knowledge-base article that our tools could not open, so we
+  have only seen them in search snippets. They are very likely needed in real deployments, but this course will not state them as confirmed. Check
+  the firewall section of the documentation for your release before you finalize a rule set.
+</Callout>
+
+## NAT and the tunnel ports
+
+Arista's guide says VeloCloud forces NAT traversal on, using the special port 2426, so the behaviour of VeloCloud is the same whether or not
+NAT is present. It also lists UDP 500 and UDP 4500 for IKEv2 negotiation and IPsec NAT transparency between tunnel endpoints, and IP protocol
+50 (ESP) for IPsec when no NAT exists between them.
+
+<Callout variant="gotcha" title="Do not build a rule set from this paragraph alone">
+  How the ESP entry and the always-on NAT traversal port fit together in each case is not spelled out in the pages we read. The practical rules
+  are the ones in the table. If you are asked to open UDP 500, UDP 4500 or ESP, treat it as a question for your release documentation.
+</Callout>
+
+<Predict
+  prompt="An Edge cannot reach the Orchestrator, but its tunnels to the Gateway are up. Which rule is the likely culprit?"
+  choices={["Outbound TCP 443 from the Edge", "Outbound UDP 2426 from the Edge", "Inbound UDP 500 to the Edge", "ESP (IP protocol 50)"]}
+  answer={0}
+>
+  The Orchestrator connection is TCP 443 outbound. The Gateway tunnels use UDP 2426, which works in this case. UDP 500 and ESP are about
+  IPsec between tunnel endpoints, not the Orchestrator connection.
+</Predict>
+
+## Other components
+
+A Gateway and an Orchestrator can sit behind firewalls too. What the guides say:
+
+| Component | Rule | Status |
+|---|---|---|
+| Gateway to the Orchestrator | outbound TCP 443 | Confirmed (Partner Guide) |
+| Partner Gateway, from the Internet | inbound **UDP 2426**, **UDP 4500**, **UDP 500**; plus **IP protocol 50 (ESP)** when NAT is not used | Confirmed |
+| Partner Gateway behind NAT | translate those ports to an externally reachable IP address; 1:1 NAT and port translation are both supported | Confirmed |
+| On-premises Orchestrator, upstream firewall | inbound **HTTP (TCP 80)** and **HTTPS (TCP 443)**; plus established outbound connections for upgrades and security updates | Confirmed (Orchestrator guide) |
+| Browsers to a hosted Orchestrator | HTTPS | Not covered by the pages we read |
+
+Every management flow we found in the guides is HTTPS (TCP 443), including the Orchestrator's own web interface; the persistent connection
+between the Orchestrator and an Edge is a WebSocket over TCP (the guides do not give its port). The guides do not say that 443 is the *only*
+management port.
+
+<Predict
+  prompt="A service provider is deploying a Partner Gateway behind a firewall, with no NAT. Which inbound rules does Arista's Partner Guide list?"
+  choices={["UDP 2426, UDP 4500 and UDP 500, and IP protocol 50 (ESP)", "TCP 443 only", "UDP 53 and UDP 123", "TCP 80 only"]}
+  answer={0}
+>
+  The Partner Guide says to allow inbound traffic from the Internet to UDP 2426 (VCMP), UDP 4500 and UDP 500, and, if NAT is not used, IP protocol 50
+  (ESP). TCP 443 is a separate, outbound rule for talking to the Orchestrator.
+</Predict>
+
+## A planning checklist
+
+1. Allow **outbound TCP 443** from Edges and Gateways to the Orchestrator.
+2. Allow **outbound UDP 2426** from Edges (to Gateways, Hubs and other Edges).
+3. If you want direct branch-to-branch tunnels, make sure NAT devices in front of Edges allow **incoming UDP 2426** from other Edges (or accept the Gateway or Hub path).
+4. For Hubs, Partner Gateways and on-premises components, use the inbound rules above, and **confirm** the unconfirmed rows in your release's documentation.
+5. Test with the tools in the Orchestrator rather than by guessing (below).
+
+## What you would see in the VCO
+
+- **Monitor > Edges**: an Edge that cannot reach the Orchestrator stops sending heartbeats and is marked OFFLINE once the configured limit passes.
+- **Remote Diagnostics > List Paths**: shows which tunnels are up and the Gateway status for an Edge you can reach.
+- **Remote Diagnostics > VPN Test**: shows branch-to-branch connectivity.
+- Edge settings: the **UDP hole punching** option on an overlay interface, for NAT cases where incoming tunnels are blocked.
+
+## Key takeaways
+
+- Edge: outbound TCP 443 to the Orchestrator, outbound UDP 2426 to Gateways and Edges.
+- Behind NAT, direct tunnels also need incoming UDP 2426 from other Edges, or they will not likely come up.
+- Partner Gateway: inbound UDP 2426, 4500, 500, and ESP when NAT is not used. On-prem Orchestrator: inbound 80 and 443.
+- Hub inbound rules and DNS/NTP are not confirmed in our sources: check your release docs.

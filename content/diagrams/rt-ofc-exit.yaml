@@ -1,0 +1,51 @@
+# Section 6, lesson 7: Overlay Flow Control picking an exit. Illustrative prefix; documented behaviour in reference/overlay-flow-control.md.
+id: rt-ofc-exit
+title: Overlay Flow Control picks an exit (illustrative prefix)
+alt: >-
+  Branch C reaches a data center prefix that two exits offer, a Hub and Branch A. Overlay Flow Control lists the Preferred VPN
+  Exits. Editing the order sends the change from the Orchestrator to the Edges and traffic switches to the other exit.
+width: 960
+height: 500
+
+nodes:
+  - { id: c, label: Branch C, kind: vce, x: 110, y: 270 }
+  - { id: hub, label: Hub, kind: datacenter, x: 470, y: 90 }
+  - { id: a, label: Branch A, kind: vce, x: 470, y: 430 }
+  - { id: dc, label: 10.30.0.0/24 behind both, kind: datacenter, x: 840, y: 260 }
+  - { id: vco, label: Orchestrator, kind: vco, x: 110, y: 90 }
+
+links:
+  - { id: c-hub, from: c, to: hub, style: overlay-tunnel }
+  - { id: c-a, from: c, to: a, style: overlay-tunnel }
+  - { id: hub-dc, from: hub, to: dc, style: lan }
+  - { id: a-dc, from: a, to: dc, style: lan }
+  - { id: v-c, from: vco, to: c, style: control }
+
+steps:
+  - title: Two eligible exits
+    narration: >-
+      Both the Hub and Branch A advertise the prefix. The OFC **Routes List** shows the subnet with its **Preferred VPN Exits** and the exits that are eligible.
+    highlight: [hub, a, dc, hub-dc, a-dc]
+    callouts:
+      - { target: dc, text: "Configure > Overlay Flow Control" }
+
+  - title: The initial order
+    narration: >-
+      OFC (or distributed cost calculation) gives each exit an initial preference; the lower value wins. In this example the Hub comes first (illustrative).
+    highlight: [c, c-hub, hub, hub-dc, dc]
+    packets:
+      - { path: [c, c-hub, hub, hub-dc, dc], label: via Hub, color_style: overlay-tunnel }
+
+  - title: Edit the Preferred VPN Exits
+    narration: >-
+      For this subnet you choose **Edit** and put Branch A first. The Orchestrator sends the change to the relevant Edges, which override their previous preferences.
+    highlight: [vco, v-c, c]
+    packets:
+      - { path: [vco, v-c, c], label: new order, color_style: control }
+
+  - title: Traffic follows the new order
+    narration: >-
+      Branch C now uses Branch A as the exit. Longest prefix, connected and local static routes are still checked first; OFC orders the dynamic routes.
+    highlight: [c, c-a, a, a-dc, dc]
+    packets:
+      - { path: [c, c-a, a, a-dc, dc], label: via Branch A, color_style: overlay-tunnel }

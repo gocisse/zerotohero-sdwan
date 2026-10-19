@@ -1,0 +1,72 @@
+---
+id: rt-ofc
+title: Overlay Flow Control
+summary: What Overlay Flow Control is, the global advertise flags and Preferred VPN Exits, how it relates to route preference and hubs, and when to use pinning.
+estimated_minutes: 9
+topics: [rt-ofc]
+---
+
+**By the end of this lesson you will be able to:**
+
+- say what <Term id="overlay-flow-control">Overlay Flow Control</Term> shows and controls;
+- explain the <Term id="global-advertise-flags" /> and their documented defaults;
+- explain <Term id="preferred-vpn-exits" /> and what happens when you edit them;
+- say how it relates to route preference and to the Section 5 Hub order.
+
+## What it is
+
+Overlay Flow Control (OFC) is a page in the Enterprise portal: **Configure > Overlay Flow Control**. It shows a summary of the routes in the company's network and the order of exits for them. Its configuration determines the *initial preference values* of routes. It has three parts.
+
+- **Preferred VPN Exits**: the priority of the destinations to which traffic for a route is sent.
+- **Global Advertise Flags**: which kinds of routes (static, connected, internal, external and uplink) the system adds to the overlay.
+- **Routes List**: columns Segment, Subnet, Preferred VPN Exits, Route Type, Last Update, Created On, IPv4 Subnet and Eligible VPN Exits.
+
+## Global Advertise Flags
+
+<Diagram id="rt-ofc-exit" />
+
+By default the system restricts certain route types from entering the overlay: **External OSPF routes** and **NSD iBGP routes** stay out until you enable their flags. A new flag applies to any route learned afterwards. A hybrid Hub and Branch Edge ignores the Hub Profile's flags and follows the Branch Profile's flags.
+
+## Preferred VPN Exits and pinning
+
+For a particular subnet you can reorder the Preferred VPN Exits with **Edit**. The Orchestrator then sends the change to the relevant Edges, which override their previous preferences. You can also **pin** a route: select it in the Routes List and choose Pin Learned Route Preference; pinned routes get preference values starting from 1, the highest priority. **Refresh Routes** makes Edges and Gateways recalculate costs when distributed cost calculation is on, and briefly affects traffic at all sites, so use a maintenance window.
+
+<Predict
+  prompt="You edit the Preferred VPN Exits for one subnet so that Branch A is first. What does the Orchestrator do?"
+  choices={["Sends the change to the relevant Edges, which override their previous preferences", "Rewrites the LAN router's configuration", "Restarts every Gateway", "Nothing until the next Profile update"]}
+  answer={0}
+>
+  That is the documented behaviour of Edit Preferred VPN Exits.
+</Predict>
+
+## How it relates to the rest
+
+- **Route preference:** OFC (or distributed cost calculation) provides the ordering for the *dynamic* routes at step 8 of the order of operations. It does not override longest prefix, connected or local static routes.
+- **Hubs (Section 5):** when an Edge learns a route through a Hub, its transit metric is 32 plus the Hub's order value; through a Gateway it is 90; from a directly connected peer Edge, 0. Hub order breaks ties after routing attributes.
+- **When to use it:** when the default order of exits is not the one you want for a subnet, or a route type is being held out of the overlay.
+
+<Callout variant="warning" title="Not confirmed">
+  The dedicated OFC page returned an error for automated reading. We did not confirm the default state of flags other than the two named, the meaning of "Eligible VPN Exits", or who can edit the page.
+</Callout>
+
+<Callout variant="tip" title="Habit">
+  Before you change an exit, read the Routes List entry for the subnet and write down what the preferred exits are now. It is the only record you will have of the previous order.
+</Callout>
+
+## What you would see in the VCO
+
+- **Configure > Overlay Flow Control**: Preferred VPN Exits, Global Advertise Flags, Routes List, Refresh Routes.
+- **Diagnostics > List Routes per Prefix** on an Edge: the order of route entries.
+- **Device > Routing & NAT > Overlay Route Control** for community and AS-path action on prefixes advertised to the overlay.
+
+## Key takeaways
+
+- OFC sets initial route preferences and which route kinds enter the overlay.
+- External OSPF and NSD iBGP stay out by default.
+- Editing exits is pushed to the relevant Edges; pinning gives the highest priority.
+
+## What would you look for in the VCO
+
+- Is the prefix in the Routes List, and what are its exits?
+- Is the flag for its route kind on?
+- Has someone pinned it?

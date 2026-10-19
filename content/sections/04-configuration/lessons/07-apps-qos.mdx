@@ -1,0 +1,61 @@
+---
+id: cfg-apps-qos
+title: Applications and QoS
+summary: How applications are identified, service classes, priorities and traffic classes, and what QoS does and does not do on a WAN link.
+estimated_minutes: 9
+topics: [config-apps-qos]
+---
+
+**By the end of this lesson you will be able to:**
+
+- explain how an application is recognised and why a rule can match "Netflix" rather than a port;
+- describe <Term id="service-class" />, <Term id="business-priority" /> and <Term id="traffic-class">traffic classes</Term>;
+- say how <Term id="qos" /> relates to link steering;
+- name what you can and cannot change for default applications.
+
+## Recognising applications
+
+DMPO identifies traffic using Layer 2 through Layer 7 attributes, and can steer applications from the very first packet by caching earlier classification results. This relies on <Term id="dpi" />: the firewall's application matches use the same engine. That is what lets a rule say "this application" instead of a list of ports.
+
+## Service class and business priority
+
+Each application has a **service class** (Real-time, Transactional or Bulk) that determines how DMPO handles it, and a **business priority** (High, Normal or Low). You can change the priority of any application. You cannot change the service class of a default application, but you can set it for your own custom applications.
+
+Combine a priority and a service class and you get a **traffic class**: a 3x3 matrix of nine classes, with a scheduler weight for each and optional policers, set through Overlay QoS CoS Mapping. Smart Defaults fills these in for over 2500 applications.
+
+<Predict
+  prompt="You add a custom application. Which of these can you set that you could not change on a default application?"
+  choices={["Service class", "Business priority", "Segment", "Edge model"]}
+  answer={0}
+>
+  Users cannot change the service class for default applications but can specify it for their own custom applications. Business priority can be changed for any application.
+</Predict>
+
+## What QoS does and does not do
+
+QoS here means treating traffic classes differently: scheduler weights decide who gets more of a busy link, policers can cap a class, and <Term id="dscp">DSCP</Term> tags can be matched or set. It is **not** the same as link steering: steering picks *which link*, QoS treats traffic *on* the link. QoS does not add bandwidth.
+
+<Callout variant="info" title="Where Section 3 fits">
+  The service class is what DMPO uses when it decides how to protect an application's traffic. Priority and weights decide who wins when a link is busy; steering and remediation decide where traffic goes and how loss is repaired.
+</Callout>
+
+<Callout variant="warning" title="What we could not confirm">
+  The default scheduler weights are only in an image. How many packets DPI needs to classify a flow, and the Applications screen's menu path, were not read.
+</Callout>
+
+## What you would see in the VCO
+
+- **Business Policy** rules with an application match and Priority, Service Class and DSCP fields in the action.
+- Overlay QoS CoS Mapping inside the business policy page; the Applications screen's exact path was not confirmed.
+
+## Key takeaways
+
+- Applications are recognised by DPI across Layers 2 to 7, so rules can match applications.
+- Service class (3) times priority (3) gives nine traffic classes.
+- Service class is fixed for default applications; priority can change.
+- QoS treats traffic on a link; steering chooses the link.
+
+## What would you look for in the VCO
+
+- Which priority and service class does this application have?
+- Does a rule override its priority or DSCP?

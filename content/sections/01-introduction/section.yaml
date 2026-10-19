@@ -1,0 +1,10 @@
+id: introduction
+title: "Introduction: why SD-WAN, and what VeloCloud is"
+summary: Why traditional branch WANs struggle, what problems SD-WAN solves, how VeloCloud's three components fit together, where the product came from, and a first tour of the Orchestrator.
+estimated_minutes: 51
+lessons:
+  - intro-why-wans-fall-short
+  - intro-problems-sdwan-solves
+  - intro-how-velocloud-solves
+  - intro-history-and-naming
+  - intro-vco-orientation

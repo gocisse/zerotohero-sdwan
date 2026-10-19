@@ -1,0 +1,62 @@
+# Section 2, lesson 5: dynamic branch-to-branch: a direct tunnel is built on demand and torn down after 180 s of silence.
+id: arch-dynamic-direct
+title: The direct dynamic tunnel
+alt: >-
+  The same two sites and Gateway. After the first packets travel through the Gateway, the initiating Edge builds a direct
+  tunnel to the other Edge, and traffic then goes directly between the sites. After 180 seconds without traffic the direct
+  tunnel is removed.
+width: 900
+height: 520
+
+groups:
+  - { id: site-a, label: Site A, nodes: [host-a, edge-a] }
+  - { id: site-b, label: Site B, nodes: [host-b, edge-b] }
+
+nodes:
+  - { id: host-a, label: Site A user, kind: host, x: 70, y: 140 }
+  - { id: edge-a, label: Site A Edge, kind: vce, x: 240, y: 140 }
+  - { id: host-b, label: Site B user, kind: host, x: 70, y: 400 }
+  - { id: edge-b, label: Site B Edge, kind: vce, x: 240, y: 400 }
+  - { id: gw, label: Gateway, kind: vcg, x: 650, y: 270 }
+
+links:
+  - { id: lan-a, from: host-a, to: edge-a, style: lan }
+  - { id: lan-b, from: host-b, to: edge-b, style: lan }
+  - { id: tun-a, from: edge-a, to: gw, style: overlay-tunnel }
+  - { id: tun-b, from: edge-b, to: gw, style: overlay-tunnel }
+  - { id: tun-direct, from: edge-a, to: edge-b, style: overlay-tunnel, label: direct tunnel }
+
+steps:
+  - title: Starting point, via the Gateway
+    narration: >-
+      Dynamic Branch to Branch is on (the Orchestrator configures it for all Edges by default, per the 7.0 Profile page). Traffic between the two sites starts out going through the Gateway,
+      exactly as in the previous diagram.
+    highlight: [host-a, lan-a, edge-a, tun-a, gw, tun-b, edge-b, lan-b, host-b]
+    show: [tun-direct]
+    packets:
+      - { path: [host-a, edge-a, tun-a, gw, tun-b, edge-b, host-b], label: first packets, color_style: overlay-tunnel }
+
+  - title: A direct tunnel is built on demand
+    narration: >-
+      If the initiating Edge determines that a secure multipath tunnel is possible, it creates a **direct tunnel** to the other
+      Edge. Nobody configured this tunnel between these two particular sites; it appears because traffic needed it.
+    show: [tun-direct]
+    highlight: [edge-a, edge-b, tun-direct]
+    callouts:
+      - { target: tun-direct, text: "Built by the initiating Edge, only when traffic needs it." }
+
+  - title: Traffic now goes direct
+    narration: >-
+      Packets between the two sites now travel directly from Edge to Edge, without detouring through the Gateway.
+    highlight: [host-a, lan-a, edge-a, tun-direct, edge-b, lan-b, host-b]
+    packets:
+      - { path: [host-a, edge-a, tun-direct, edge-b, host-b], label: direct, color_style: overlay-tunnel }
+
+  - title: After 180 seconds of silence it goes away
+    narration: >-
+      When there has been no traffic for 180 seconds, the direct tunnel is torn down. The next time the sites talk, the cycle
+      starts again: via the Gateway first, then direct if possible.
+    hide: [tun-direct]
+    highlight: [edge-a, edge-b, gw, tun-a, tun-b]
+    callouts:
+      - { target: edge-b, text: "Removed after 180 seconds of traffic silence." }

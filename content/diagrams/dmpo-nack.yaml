@@ -1,0 +1,55 @@
+# Section 3, lesson 5: NACK for a TCP flow. Facts: reference/dmpo-remediation.md. Packet numbers are illustrative.
+id: dmpo-nack
+title: NACK for a TCP transfer
+alt: >-
+  A file transfer runs between a branch client and a server through two Edges. Packet 2 is lost on the path. The receiving Edge
+  notices the gap from the sequence numbers and sends a negative acknowledgement back to the sending Edge, which retransmits packet
+  2, so the end hosts never see the loss.
+width: 900
+height: 460
+
+nodes:
+  - { id: client, label: Branch PC, kind: host, x: 60, y: 230 }
+  - { id: edge-a, label: Branch Edge, kind: vce, x: 230, y: 230 }
+  - { id: edge-b, label: Hub Edge, kind: vce, x: 680, y: 230 }
+  - { id: server, label: File server, kind: host, x: 840, y: 230 }
+
+links:
+  - { id: lan-a, from: client, to: edge-a, style: lan }
+  - { id: lan-b, from: edge-b, to: server, style: lan }
+  - { id: path, from: edge-a, to: edge-b, style: underlay-internet, label: Internet path }
+
+steps:
+  - title: A TCP transfer
+    narration: >-
+      A file transfer is a TCP flow. Loss hurts it: the sender backs off when it sees loss, so throughput collapses. DMPO tries to hide the loss.
+    highlight: [client, lan-a, edge-a, path, edge-b, lan-b, server]
+    packets:
+      - { path: [client, lan-a, edge-a, path, edge-b, lan-b, server], label: "1", color_style: overlay-tunnel }
+
+  - title: Packet 2 is lost
+    narration: >-
+      Packets 1 and 3 cross the path. Packet 2 is lost on the way. Because the tunnel header carries sequence numbers, the receiving Edge sees that 2 is missing when 3
+      arrives.
+    highlight: [edge-a, path, edge-b]
+    packets:
+      - { path: [edge-a, path, edge-b], label: "3", color_style: overlay-tunnel, delay_ms: 400 }
+    callouts:
+      - { target: path, text: "Packet 2 never arrives." }
+
+  - title: The receiver sends a NACK
+    narration: >-
+      The receiving DMPO endpoint tells the sending DMPO endpoint to retransmit the missing packet: a **negative acknowledgement**. This works at the DMPO level, between the two Edges.
+    highlight: [edge-b, path, edge-a]
+    packets:
+      - { path: [edge-b, path, edge-a], label: "NACK 2", color_style: control }
+    callouts:
+      - { target: edge-b, text: "NACK is on when loss exceeds the threshold for the application type." }
+
+  - title: Retransmitted, hidden from the hosts
+    narration: >-
+      The sending Edge resends packet 2 and the receiving Edge delivers the data in order. The end hosts never saw the loss.
+    highlight: [edge-a, path, edge-b, lan-b, server]
+    packets:
+      - { path: [edge-a, path, edge-b], label: "2 again", color_style: overlay-tunnel }
+      - { path: [edge-b, lan-b, server], label: "2", color_style: overlay-tunnel, delay_ms: 900 }

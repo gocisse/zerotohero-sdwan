@@ -1,0 +1,115 @@
+# Section 1, lesson 3: the three components and what connects to what.
+# Consistent with reference/components.md, underlay-overlay.md and vcmp-tunnels.md.
+id: vc-components
+title: Edge, Gateway and Orchestrator
+alt: >-
+  A diagram of the three VeloCloud components. A branch has a user and an Edge. The Edge reaches the Internet and, optionally,
+  an MPLS network. A cloud Gateway is reachable over the Internet and leads to a SaaS provider. An Orchestrator in the cloud
+  is joined to the Edges and the Gateway by management links. A data center has its own Edge and servers. Overlay tunnels run
+  from the branch Edge to the Gateway and directly to the data center Edge.
+width: 900
+height: 540
+
+groups:
+  - { id: branch, label: Branch, nodes: [host-a, edge-a] }
+  - { id: dc, label: Data center, nodes: [edge-dc, dc-apps] }
+
+nodes:
+  - { id: host-a, label: Branch user, kind: host, x: 70, y: 170 }
+  - { id: edge-a, label: Branch Edge, kind: vce, x: 210, y: 170 }
+  - { id: inet, label: Internet, kind: internet, x: 440, y: 90 }
+  - { id: mpls, label: MPLS (optional), kind: mpls, x: 440, y: 440 }
+  - { id: gw, label: Gateway, kind: vcg, x: 650, y: 90 }
+  - { id: saas, label: SaaS provider, kind: saas, x: 815, y: 90 }
+  - { id: vco, label: Orchestrator, kind: vco, x: 650, y: 285 }
+  - { id: edge-dc, label: Data center Edge, kind: vce, x: 650, y: 440 }
+  - { id: dc-apps, label: Company apps, kind: datacenter, x: 815, y: 440 }
+
+links:
+  - { id: lan-a, from: host-a, to: edge-a, style: lan }
+  - { id: wan-a-inet, from: edge-a, to: inet, style: underlay-internet }
+  - { id: wan-inet-gw, from: inet, to: gw, style: underlay-internet }
+  - { id: gw-saas, from: gw, to: saas, style: underlay-internet }
+  - { id: wan-a-mpls, from: edge-a, to: mpls, style: underlay-mpls }
+  - { id: wan-mpls-dc, from: mpls, to: edge-dc, style: underlay-mpls }
+  - { id: wan-inet-dc, from: inet, to: edge-dc, style: underlay-internet }
+  - { id: lan-dc, from: edge-dc, to: dc-apps, style: lan }
+  - { id: tun-gw, from: edge-a, to: gw, style: overlay-tunnel, label: tunnel to Gateway, curve: 60 }
+  - { id: tun-edges, from: edge-a, to: edge-dc, style: overlay-tunnel }
+  - { id: mgmt-a, from: vco, to: edge-a, style: control }
+  - { id: mgmt-dc, from: vco, to: edge-dc, style: control }
+  - { id: mgmt-gw, from: vco, to: gw, style: control }
+
+steps:
+  - title: Three components
+    narration: >-
+      VeloCloud SD-WAN is built from three parts. The **Edge** sits at a site. The **Gateway** is a cloud service. The
+      **Orchestrator** is the cloud portal where everything is configured and monitored. The next steps add them one at a time.
+    highlight: [edge-a, gw, vco]
+    show: [mpls, edge-dc, dc-apps, tun-gw, tun-edges, mgmt-a, mgmt-dc, mgmt-gw, vco, gw, saas, wan-inet-gw, gw-saas, wan-a-mpls, wan-mpls-dc, wan-inet-dc, lan-dc]
+
+  - title: The Edge sits between users and the WAN circuits
+    narration: >-
+      At the branch, the Edge is the device (or virtual machine) between local users and the WAN links. It uses whichever
+      circuits the site has: here, one ordinary Internet connection. The circuits themselves are the **underlay**.
+    highlight: [host-a, lan-a, edge-a, wan-a-inet, inet]
+    callouts:
+      - { target: edge-a, text: "Zero-touch: powered on at the branch, set up from the cloud." }
+  - title: The Orchestrator manages from one place
+    narration: >-
+      The Orchestrator appears. An administrator configures policy and watches the network here, and the Edges learn their
+      configuration from it. In this picture the Edge reaches the Orchestrator over its Internet connection; a firewall in
+      front of an Edge has to allow that outbound connection (TCP port 443).
+    show: [vco, mgmt-a]
+    highlight: [vco, mgmt-a, edge-a]
+    packets:
+      - { path: [vco, edge-a], label: config, color_style: control }
+    callouts:
+      - { target: vco, text: "One portal for many sites." }
+  - title: The Gateway is a cloud on-ramp
+    narration: >-
+      A Gateway is a cloud-delivered service that many customers share. An Edge can build an **overlay tunnel** to a Gateway
+      across its Internet circuit, and traffic for cloud services can then travel through the Gateway to the SaaS provider.
+      Gateways also pass routes between Edges, so Edges do not each need a tunnel to every other Edge.
+    show: [gw, saas, wan-inet-gw, gw-saas, tun-gw, mgmt-gw]
+    highlight: [host-a, lan-a, edge-a, tun-gw, gw, gw-saas, saas]
+    packets:
+      - { path: [host-a, edge-a, tun-gw, gw, saas], label: to cloud app, color_style: overlay-tunnel }
+    callouts:
+      - { target: tun-gw, text: "A tunnel built on top of the Internet circuit." }
+  - title: Edges can also tunnel directly to each other
+    narration: >-
+      The data center has an Edge too, with the company applications behind it. The branch Edge can build a tunnel straight to
+      the data center Edge, over the MPLS circuit, the Internet, or both. Which kind of circuit carries which traffic is decided
+      by policy, not by where the cable is plugged in.
+    show: [mpls, edge-dc, dc-apps, wan-a-mpls, wan-mpls-dc, wan-inet-dc, lan-dc, tun-edges, mgmt-dc]
+    highlight: [host-a, lan-a, edge-a, tun-edges, edge-dc, lan-dc, dc-apps]
+    packets:
+      - { path: [host-a, edge-a, tun-edges, edge-dc, dc-apps], label: to company app, color_style: overlay-tunnel }
+
+  - title: Job one, management
+    narration: >-
+      A useful way to remember who does what is to split the system into three jobs. **Management** is configuring and
+      monitoring, and here that is the Orchestrator. This three-way split is a teaching device used in this course, not
+      official vendor wording.
+    highlight: [vco, mgmt-a, mgmt-dc, mgmt-gw, edge-a, edge-dc, gw]
+    callouts:
+      - { target: vco, text: "Management plane: configure and monitor." }
+
+  - title: Job two, control
+    narration: >-
+      **Control** is working out and sharing routes and policy. In this picture that is the exchange of routes between Edges
+      and Gateways; the Gateway passes routes between Edges, so Edges do not each need a tunnel to every other Edge.
+    highlight: [gw, tun-gw, edge-a, edge-dc, tun-edges]
+    callouts:
+      - { target: gw, text: "Control plane: routes are shared via Gateways." }
+
+  - title: Job three, data
+    narration: >-
+      **Data** is the user traffic itself. Packets leave the user, pass the Edge, and ride the tunnels to where they are going.
+      The management and control jobs exist to make this part work well.
+    highlight: [host-a, lan-a, edge-a, tun-edges, edge-dc, lan-dc, dc-apps]
+    packets:
+      - { path: [host-a, edge-a, tun-edges, edge-dc, dc-apps], label: user traffic, color_style: overlay-tunnel }
+    callouts:
+      - { target: edge-a, text: "Data plane: user traffic rides the tunnels." }

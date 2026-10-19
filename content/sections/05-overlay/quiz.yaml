@@ -1,0 +1,366 @@
+# Section 5 quiz. Correct answers use only VERIFIED rows in content/reference/{cloud-vpn,hubs-and-branches,non-sdwan-destinations,network-services-other,overlay-paths,vco-overlay-ui}.md.
+
+- id: ov-q-hub-option
+  topic: overlay-ways
+  difficulty: 1
+  type: single_choice
+  prompt: "Which Branch to Branch VPN option sends connections between branch Edges through a Hub?"
+  options:
+    - id: hubs
+      text: "Hubs for VPN"
+    - id: gw
+      text: "Cloud Gateways"
+      explanation: "With Cloud Gateways, Edges tunnel to the closest Gateway and connections go through it."
+    - id: nsd
+      text: "Edge to Non SD-WAN via Gateway"
+      explanation: "That option is for tunnels to destinations that do not run SD-WAN."
+    - id: dyn
+      text: "Dynamic Branch to Branch alone"
+      explanation: "Dynamic Branch to Branch builds a direct tunnel on demand; the first packets still go through a Gateway or Hub."
+  correct: hubs
+  explanation: "Under Branch to Branch VPN (Transit & Dynamic), Hubs for VPN sends connections between branch Edges through the Hub, and Cloud Gateways sends them through the closest Gateway."
+  lesson_ref: ov-glance
+
+- id: ov-q-first-packet
+  topic: overlay-ways
+  difficulty: 2
+  type: single_choice
+  prompt: "Scenario: Site A and Site B both have Cloud VPN and Branch to Branch VPN (Cloud Gateways) enabled, there is no Hub, and Dynamic Branch to Branch is on. They talk for the first time. How does the first packet travel, and what can happen next?"
+  options:
+    - id: gwthen
+      text: "Through the Gateway; the initiating Edge then builds a direct tunnel if it determines a secure overlay tunnel is possible"
+    - id: direct
+      text: "Directly between the Edges, because dynamic tunnels exist before traffic"
+      explanation: "A dynamic tunnel is built on demand; the first packet goes through the Cloud Gateway (or the Hub)."
+    - id: vco
+      text: "Through the Orchestrator, which relays it"
+      explanation: "The Orchestrator manages configuration; it does not relay user traffic."
+    - id: drop
+      text: "It is dropped until an administrator creates a tunnel"
+      explanation: "Nobody creates the direct tunnel by hand; it is built on demand."
+  correct: gwthen
+  explanation: "With Dynamic Branch to Branch, the first packet goes through the Cloud Gateway (or the Hub), and the initiating Edge builds a direct tunnel if it determines that traffic can be routed through a secure overlay multi-path tunnel."
+  lesson_ref: ov-glance
+
+- id: ov-q-nsd-edge-end
+  topic: overlay-ways
+  difficulty: 1
+  type: true_false
+  prompt: "**True or false:** A non SD-WAN destination is a site or service that does not run VeloCloud SD-WAN, and it is reached over an IPsec tunnel."
+  correct: true
+  explanation: "That is the definition used in the guides: a destination that is not an SD-WAN Edge, reached through an IPsec tunnel built by a Gateway or an Edge."
+  lesson_ref: ov-glance
+
+- id: ov-q-cvpn-where
+  topic: overlay-cloud-vpn
+  difficulty: 1
+  type: single_choice
+  prompt: "Where is Cloud VPN activated?"
+  options:
+    - id: profile
+      text: "In the Profile: Device tab, VPN Services, Cloud VPN (per segment)"
+    - id: gwonly
+      text: "Only on the Gateway"
+      explanation: "Cloud VPN is an Orchestrator Profile (and Edge override) setting."
+    - id: fw
+      text: "In the firewall rules"
+      explanation: "Firewall rules decide allow or drop, not which tunnels exist."
+    - id: bp
+      text: "In a business policy rule"
+      explanation: "Business policy steers traffic; it does not switch tunnels on."
+  correct: profile
+  explanation: "Cloud VPN is activated under VPN Services on the Profile's Device tab, and it must be configured per segment."
+  lesson_ref: ov-cloud-vpn
+
+- id: ov-q-cvpn-segment
+  topic: overlay-cloud-vpn
+  difficulty: 2
+  type: true_false
+  prompt: "**True or false:** Cloud VPN must be configured per segment."
+  correct: true
+  explanation: "The guide says users must configure Cloud VPN per Segment."
+  lesson_ref: ov-cloud-vpn
+
+- id: ov-q-cvpn-types
+  topic: overlay-cloud-vpn
+  difficulty: 2
+  type: multi_choice
+  prompt: "Which tunnel types does enabling Cloud VPN cover? (Select all that apply.)"
+  options:
+    - id: b2h
+      text: "Branch to Hub VPN"
+    - id: b2b
+      text: "Branch to Branch VPN"
+    - id: nsd
+      text: "Edge to Non SD-WAN via Gateway"
+    - id: orch
+      text: "Edge to Orchestrator management tunnel"
+      explanation: "The management connection is separate from the Cloud VPN options."
+    - id: gwgw
+      text: "Gateway to Gateway tunnel"
+      explanation: "It is not one of the Cloud VPN options."
+  correct: [b2h, b2b, nsd]
+  explanation: "Cloud VPN lets Edges initiate and respond to VPN requests; the tunnel types listed are Branch to Hub VPN, Branch to Branch VPN and Edge to Non SD-WAN via Gateway."
+  lesson_ref: ov-cloud-vpn
+
+- id: ov-q-hub-down
+  topic: overlay-hubs
+  difficulty: 3
+  type: multi_choice
+  prompt: "Scenario: The primary Hub becomes unreachable. Which statements are documented? (Select all that apply.)"
+  options:
+    - id: local
+      text: "The Spoke updates the local flow's route to the secondary Hub"
+    - id: peer
+      text: "Peer flows are not re-routed when the primary Hub comes back, so affected flows may need to be flushed"
+    - id: auto
+      text: "The Orchestrator automatically flushes all flows when the primary returns"
+      explanation: "The documented workaround is to flush the affected flows; no automatic flush is described."
+    - id: stop
+      text: "All branch traffic stops until an administrator intervenes"
+      explanation: "The Spoke moves local flows to the secondary Hub."
+  correct: [local, peer]
+  explanation: "The documentation says the Spoke updates the local flow's route to the secondary Hub; peer flows are not re-routed when the primary returns, so the workaround is to flush the affected flows."
+  lesson_ref: ov-hubs
+
+- id: ov-q-hub-order
+  topic: overlay-hubs
+  difficulty: 2
+  type: single_choice
+  prompt: "What is the role of Hub order when a branch has routes through a primary and a secondary Hub?"
+  options:
+    - id: tie
+      text: "A tie-breaker: routes sort by BGP attributes first, then by Hub order"
+    - id: first
+      text: "It overrides every routing attribute"
+      explanation: "Routing attributes are compared first; Hub order applies if they are the same."
+    - id: none
+      text: "It has no effect on routes"
+      explanation: "If the routing attributes are the same, route sorting uses the VPN Hub order."
+    - id: load
+      text: "It balances load by CPU use"
+      explanation: "Load is a cluster matter (Cluster Score), not Hub order."
+  correct: tie
+  explanation: "The guide says that if the routing attributes are the same, route sorting happens based on the VPN Hub order configuration."
+  lesson_ref: ov-hubs
+
+- id: ov-q-cluster
+  topic: overlay-hubs
+  difficulty: 2
+  type: single_choice
+  prompt: "Scenario: One Hub Edge cannot hold enough tunnels for all your branches. What does the documentation offer?"
+  options:
+    - id: cluster
+      text: "A Hub cluster: a logical cluster of Edges that other Edges treat as a single Hub, adding tunnel capacity and Active/Active high availability"
+    - id: bigger
+      text: "Raise the 16-tunnel limit in the Profile"
+      explanation: "The 16 tunnels per Edge pair is a fixed maximum, not a setting."
+    - id: gw
+      text: "Turn Cloud VPN off"
+      explanation: "That removes the tunnels rather than adding capacity."
+    - id: nsd
+      text: "Use NSD via Gateway"
+      explanation: "NSD is for destinations that do not run SD-WAN."
+  correct: cluster
+  explanation: "Edge Clustering addresses the Hub scale issue by dynamically expanding tunnel capacity through a logical cluster of Edges; other Edges treat the cluster as a single Hub."
+  lesson_ref: ov-hubs
+
+- id: ov-q-permanent
+  topic: overlay-hubs
+  difficulty: 1
+  type: true_false
+  prompt: "**True or false:** Branch to Hub tunnels are permanent."
+  correct: true
+  explanation: "The option is named Branch to Hub Site (Permanent VPN): the tunnels are always up, shown as Static in List Paths."
+  lesson_ref: ov-hubs
+
+- id: ov-q-dyn-order
+  topic: overlay-dynamic
+  difficulty: 3
+  type: ordering
+  prompt: "Put the life of a dynamic branch-to-branch tunnel in order."
+  options:
+    - id: first
+      text: "The first packet goes through the Cloud Gateway (or the Hub)"
+    - id: decide
+      text: "The initiating Edge determines a secure overlay multi-path tunnel is possible"
+    - id: build
+      text: "A direct tunnel is built"
+    - id: use
+      text: "Traffic flows directly between the branches"
+    - id: silence
+      text: "There is no traffic for 180 seconds"
+    - id: tear
+      text: "The initiating Edge tears the tunnel down"
+  correct: [first, decide, build, use, silence, tear]
+  explanation: "First packets go via the Gateway or Hub; the initiating Edge decides and builds the direct tunnel; after 180 seconds of silence it tears the tunnel down."
+  lesson_ref: ov-dynamic
+
+- id: ov-q-teardown-who
+  topic: overlay-dynamic
+  difficulty: 2
+  type: single_choice
+  prompt: "Who tears down a dynamic branch-to-branch tunnel, and after how long without traffic?"
+  options:
+    - id: init
+      text: "The initiating Edge, after 180 seconds"
+    - id: vco
+      text: "The Orchestrator, after 180 seconds"
+      explanation: "The initiating Edge makes that decision."
+    - id: gw
+      text: "The Gateway, after 60 seconds"
+      explanation: "The documented figure is 180 seconds and the initiating Edge acts."
+    - id: never
+      text: "Nobody; it stays until an administrator removes it"
+      explanation: "It is torn down after 180 seconds of traffic silence."
+  correct: init
+  explanation: "After 180 seconds of traffic silence the initiating Edge tears the tunnel down."
+  lesson_ref: ov-dynamic
+
+- id: ov-q-no-dynamic
+  topic: overlay-dynamic
+  difficulty: 2
+  type: single_choice
+  prompt: "Scenario: List Paths on Branch A shows a Static tunnel to the Hub but no Dynamic tunnel to Branch B. The branches last exchanged traffic five minutes ago. Is that consistent with the documentation?"
+  options:
+    - id: yes
+      text: "Yes: after 180 seconds of traffic silence the initiating Edge tears a dynamic tunnel down"
+    - id: no
+      text: "No: dynamic tunnels stay up as long as Cloud VPN is on"
+      explanation: "A dynamic tunnel is on demand and is torn down after 180 seconds of silence."
+    - id: bug
+      text: "No: the Static tunnel should have become Dynamic"
+      explanation: "Static and Dynamic are different tunnel modes; one does not turn into the other."
+    - id: orch
+      text: "Yes: because the Orchestrator was unreachable"
+      explanation: "Nothing links the Orchestrator's reachability to this state."
+  correct: yes
+  explanation: "List Paths shows Mode Static for always-up tunnels and Dynamic for tunnels established on a need basis; a dynamic tunnel is torn down after 180 seconds of silence."
+  lesson_ref: ov-dynamic
+
+- id: ov-q-nsd-edge
+  topic: overlay-nsd
+  difficulty: 2
+  type: single_choice
+  prompt: "Scenario: You want the branch Edge itself to build an IPsec tunnel to a cloud provider across its own WAN link, without a Gateway building it. Which service?"
+  options:
+    - id: viaedge
+      text: "Non SD-WAN Destination via Edge"
+    - id: viagw
+      text: "Non SD-WAN Destination via Gateway"
+      explanation: "There the Gateway builds the tunnel."
+    - id: hub
+      text: "A Hub cluster"
+      explanation: "Clusters add Hub capacity for SD-WAN tunnels."
+    - id: netflow
+      text: "NetFlow"
+      explanation: "NetFlow exports flow records."
+  correct: viaedge
+  explanation: "With NSD via Edge, an Edge builds an IPsec tunnel directly to an external destination."
+  lesson_ref: ov-nsd
+
+- id: ov-q-nsd-override
+  topic: overlay-nsd
+  difficulty: 3
+  type: single_choice
+  prompt: "Scenario: An administrator wants one Edge to use different NSD via Gateway settings from its Profile. What does the documentation say?"
+  options:
+    - id: no
+      text: "NSD via Gateway is defined only at the Profile level and cannot be overridden at the Edge level"
+    - id: yes
+      text: "Tick Override on the Edge's Device tab"
+      explanation: "The guide says it cannot be overridden at the SD-WAN Edge level."
+    - id: gw
+      text: "Edit it directly on the Gateway"
+      explanation: "It is defined in the Orchestrator at the Profile level."
+    - id: fw
+      text: "Add a firewall rule"
+      explanation: "A firewall rule does not change tunnel definitions."
+  correct: no
+  explanation: "NSD via Gateway configuration is defined exclusively at the Profile level and cannot be overridden at the SD-WAN Edge level."
+  lesson_ref: ov-nsd
+
+- id: ov-q-nsd-types
+  topic: overlay-nsd
+  difficulty: 3
+  type: multi_choice
+  prompt: "Which of these are named destination types for NSD via Gateway in the 7.0 Network Services page? (Select all that apply.)"
+  options:
+    - id: zs
+      text: "Zscaler"
+    - id: pa
+      text: "Palo Alto"
+    - id: aws
+      text: "AWS VPN Gateway"
+    - id: vnf
+      text: "Fortinet VNF"
+      explanation: "Fortinet appears as a VNF type under Edge Services, not as an NSD via Gateway type."
+    - id: hubc
+      text: "Hub cluster"
+      explanation: "A cluster is an SD-WAN Hub construct, not a destination type."
+  correct: [zs, pa, aws]
+  explanation: "The list includes AWS VPN Gateway, Check Point, Cisco ASA, Cisco ISR, Generic IKEv2, Azure Virtual Hub, Palo Alto, SonicWALL, Zscaler, Generic IKEv1 and Generic Firewall."
+  lesson_ref: ov-nsd
+
+- id: ov-q-netflow
+  topic: overlay-services
+  difficulty: 1
+  type: single_choice
+  prompt: "Scenario: You need Edge flow records to reach an analytics server. Which network service do you configure?"
+  options:
+    - id: nf
+      text: "NetFlow, with a collector"
+    - id: pdt
+      text: "Prefix Delegation Tags"
+      explanation: "Those link LAN and WAN interfaces for IPv6 prefixes."
+    - id: pnn
+      text: "Private Network Names"
+      explanation: "Those name private WAN overlays."
+    - id: api
+      text: "API Credentials"
+      explanation: "Those store cloud API access for Azure and Zscaler."
+  correct: nf
+  explanation: "NetFlow sends IPFIX flow information from the Edge to the collectors you define."
+  lesson_ref: ov-services
+
+- id: ov-q-two-meanings
+  topic: overlay-services
+  difficulty: 2
+  type: single_choice
+  prompt: "In a business policy rule, which of these is the **network service** action?"
+  options:
+    - id: mp
+      text: "Direct, Multi-Path or Internet Backhaul"
+    - id: nf
+      text: "NetFlow, DNS or RADIUS"
+      explanation: "Those are services under Configure > Network Services, a different thing."
+    - id: seg
+      text: "Segment or Profile"
+      explanation: "Those are configuration scopes, not rule actions."
+    - id: ma
+      text: "Mandatory, Preferred or Available"
+      explanation: "Those are link steering strictness choices."
+  correct: mp
+  explanation: "The rule's network service action is Direct, Multi-Path or Internet Backhaul; the Configure > Network Services area is a separate list of shared services."
+  lesson_ref: ov-services
+
+- id: ov-q-why-hub
+  topic: overlay-diagnosis
+  difficulty: 2
+  type: single_choice
+  prompt: "Scenario: Traffic from Branch A to Branch B goes through the Hub and you did not expect that. Which setting do you check first for the standing path?"
+  options:
+    - id: opt
+      text: "The Profile's Branch to Branch VPN option under VPN Services: Hubs for VPN sends branch connections through the Hub"
+    - id: fw
+      text: "Monitor > Firewall Logs, to switch tunnels off"
+      explanation: "Firewall logs only show what happened; they do not change tunnels."
+    - id: nf
+      text: "NetFlow collectors"
+      explanation: "NetFlow reports flows; it does not choose paths."
+    - id: dns
+      text: "The DNS service"
+      explanation: "DNS service settings do not decide branch-to-branch paths."
+  correct: opt
+  explanation: "With the Hubs for VPN option, connections between branch Edges go through the Hub; with Cloud Gateways they go through the closest Gateway."
+  lesson_ref: ov-diagnosis

@@ -1,0 +1,55 @@
+# Section 3, lesson 4: an outage and failover. Facts: reference/dmpo-steering.md, dmpo.md (300-500 ms detection, one-minute hold).
+id: dmpo-outage-failover
+title: An outage and the failover
+alt: >-
+  Traffic flows over the MPLS path between a branch Edge and a hub Edge. The MPLS link fails completely. DMPO detects the outage
+  within 300 to 500 ms and moves the flow to the Internet path. When MPLS recovers, DMPO waits one minute before moving
+  traffic back.
+width: 900
+height: 460
+
+nodes:
+  - { id: phone, label: IP phone, kind: host, x: 60, y: 230 }
+  - { id: edge-a, label: Branch Edge, kind: vce, x: 230, y: 230 }
+  - { id: edge-b, label: Hub Edge, kind: vce, x: 700, y: 230 }
+  - { id: pbx, label: Voice server, kind: host, x: 850, y: 230 }
+
+links:
+  - { id: lan-a, from: phone, to: edge-a, style: lan }
+  - { id: lan-b, from: edge-b, to: pbx, style: lan }
+  - { id: path-mpls, from: edge-a, to: edge-b, style: underlay-mpls, label: MPLS path, curve: -90 }
+  - { id: path-inet, from: edge-a, to: edge-b, style: underlay-internet, label: Internet path, curve: 90 }
+
+steps:
+  - title: Voice on the preferred link
+    narration: >-
+      The business policy says this voice traffic prefers the MPLS link. Both links are healthy, so the flow goes over MPLS.
+    highlight: [phone, lan-a, edge-a, path-mpls, edge-b, lan-b, pbx]
+    packets:
+      - { path: [phone, lan-a, edge-a, path-mpls, edge-b, lan-b, pbx], label: voice, color_style: overlay-tunnel }
+
+  - title: The link fails completely
+    narration: >-
+      The MPLS circuit goes down: an **outage**. Packets sent on that path no longer arrive, and the endpoints stop hearing from each other on it.
+    highlight: [edge-a, edge-b, path-mpls]
+    callouts:
+      - { target: path-mpls, text: "Outage: the link cannot pass traffic." }
+
+  - title: DMPO notices and steers
+    narration: >-
+      DMPO detects the outage within **300 to 500 ms** and moves the flow to a healthy link. The same call, the same flow, now on the Internet path.
+    highlight: [phone, lan-a, edge-a, path-inet, edge-b, lan-b, pbx]
+    packets:
+      - { path: [phone, lan-a, edge-a, path-inet, edge-b, lan-b, pbx], label: voice, color_style: overlay-tunnel }
+    callouts:
+      - { target: path-inet, text: "Detected within 300 to 500 ms." }
+
+  - title: MPLS returns, and DMPO waits
+    narration: >-
+      When the link recovers DMPO does not move back at once. After an outage or brownout clears there is a **one-minute hold** before the flow
+      returns to the preferred link named in the policy, which keeps a flapping link from pulling the call back and forth.
+    highlight: [edge-a, edge-b, path-mpls, path-inet]
+    packets:
+      - { path: [edge-a, path-inet, edge-b], label: still here (hold), color_style: overlay-tunnel }
+    callouts:
+      - { target: path-mpls, text: "Back up, but the flow waits one minute." }

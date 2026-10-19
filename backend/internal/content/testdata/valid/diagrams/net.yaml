@@ -1,0 +1,17 @@
+id: net
+title: Fixture diagram
+alt: Two hosts joined by a switch.
+width: 400
+height: 200
+nodes:
+  - { id: h1, label: Host 1, kind: host, x: 50, y: 100 }
+  - { id: sw, label: Switch, kind: l2switch, x: 200, y: 100 }
+  - { id: h2, label: Host 2, kind: host, x: 350, y: 100 }
+links:
+  - { id: l1, from: h1, to: sw, style: lan }
+  - { id: l2, from: sw, to: h2, style: lan }
+steps:
+  - title: Send
+    narration: A packet goes **across**.
+    packets:
+      - { path: [h1, sw, h2], label: pkt }

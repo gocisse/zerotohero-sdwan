@@ -1,0 +1,77 @@
+---
+id: rt-ospf
+title: OSPF
+summary: Enabling OSPF in a Profile and on Edge interfaces, areas, routed versus VLAN interfaces, what the Edge learns and advertises, metric types E1 and E2, and summarization.
+estimated_minutes: 10
+topics: [rt-ospf]
+---
+
+**By the end of this lesson you will be able to:**
+
+- say where OSPF is enabled and on which interfaces it fully works;
+- explain what the Edge learns from OSPF and what reaches the overlay;
+- explain the metric types E1 and E2 and the documented defaults;
+- say what route summarization is and what the VCO's summarization table covers.
+
+## Enabling it
+
+<Term id="ospf">OSPF</Term> is switched on in two places, in this order:
+
+1. **Profile:** **Configure > Profiles > (Profile) > Device > Routing & NAT > OSPF**. Here you define the areas. Each area has an Area ID; **Normal** is the default and the only supported <Term id="ospf-area">area</Term> type. These settings cannot be overridden on an Edge.
+2. **Edge interface:** then enable OSPF on the Edge's interfaces.
+
+Configure OSPF only on the **Global Segment**. OSPFv2 is IPv4; OSPFv3 is IPv6.
+
+## Routed interfaces versus VLAN interfaces
+
+The guide says OSPF can be enabled on a LAN (routed or switched) or WAN interface of an Edge, but "to get full OSPF functionality" you must use a **routed** interface. On a **switched** (VLAN) interface the Edge only supports OSPF as a **passive** interface: it advertises the connected subnet but forms no neighbors there.
+
+## What the Edge learns and advertises
+
+<Diagram id="rt-lan-to-lan" />
+
+- **Learned from the LAN router:** routes arrive as intra-area (O), inter-area (O IA) or external (O E1, O E2). The Edge keeps the lowest cost among routes of the same type.
+- **Into the overlay:** routes learned through OSPF are automatically redistributed to the Gateway. But Overlay Flow Control's **Global Advertise Flags** keep **External OSPF routes** out of the overlay by default, so E1 and E2 routes need their flag turned on (lesson 7).
+- **Out to the LAN router:** what the Edge injects into OSPF is set by the Profile's route settings: the **Overlay Prefixes** check box, the **BGP** option for BGP routes, and a default route with route type O1 or O2 (None by default; Advertise Conditional means "only if the Edge learns it").
+
+## E1 versus E2
+
+Routes redistributed *into* OSPF become external LSAs (<Term id="ospf-e1-e2">E1 or E2</Term>). In the Profile you set the **metric** (default 20) and the **metric type**, E1 or E2; **the default is E2**. When OSPF-learned routes compete, the type order is intra-area, then inter-area, then E1, then E2.
+
+<Predict
+  prompt="The Edge learns the same prefix from OSPF as an inter-area route and as an E2 route. Which does it prefer?"
+  choices={["The inter-area route", "The E2 route, because external routes are newer", "Whichever arrived first, always", "Neither: it must be summarized first"]}
+  answer={0}
+>
+  The documented type order is intra-area, inter-area, E1, E2. Among routes of the same type, the lower cost wins.
+</Predict>
+
+## Summarization
+
+<Term id="route-summarization">Summarization</Term> replaces several prefixes with one covering prefix.
+
+<Diagram id="rt-summary" />
+
+The OSPF page has a **Route Summarization** table with Subnet, No Advertise, Tag, Metric Type and Metric. It acts on **external (Type-5)** routes under a supernet: with **No Advertise**, those external routes are summarized and the supernet is not advertised to the peer. Summarizing OSPF-learned routes *before* they enter the overlay is not described in the pages we read.
+
+<Callout variant="warning" title="Do not assume">
+  The default state of Overlay Prefixes, OSPF cost and timer defaults, route and neighbor limits, and whether inbound filters accept by default were not stated. Check them in your VCO before building on them.
+</Callout>
+
+## What you would see in the VCO
+
+- **Configure > Profiles > (Profile) > Device > Routing & NAT > OSPF** for areas, redistribution, route filters and summarization.
+- **Diagnostics:** **Show OSPF Neighbors** (expect Full; Down, Attempt or Init for long: check Area ID, Neighbor ID and Router ID; stuck in 2-way or ExStart: check MTU), **List OSPF Routes**, **List OSPF Redistributed Routes**, **Show OSPF Setting**.
+
+## Key takeaways
+
+- Enable at the Profile first, then on Edge interfaces; Global Segment only.
+- Routed interfaces give full OSPF; switched ones are passive only.
+- Redistributed routes default to metric 20, type E2; type order is O, O IA, O E1, O E2.
+- External OSPF routes are kept out of the overlay by default.
+
+## What would you look for in the VCO
+
+- Is the neighbor in Full state?
+- Is the prefix in List OSPF Routes, and of which type?
+- Is the External OSPF flag on, if the prefix is E1 or E2?

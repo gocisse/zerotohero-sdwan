@@ -1,0 +1,59 @@
+---
+id: ov-services
+title: Other network services
+summary: "NetFlow, DNS, private network names, prefix delegation, authentication, VNFs and API credentials: each with what problem it solves and where to find it."
+estimated_minutes: 9
+topics: [overlay-services]
+---
+
+**By the end of this lesson you will be able to:**
+
+- say what each of the remaining network services is for;
+- find each under **Configure > Network Services**;
+- avoid mixing up the Network Services area with the "network service" choice in business policy.
+
+<Callout variant="info" title="Two meanings of 'network service'">
+  **Configure > Network Services** is the Orchestrator area for shared services such as the ones below. The <Term id="network-service-action">network service</Term> in a business policy rule (Direct, Multi-Path, Internet Backhaul) is a different thing: how matching traffic is carried.
+</Callout>
+
+## One by one
+
+| Service | Problem it solves | Where |
+|---|---|---|
+| <Term id="netflow" /> | tell a <Term id="collector" /> what flows the Edge carries (IPFIX records) | Network Management > NetFlow |
+| DNS Services | give Edges DNS servers (Public or Private); picks the fastest responder | Network Management > DNS Services |
+| <Term id="private-network-name" /> | tell private WAN overlays apart by name | Network Management > Private Network Names |
+| <Term id="prefix-delegation-tag" /> | let LAN interfaces receive IPv6 prefixes from a WAN interface with the same tag | Network Management > Prefix Delegation Tags |
+| <Term id="authentication-service" /> | RADIUS server for authentication (port 1812 by default); TACACS also exists, hidden until the Operator enables it | Network Management > Authentication Services, TACACS Services |
+| <Term id="vnf" /> | run a third-party function, for example a firewall, as software | Edge Services > VNFs |
+| <Term id="api-credential" /> | let the Orchestrator reach Azure or Zscaler APIs | API Credentials |
+
+Details worth knowing: NetFlow allows 2 collectors per segment and 8 per Profile and Edge, with 16 filters per collector, and records are aggregated by source and destination IP, destination port and protocol. The DNS service ships preconfigured with Google and Open DNS servers. Only private network names no Edge uses can be deleted.
+
+<Predict
+  prompt="You need your branch flow records to reach an analytics server. Which service do you configure?"
+  choices={["NetFlow, with a collector", "Prefix Delegation Tags", "Private Network Names", "API Credentials"]}
+  answer={0}
+>
+  NetFlow exports IPFIX flow records from the Edge to a collector you define with a name, IP and port.
+</Predict>
+
+<Callout variant="warning" title="What we could not confirm">
+  How these services are enabled on an Edge, and exactly which settings the Operator controls, were read only from the Network Services page. We did not read each service's own Edge-level page.
+</Callout>
+
+## What you would see in the VCO
+
+- **Configure > Network Services**: a list with each service expandable.
+- Edge-level: some services (TACACS, documented as **Configure > Edges > Device Settings > Edge Services**) are also assigned on the Edge; we did not read the others' Edge pages.
+
+## Key takeaways
+
+- Network Services holds shared definitions Edges and Profiles refer to.
+- Each solves one practical problem: flows, DNS, naming, IPv6 prefixes, authentication, VNFs, cloud APIs.
+- Do not confuse it with the business policy network service.
+
+## What would you look for in the VCO
+
+- Is the service defined under Configure > Network Services before the Profile or Edge refers to it?
+- Which Profile or Edge uses it?

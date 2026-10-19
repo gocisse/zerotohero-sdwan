@@ -1,0 +1,76 @@
+# Section 2, lesson 1: the Edge between the LAN and the transports. See reference/edge-details.md.
+id: arch-edge-between
+title: The Edge between the LAN and the transports
+alt: >-
+  A branch user connects to a branch Edge. The Edge has three WAN circuits: Internet, MPLS and cellular (LTE). Over the
+  Internet circuit it can build a tunnel to a Gateway. A data center Edge sits behind the MPLS network, and an Orchestrator
+  is reachable over the Internet for configuration.
+width: 900
+height: 540
+
+groups:
+  - { id: branch, label: Branch, nodes: [host-a, edge-a] }
+
+nodes:
+  - { id: host-a, label: Branch user, kind: host, x: 70, y: 265 }
+  - { id: edge-a, label: Branch Edge, kind: vce, x: 230, y: 265 }
+  - { id: inet, label: Internet, kind: internet, x: 470, y: 70 }
+  - { id: mpls, label: MPLS, kind: mpls, x: 470, y: 265 }
+  - { id: lte, label: LTE (cellular), kind: cloud, x: 470, y: 455 }
+  - { id: gw, label: Gateway, kind: vcg, x: 710, y: 70 }
+  - { id: edge-dc, label: Data center Edge, kind: vce, x: 710, y: 265 }
+  - { id: vco, label: Orchestrator, kind: vco, x: 710, y: 455 }
+
+links:
+  - { id: lan-a, from: host-a, to: edge-a, style: lan }
+  - { id: wan-inet, from: edge-a, to: inet, style: underlay-internet }
+  - { id: wan-mpls, from: edge-a, to: mpls, style: underlay-mpls }
+  - { id: wan-lte, from: edge-a, to: lte, style: underlay-lte }
+  - { id: inet-gw, from: inet, to: gw, style: underlay-internet }
+  - { id: mpls-dc, from: mpls, to: edge-dc, style: underlay-mpls }
+  - { id: inet-vco, from: inet, to: vco, style: underlay-internet }
+  - { id: tun-gw, from: edge-a, to: gw, style: overlay-tunnel, label: tunnel }
+
+steps:
+  - title: Between the LAN and the transports
+    narration: >-
+      The **Edge** is the device (or virtual machine) between the branch's local network and its WAN circuits. Users and
+      local devices sit on the LAN side; the circuits, which we call the transports, are on the WAN side.
+    highlight: [host-a, lan-a, edge-a, wan-inet, wan-mpls, wan-lte, inet, mpls, lte]
+    show: [gw, edge-dc, vco, inet-gw, mpls-dc, inet-vco, tun-gw]
+
+  - title: Local services on the LAN side
+    narration: >-
+      On a routed interface the Edge can act as a **DHCP server** for local clients, handing out its own virtual IP address as
+      their default gateway. The Edge settings also include LAN-side NAT rules and a DNS proxy. These are examples of what the
+      Edge does locally for the LAN.
+    highlight: [host-a, lan-a, edge-a]
+    packets:
+      - { path: [host-a, edge-a], label: DHCP request, color_style: lan }
+    callouts:
+      - { target: edge-a, text: "Can run a DHCP server, NAT rules and a DNS proxy." }
+
+  - title: One Edge, several circuits
+    narration: >-
+      The Edge uses whatever circuits the site has: here an Internet line, an MPLS circuit and an LTE connection. The WAN
+      overlay is switched on per interface, so each circuit that should carry tunnels is marked on the Edge itself.
+    highlight: [edge-a, wan-inet, wan-mpls, wan-lte, inet, mpls, lte]
+
+  - title: What the Edge builds
+    narration: >-
+      On top of the circuits the Edge builds **tunnels** to one or more Gateways, and it can build tunnels directly to other
+      Edges. User traffic travels inside those tunnels. This is the overlay the next lessons look at in detail.
+    show: [gw, inet-gw, tun-gw]
+    highlight: [host-a, lan-a, edge-a, tun-gw, gw]
+    packets:
+      - { path: [host-a, edge-a, tun-gw, gw], label: tunnel traffic, color_style: overlay-tunnel }
+
+  - title: Getting started, activation
+    narration: >-
+      A new Edge is provisioned in the Orchestrator and then **activated**. The documentation describes the Edge downloading its configuration and software from the Orchestrator (for the email method). In this picture it reaches the Orchestrator across the Internet circuit.
+    show: [edge-dc, mpls-dc, vco, inet-vco]
+    highlight: [vco, inet-vco, inet, wan-inet, edge-a]
+    packets:
+      - { path: [vco, inet, edge-a], label: configuration and software, color_style: control }
+    callouts:
+      - { target: vco, text: "Configuration comes from here, not from the branch." }

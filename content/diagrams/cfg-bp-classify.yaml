@@ -1,0 +1,45 @@
+# Section 4, lesson 5: a business policy rule picks the link. Rules shown are invented examples (illustrative); evaluation order inside a rule list is not documented.
+id: cfg-bp-classify
+title: A rule classifies a flow and picks a link (illustrative rules)
+alt: >-
+  Two flows enter a branch Edge. A rule matching the voice application sends it over the MPLS link. A rule matching a streaming
+  application uses the Direct network service, so it leaves over the Internet link.
+width: 900
+height: 520
+
+nodes:
+  - { id: phone, label: Voice client, kind: host, x: 80, y: 150 }
+  - { id: tv, label: Streaming client, kind: host, x: 80, y: 380 }
+  - { id: edge, label: Branch Edge, kind: vce, x: 330, y: 265 }
+  - { id: mpls, label: MPLS, kind: mpls, x: 640, y: 130 }
+  - { id: inet, label: Internet, kind: internet, x: 640, y: 400 }
+
+links:
+  - { id: lan-v, from: phone, to: edge, style: lan }
+  - { id: lan-t, from: tv, to: edge, style: lan }
+  - { id: wan-mpls, from: edge, to: mpls, style: underlay-mpls }
+  - { id: wan-inet, from: edge, to: inet, style: underlay-internet }
+
+steps:
+  - title: Two flows arrive
+    narration: >-
+      A voice flow and a streaming flow reach the Edge. Which link each uses is not decided by the routing table alone but by the **business policy**.
+    highlight: [phone, tv, lan-v, lan-t, edge]
+    packets:
+      - { path: [phone, lan-v, edge], label: voice, color_style: overlay-tunnel }
+      - { path: [tv, lan-t, edge], label: streaming, color_style: control, delay_ms: 300 }
+
+  - title: Match, then act
+    narration: >-
+      A rule has a **Match** (source, destination, application, DSCP...) and an **Action** (priority, network service, link steering...). Here, invented rule 1: match application Voice, action Link Steering on MPLS. Invented rule 2: match a streaming application, action Network Service Direct.
+    highlight: [edge]
+    callouts:
+      - { target: edge, text: "Match fields pick the flow. Action fields say what to do with it." }
+
+  - title: The actions send them different ways
+    narration: >-
+      Voice follows its rule to the MPLS link. The streaming flow follows the Direct network service and leaves over the Internet link.
+    highlight: [edge, wan-mpls, wan-inet, mpls, inet]
+    packets:
+      - { path: [edge, wan-mpls, mpls], label: voice, color_style: overlay-tunnel }
+      - { path: [edge, wan-inet, inet], label: streaming, color_style: control, delay_ms: 300 }

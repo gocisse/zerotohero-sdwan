@@ -1,0 +1,49 @@
+# Section 6, lesson 3: summarization, illustrative prefixes. What the VCO documents is in reference/ospf.md.
+id: rt-summary
+title: Summarizing two /24s into a /23 (illustrative prefixes)
+alt: >-
+  Two /24 prefixes behind a router are advertised as separate routes, then replaced by one /23 that covers both. The VCO's OSPF
+  Route Summarization table works on external (Type-5) routes under a supernet.
+width: 960
+height: 420
+
+nodes:
+  - { id: p1, label: 10.20.0.0/24, kind: generic, x: 100, y: 120 }
+  - { id: p2, label: 10.20.1.0/24, kind: generic, x: 100, y: 310 }
+  - { id: lan, label: LAN router, kind: router, x: 330, y: 215 }
+  - { id: edge, label: Edge, kind: vce, x: 560, y: 215 }
+  - { id: peer, label: Peer router, kind: router, x: 840, y: 215 }
+  - { id: sum, label: 10.20.0.0/23, kind: generic, x: 330, y: 360 }
+
+links:
+  - { id: p1-lan, from: p1, to: lan, style: lan }
+  - { id: p2-lan, from: p2, to: lan, style: lan }
+  - { id: lan-edge, from: lan, to: edge, style: lan, label: OSPF }
+  - { id: edge-peer, from: edge, to: peer, style: lan, label: OSPF }
+  - { id: sum-lan, from: sum, to: lan, style: control }
+
+steps:
+  - title: Two routes
+    narration: >-
+      Two /24 prefixes sit behind the router. Without summarization the router advertises two routes.
+    highlight: [p1, p2, p1-lan, p2-lan, lan]
+    show: [sum, sum-lan]
+    packets:
+      - { path: [p1, p1-lan, lan, lan-edge, edge], label: /24, color_style: lan }
+      - { path: [p2, p2-lan, lan, lan-edge, edge], label: /24, color_style: lan, delay_ms: 400 }
+
+  - title: One covering route
+    narration: >-
+      A summary (a supernet) is a single prefix that covers both. 10.20.0.0/24 and 10.20.1.0/24 both fall inside 10.20.0.0/23, so one /23 route can stand for the pair.
+    highlight: [sum, sum-lan, lan]
+    packets:
+      - { path: [lan, lan-edge, edge], label: /23, color_style: lan }
+    callouts:
+      - { target: sum, text: "One /23 covers both /24s" }
+
+  - title: What the VCO documents
+    narration: >-
+      The OSPF **Route Summarization** table has Subnet, No Advertise, Tag, Metric Type and Metric, and acts on **external (Type-5)** routes under a supernet. Summarizing OSPF routes before they enter the overlay is **not documented** in the pages we read.
+    highlight: [edge, edge-peer, peer]
+    callouts:
+      - { target: edge, text: "Route Summarization: Subnet, No Advertise, Tag, Metric Type, Metric" }

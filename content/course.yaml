@@ -1,0 +1,11 @@
+title: VeloCloud Academy
+description: From zero to hero in Arista VeloCloud SD-WAN.
+sections:
+  - introduction
+  - architecture
+  - dmpo
+  - configuration
+  - overlay
+  - routing
+  - sample
+  - sample-two

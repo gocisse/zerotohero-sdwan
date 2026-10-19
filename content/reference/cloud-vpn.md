@@ -1,0 +1,21 @@
+# Cloud VPN
+
+Read 2026-10-19 through WebFetch (verbatim quotes requested) unless a row says "local PDF". "Needs observation" marks a VERIFY row a real VCO could settle (see `observations/README.md`).
+
+| claim | source URL | doc version | status |
+|---|---|---|---|
+| Cloud VPN is activated at Profile level under Configure > Profiles > the Profile > Device tab > VPN Services > Cloud VPN: "Navigate to VPN Services and activate Cloud VPN." | https://www.arista.com/en/admin-guide-vc-7-0/sd-wan-7-0-configure-device-settings-for-profiles | 7.0 (6.4: Configure > Profiles > Device tab, VPN Service) | VERIFIED |
+| Cloud VPN is configured per Segment: "Users must configure Cloud VPN per Segment." | https://www.arista.com/en/admin-guide-vc-7-0/sd-wan-7-0-configure-device-settings-for-profiles | 7.0 | VERIFIED |
+| Enabling Cloud VPN lets the Edge initiate and respond to VPN connection requests; the tunnel types are Branch to Hub VPN, Branch to Branch VPN and Edge to Non SD-WAN via Gateway; you tick the ones you need. | https://www.arista.com/en/admin-guide-vc-7-0/sd-wan-7-0-configure-device-settings-for-edges | 7.0 | VERIFIED |
+| Branch to Hub is set under "Branch to Hub Site (Permanent VPN)": tick Enable Branch to Hubs, then Edit Hubs; hubs and backhaul hubs are picked from "Available Edges & Clusters". | https://www.arista.com/en/admin-guide-vc-7-0/sd-wan-7-0-configure-device-settings-for-profiles | 7.0 | VERIFIED |
+| In 6.4 the branch-to-hub tunnel comes up only after Cloud VPN is enabled; before that the link may show a tunnel to the Gateway and not to the hub. | https://www.arista.com/en/admin-guide-vc-6-4/sd-wan-6-4-site-configurations-overview | 6.4 | VERIFIED |
+| Branch to Branch is set under "Branch to Branch VPN (Transit & Dynamic)": tick Enable Branch to Branch VPN. Two options: Cloud Gateways ("Edges establish VPN tunnel with the closest Gateway and connections between Edges go through this Gateway") and Hubs for VPN ("Connections between Branch Edges go through the Hub"). | https://www.arista.com/en/admin-guide-vc-7-0/sd-wan-7-0-configure-device-settings-for-profiles | 7.0 | VERIFIED |
+| 6.4: enabling Hubs for VPN deactivates the data plane through the Gateway for Branch to Branch VPN, and branch-to-branch traffic first transits a Hub in the order you specify while the direct tunnel establishes. | https://www.arista.com/en/admin-guide-vc-6-4/sd-wan-6-4-site-configurations-overview | 6.4 | VERIFIED |
+| Branch to Branch VPN "prevents Edges within the Profile from learning routes from other Edges outside the Profile". | https://www.arista.com/en/admin-guide-vc-7-0/sd-wan-7-0-configure-device-settings-for-profiles | 7.0 | VERIFIED |
+| Dynamic Branch to Branch VPN can be activated for all Edges or for Edges within a Profile. | https://www.arista.com/en/admin-guide-vc-7-0/sd-wan-7-0-configure-device-settings-for-profiles | 7.0 | VERIFIED |
+| An Edge's Device tab inherits the Cloud VPN settings from the Profile and can override them for that Edge (Override checkbox). | https://www.arista.com/en/admin-guide-vc-7-0/sd-wan-7-0-configure-device-settings-for-edges | 7.0 | VERIFIED |
+| Edge to Non SD-WAN via Gateway is ticked under "Edge to Non SD-WAN Sites" in the same VPN Services area; the Enterprise Data Center administrator must configure the Gateway before the destination is associated with a Profile. | https://www.arista.com/en/admin-guide-vc-7-0/sd-wan-7-0-configure-device-settings-for-profiles | 7.0 | VERIFIED |
+| Gateway involvement: with Cloud Gateways, tunnels run from each Edge to the closest Gateway and Edge-to-Edge traffic goes through it. | https://www.arista.com/en/admin-guide-vc-7-0/sd-wan-7-0-configure-device-settings-for-profiles | 7.0 | VERIFIED |
+| The Cloud VPN default state (on or off) and what Cloud VPN controls beyond the tunnel options were not stated. [needs observation] | none | 6.4 / 7.0 | VERIFY |
+| Whether per-Edge Cloud VPN overrides can enable a tunnel type the Profile disables: not stated. [needs observation] | none | 7.0 | VERIFY |
+| The syslog section says Cloud VPN (branch-to-branch VPN) must establish a path between a Profile's Edges and the syslog collectors. | https://www.arista.com/en/admin-guide-vc-7-0/sd-wan-7-0-configure-device-settings-for-profiles | 7.0 | VERIFIED |
