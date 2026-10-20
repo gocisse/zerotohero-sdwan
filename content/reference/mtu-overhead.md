@@ -13,3 +13,4 @@
 | An IPv6 underlay tunnel adds 20 bytes (larger IPv6 header), so the effective path MTU is reduced by 20 bytes. | https://www.arista.com/en/admin-guide-vc-7-0/sd-wan-7-0-overview | 7.0 | VERIFIED |
 | Path MTU discovery starts from a default link MTU of 1500 bytes, and the maximum supported IP MTU for packets sent across the overlay without fragmentation is 1500. | https://www.arista.com/en/admin-guide-vc-7-0/sd-wan-7-0-overview | 7.0, summarised via WebFetch (verbatim quotes requested) | VERIFIED |
 | When a packet is too large the Edge automatically performs IP fragmentation as per RFC 791. | https://www.arista.com/en/admin-guide-vc-7-0/sd-wan-7-0-overview | 7.0, summarised via WebFetch (verbatim quotes requested) | VERIFIED |
+| The IPsec overhead of tunnels to Non SD-WAN Destinations (NSD via Gateway or via Edge), and the effective MTU along them, were not found in the pages read. [needs observation] | none | 7.0 | VERIFY |

@@ -60,6 +60,8 @@ A route can exist but be unreachable: the Reachable column and its reason (PR_UN
 - **Diagnostics tab**, choose the Edge, pick the test and **Run** (shortcut on Configure > Edges and Monitor > Edges).
 - **Monitor > Routing** for BGP neighbor state; **Configure > Overlay Flow Control** for the route list.
 
+[Try it in the simulator](/sim/routing-demo/reachability): ask "why can Branch B not reach 10.20.0.0/24" and follow the six checks above; the explainer names the first one that fails.
+
 ## Key takeaways
 
 - Follow the route's life: learned, advertised, filtered, redistributed, selected, reachable.

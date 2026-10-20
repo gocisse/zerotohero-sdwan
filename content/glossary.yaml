@@ -1,32 +1,3 @@
-# PLACEHOLDER glossary entries used only to exercise the glossary engine. Not real VeloCloud terms.
-- id: placeholder-term
-  term: Placeholder term
-  short: A made-up term used to test the glossary popover.
-  long: |
-    This entry is **placeholder** content. It has a long definition so the glossary page can show more than one line,
-    including *Markdown*.
-  related: [placeholder-alpha]
-  lesson_ref: sample-markdown
-
-- id: placeholder-alpha
-  term: Placeholder alpha
-  aliases: [PA, alpha thing]
-  short: A second made-up term that can also be found by its aliases.
-  long: Search for "PA" or "alpha thing" on the glossary page to find this entry.
-  related: [placeholder-term, placeholder-beta]
-
-- id: placeholder-beta
-  term: Placeholder beta
-  short: A third made-up term with no long definition.
-  related: [placeholder-alpha]
-  lesson_ref: sample-components
-
-- id: placeholder-gamma
-  term: Placeholder gamma
-  aliases: [gamma]
-  short: A fourth made-up term that is not related to the others.
-  long: Used to prove alphabetical ordering and filtering.
-
 # ---- Section 1 vocabulary (real content) ----
 - id: wan
   term: "WAN"
@@ -910,7 +881,7 @@
 - id: icmp-probe
   term: "ICMP probe"
   short: "A reachability check on a static route's next hop that triggers failover when it fails."
-  long: "The guide says to always configure one; without it traffic can be black-holed. A failed probe shows as SLA_STATE_DOWN in the route's reachable reason."
+  long: "The guide says to always configure one; without it traffic can be black-holed. SLA_STATE_DOWN is one of the reachability reason codes the guide lists; the pages read do not say that a failed probe produces it."
   related: [static-route]
   lesson_ref: rt-static
 

@@ -94,13 +94,18 @@ function LessonBody({ lessonId }: { lessonId: string }) {
     }
   }, [lessonId, refresh])
 
-  const markComplete = useCallback(() => {
-    if (sentCompleted.current) return
+  // Resolves true once the server has the lesson as completed (or a request is already on its way).
+  const markComplete = useCallback((): Promise<boolean> => {
+    if (sentCompleted.current) return Promise.resolve(true)
     sentCompleted.current = true
-    putLessonProgress(lessonId, 'completed')
-      .then(() => refresh())
+    return putLessonProgress(lessonId, 'completed')
+      .then(() => {
+        void refresh()
+        return true
+      })
       .catch(() => {
         sentCompleted.current = false
+        return false
       })
   }, [lessonId, refresh])
 
@@ -108,14 +113,24 @@ function LessonBody({ lessonId }: { lessonId: string }) {
   useEffect(() => {
     const el = endRef.current
     if (!rendered || !el || typeof IntersectionObserver === 'undefined') return
+    let retry: ReturnType<typeof setTimeout> | undefined
     const io = new IntersectionObserver((entries) => {
-      if (entries.some((e) => e.isIntersecting)) {
-        markComplete()
-        io.disconnect()
-      }
+      if (!entries.some((e) => e.isIntersecting)) return
+      void markComplete().then((ok) => {
+        if (ok) {
+          io.disconnect()
+        } else {
+          // The request failed: observe again shortly so that a marker that stays in view is reported once more.
+          io.unobserve(el)
+          retry = setTimeout(() => io.observe(el), 2000)
+        }
+      })
     })
     io.observe(el)
-    return () => io.disconnect()
+    return () => {
+      clearTimeout(retry)
+      io.disconnect()
+    }
   }, [rendered, markComplete])
 
   return (

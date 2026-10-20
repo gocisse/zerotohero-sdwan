@@ -108,9 +108,15 @@ export async function answerUI(page: Page, q: QuizQuestion, answer: string | str
     case 'multi_choice':
       for (const id of answer as string[]) await page.locator(`input[type=checkbox][value="${id}"]`).check()
       break
-    case 'ordering':
+    case 'ordering': {
       await arrange(page, q.id, answer as string[])
+      // The server shuffles on every request, so the order can already be right and nothing needs moving. The page counts
+      // an ordering answer only once something moved or "Keep this order" was pressed, so confirm it here.
+      const keep = page.getByRole('button', { name: 'Keep this order' })
+      if (await keep.isVisible()) await keep.click()
+      await expect(page.getByRole('button', { name: /Order confirmed/ })).toBeVisible()
       break
+    }
   }
 }
 
@@ -118,6 +124,6 @@ export async function getQuiz(r: APIRequestContext, sectionId: string): Promise<
   return (await getJSON<{ questions: QuizQuestion[] }>(r, `/api/sections/${sectionId}/quiz`)).questions
 }
 
-export function waitForAttempt(page: Page) {
-  return page.waitForResponse((res) => /\/quiz\/attempts$/.test(res.url()) && res.request().method() === 'POST')
+export function waitForAttempt(page: Page, timeout?: number) {
+  return page.waitForResponse((res) => /\/quiz\/attempts$/.test(res.url()) && res.request().method() === 'POST', { timeout })
 }

@@ -150,6 +150,9 @@ export default function SidebarNav({ onNavigate }: { onNavigate?: () => void }) 
       <NavLink to="/glossary" onClick={onNavigate} className={({ isActive }) => navLink(isActive)}>
         Glossary
       </NavLink>
+      <NavLink to="/sim" onClick={onNavigate} className={({ isActive }) => navLink(isActive)}>
+        Simulator
+      </NavLink>
       <div className="my-2 border-t border-slate-200 dark:border-slate-800" />
       {state.status === 'loading' && <p className="px-3 py-2 text-sm text-slate-500">Loading course…</p>}
       {state.status === 'error' && (

@@ -1,0 +1,118 @@
+# TEACHING TOPOLOGY, not a real network. One Profile, three Edges: one plain, one that overrides settings and the
+# firewall, one that uses an extra segment. Every name, id and number is invented.
+version: 1
+meta:
+  id: branch-override-demo
+  title: Branch override demo (teaching topology)
+  summary: One Profile and three Edges built to show inheritance, an override, and an Edge that uses an extra segment. Ask "why does this Edge have this value?".
+  teaching: true
+  notes: Invented for practice. Values such as ARP timeouts are opaque numbers; their meaning is not modelled.
+
+customer:
+  id: demo-retail
+  name: Demo Retail (invented)
+  max_segments: 16
+
+segments:
+  - { id: global, name: Global Segment, type: regular }
+  - { id: iot, name: IoT sensors, type: private }
+
+gateways:
+  - { id: gw-demo, region: demo-region }
+
+links:
+  - { id: s1-inet, type: public, medium: wired, up_mbps: 200, down_mbps: 200 }
+  - { id: s2-inet, type: public, medium: wired, up_mbps: 200, down_mbps: 200 }
+  - { id: s2-lte, type: public, medium: wireless, up_mbps: 30, down_mbps: 30 }
+  - { id: s3-inet, type: public, medium: wired, up_mbps: 200, down_mbps: 200 }
+
+profiles:
+  - id: retail
+    name: Retail Profile
+    description: The single Profile all three stores use.
+    segments: [global, iot]
+    device:
+      connectivity.arp_timeouts: 120
+      routing.bfd: true
+      routing.ecmp: false
+      firewall.stateful_firewall: false
+    vlans:
+      - { id: 10, name: Store }
+      - { id: 50, name: Sensors }
+    business_rules:
+      - id: retail-pos
+        name: Point of sale traffic
+        segment: global
+        match: { application: pos }
+        action: { priority: high, network_service: multipath, steering: { mode: auto } }
+      - id: retail-sensor-upload
+        name: Sensor uploads
+        segment: iot
+        match: { application: sensor-upload }
+        action: { priority: low, network_service: multipath }
+    firewall_rules:
+      - id: retail-allow-store
+        name: Allow the store VLAN
+        match: { vlan: "10" }
+        action: allow
+      - id: retail-drop-icmp
+        name: Drop ICMP
+        match: { protocol: icmp }
+        action: drop
+
+sites:
+  - id: store-1
+    name: Store 1
+    region: demo-region
+    edges:
+      - id: store-1-edge
+        name: Store 1 Edge
+        role: branch
+        profile: retail
+        interfaces:
+          - { id: ge1, kind: wan, link: s1-inet }
+          - { id: ge3, kind: lan, vlan: 10, segments: [global] }
+
+  - id: store-2
+    name: Store 2
+    region: demo-region
+    edges:
+      - id: store-2-edge
+        name: Store 2 Edge
+        role: branch
+        profile: retail
+        interfaces:
+          - { id: ge1, kind: wan, link: s2-inet }
+          - { id: ge2, kind: wan, link: s2-lte }
+          - { id: ge3, kind: lan, vlan: 10, segments: [global] }
+        overrides:
+          device:
+            routing.bfd: false
+            routing.ecmp: true
+          firewall:
+            override: true
+            rules:
+              - id: store-2-allow-icmp
+                name: Allow ICMP at Store 2 only
+                match: { protocol: icmp }
+                action: allow
+
+  - id: store-3
+    name: Store 3
+    region: demo-region
+    edges:
+      - id: store-3-edge
+        name: Store 3 Edge
+        role: branch
+        profile: retail
+        interfaces:
+          - { id: ge1, kind: wan, link: s3-inet }
+          - { id: ge3, kind: lan, vlan: 10, segments: [global] }
+          - { id: ge4, kind: lan, vlan: 50, segments: [iot] }
+        overrides:
+          business_rules:
+            - id: store-3-sensor-upload
+              name: Store 3 sensor uploads at normal priority
+              segment: iot
+              match: { application: sensor-upload }
+              action: { priority: normal, network_service: multipath }

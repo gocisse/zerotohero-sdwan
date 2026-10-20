@@ -1,0 +1,24 @@
+version: 1
+meta: { id: dangling, title: Broken fixture, summary: Several problems at once, teaching: true }
+customer: { id: c, name: C }
+links:
+  - { id: l1, type: public, medium: wired, up_mbps: 10, down_mbps: 10 }
+profiles:
+  - { id: p1, name: P1, segments: [global] }
+sites:
+  - id: s1
+    name: S1
+    region: r1
+    edges:
+      - id: e1
+        name: E1
+        role: branch
+        profile: ghost
+        interfaces: [{ id: ge1, kind: wan, link: l1 }]
+      - id: e1
+        name: E1 again
+        role: branch
+        profile: p1
+        interfaces: [{ id: ge1, kind: wan, link: l1 }]
+        overrides:
+          device: { made.up: 1 }

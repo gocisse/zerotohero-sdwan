@@ -15,11 +15,12 @@ content/
   diagrams/<id>.yaml           # one step-through network diagram per file
   glossary.yaml                # glossary terms
   reference/                   # author fact sheets with sourced claims tables (see reference/README.md)
+  topologies/                  # simulator teaching topologies (strict YAML, validated; see docs/SIMULATOR-MODEL.md section 16)
   labs/                        # simulator scenarios (later step)
 ```
 
 Section, lesson and question IDs are stable slugs; they are the keys used in `lesson_progress.lesson_id`
-and `quiz_attempts.section_id`. `sections/00-sample` is placeholder content used to exercise the engine.
+and `quiz_attempts.section_id`.
 
 ## Teaching components (usable in any lesson, no imports)
 
@@ -37,7 +38,7 @@ lesson are reported with the lesson file and line.
 ### Diagram
 
 ```mdx
-<Diagram id="sample-branch-hub" />
+<Diagram id="rt-lan-to-lan" />
 ```
 
 The id is the `id:` of a file in `content/diagrams/`. A diagram with `steps` gets a player (Previous / Next / Play / Replay,
@@ -94,18 +95,18 @@ source, so it is for thinking, not scoring.
 ### Term
 
 ```mdx
-A <Term id="placeholder-term" /> in a sentence, or <Term id="placeholder-alpha">with your own wording</Term>.
+A <Term id="route-preference" /> in a sentence, or <Term id="overlay-flow-control">with your own wording</Term>.
 ```
 
 Shows a popover with the short definition and a link to the glossary entry (hover, keyboard focus, or tap).
 
 ```yaml
 # content/glossary.yaml
-- id: placeholder-term            # unique
-  term: Placeholder term
-  aliases: [PT]                   # optional; the glossary search also matches these
+- id: route-preference            # unique
+  term: Route preference
+  aliases: [preference]                 # optional; the glossary search also matches these
   short: One-sentence definition (required).
   long: Optional **Markdown** longer definition.
-  related: [placeholder-alpha]    # optional term ids
-  lesson_ref: sample-markdown     # optional lesson id: "Where this is taught"
+  related: [overlay-flow-control]    # optional term ids
+  lesson_ref: rt-redistribution  # optional lesson id: "Where this is taught"
 ```

@@ -26,6 +26,7 @@ backend/internal/review      pure Leitner scheduling, injectable `now`
 backend/internal/mastery     pure per-topic accuracy / weak-topic calculation
 backend/internal/db          pgx pool + migration runner
 backend/internal/store       persistence (SQL lives only here); Leitner updates happen inside its transactions
+backend/internal/sim         teaching-model simulator: topology types, validation, effective configuration, what-if (pure, no DB/HTTP)
 backend/internal/domain      shared types, no HTTP or SQL
 backend/internal/http        chi router and handlers
 backend/migrations/          NNNN_name.up.sql / .down.sql, embedded via embed.go
@@ -36,10 +37,12 @@ frontend/src/quiz/           per-type question inputs (questions/), result card
 e2e/                         Playwright (TypeScript) regression suite: data-driven from the API, serial, shared DB
 frontend/src/mdx/            MDX renderer + component registry (Callout, Diagram, Predict, Term)
 frontend/src/mdx/diagram/    diagram engine: canvas (SVG), icons, link-style map, packet animation, step player
+frontend/src/sim/            simulator screens (/sim): picker, Edge list, Edge tabs, what-if, challenge, source and basis badges, topology map, conditions, Monitor tabs, path explainer, timeline player
 frontend/src/glossary/       glossary context (fetched once, shared by <Term> and /glossary)
 frontend/src/components/     Layout shell (sidebar, top bar), ErrorPanel
 frontend/src/pages/          route pages
 content/                     course content files (mounted read-only at /content in the backend)
+content/topologies/          simulator teaching topologies (YAML, validated with the rest of the content)
 docs/DECISIONS.md            decision log
 ```
 
@@ -56,6 +59,16 @@ docs/DECISIONS.md            decision log
 - Single Go test: `cd backend && go test ./internal/grading -run TestGrade` (DB tests also need `TEST_DATABASE_URL=postgres://academy:...@localhost:5432/academy?sslmode=disable`).
 - Frontend only: `cd frontend && npm run dev | build | typecheck | lint`.
 - The backend has no live reload; after Go changes run `make up` again to rebuild. The frontend has HMR.
+
+## Simulator (`backend/internal/sim`, `/sim`)
+
+A **teaching model, never an emulator**. Topology files in `content/topologies/<id>.yaml` (strict YAML, `version: 1`, `meta.teaching: true`, ids equal the file name) hold customer, segments, gateways, WAN links, Profiles and Sites > Edges (interfaces, own VLANs, overrides). Validation (`sim.Validate`) reports every problem with a path; errors fail `make validate-content`, startup and the API (503), warnings are shown.
+- **Effective configuration** (`sim.EffectiveConfig`): per value a source (profile, edge-override, edge-only, customer, default, unset) and a **basis**: verified (fact sheet), assumption N, or not modelled. `sim.WhatIf` applies a hypothetical change to a copy and diffs every Edge.
+- **Citation convention** (enforced by `rules_test.go`): every behaviour carries a `// rule: <id>` comment; ids are registered in `rules.go` with a fact sheet and an exact row substring (that row must be VERIFIED or OBSERVED; not-modelled rules cite a VERIFY row) or an assumption number listed in `docs/SIMULATOR-MODEL.md`. Add the rule before the behaviour; nothing silent.
+- Never guess: rule evaluation order, firewall versus business policy order, segment-to-segment traffic and override marking return a "not modelled" marker. Tunnels, routing, reachability, flow tracing and labs are later steps (docs/SIMULATOR-MODEL.md section 15).
+- **Overlay (step 12):** `tunnels.go`, `dynamic.go`, `timeline.go`, `pathselect.go`, `conditions.go`, `validate_overlay.go`. `ComputeTunnels(topology, conditions, clock)` returns every tunnel (gateway, hub, dynamic, nsd-gateway, nsd-edge) with state, reason code and basis; `Timeline` replays timed events; `SelectPath` returns the ordered options, the chosen one, rejected options with reasons, link steering and the MTU, and always says reachability is assumed (routing is step 13). **Conditions** (`links_down`, `links_degraded`, `hubs_unreachable`, `gateways_unreachable`, `nsds_unreachable`, `orchestrator_unreachable`, `dynamic_build`, `traffic`) are an overlay sent in each request body: stateless, never stored, never changing the topology. Overlay topology keys (`cloud_vpn`, `clusters`, `non_sdwan_destinations`, Edge `logical_id`/`gateways`/`nat_blocks_incoming_vcmp`, link `mtu`, Gateway `roles`) are optional additions to schema version 1.
+- **Routing (step 13):** `routing.go` (optional schema), `validate_routing.go`, `routes.go` (`ComputeRoutes`: per Edge and segment candidate routes with source, type, preference, Lost Reason, reachability, basis), `routes_select.go` (order of operations, preferences 1001 to 1004, attribute and tie-break comparison), `routes_lan.go` (redistribution into OSPF and BGP, summaries, BGP filters), `reachability.go` (`Reachability`: six stages in the Section 6 diagnostic order, first failing stage, per-owner verdicts, `depends_on`), `routing_assumptions.go` (ten selectable unverified defaults, sent in each request, shown in every output), `rules_routing.go`. Conditions gain `neighbors_down` and `probes_down`. Cross-segment questions return not modelled. Topology `routing-demo`.
+- API: `GET /api/topologies`, `GET /api/topologies/{id}`, `GET /api/topologies/{id}/edges/{edge}/effective-config`, `POST /api/topologies/{id}/what-if`, `POST /api/topologies/{id}/tunnels`, `/timeline`, `/paths`, `/routes` and `/reachability` (body `{conditions, assumptions, query}`). UI: `/sim`, `/sim/:topology`, `/sim/:topology/edges/:edge?tab=device|business-policy|firewall`, `/sim/:topology/what-if`, `/sim/:topology/challenge`, `/sim/:topology/map`, `/monitor` (Links and Paths tabs), `/paths`, `/timeline`, `/overlay-challenge`, `/routes` (mock Remote Diagnostics > Route Table Dump), `/reachability`, `/routing-challenge`; every screen carries the banner "Teaching model, not an emulator. Items marked 'assumption' are not verified."
 
 ## Content format (`/content`)
 
@@ -195,13 +208,13 @@ Facts used in lessons are chosen to hold across 6.4 and 7.0. Confirm the release
 | `dmpo` (Section 3) | **Real content, written (step 7).** 7 lessons (overview, monitoring, steering, outages and brownouts, remediation, putting it together, reading DMPO in the VCO), 6 diagrams (`dmpo-*`: probes, steering modes, outage failover, brownout FEC, jitter buffer, NACK), 19-question quiz (7 scenarios, 1 ordering, all four types), 22 glossary terms. Quiz topic tags = lesson topics: dmpo-overview, dmpo-monitoring, dmpo-steering, dmpo-outage-brownout, dmpo-remediation, dmpo-scenarios, dmpo-vco-diagnosis. Sources: `content/reference/dmpo*.md` (6 sheets); legacy 2017 white-paper facts are SECONDARY and never a quiz answer. |
 | `configuration` (Section 4) | **Real content, written (step 8).** 8 lessons (configuration model, segments, profiles, Edge overrides, business policy, firewall, applications and QoS, reading an Edge's configuration), 5 diagrams (`cfg-*`; `cfg-fw-vs-bp` and `cfg-bp-classify` are labelled illustrative), 19-question quiz (9 scenarios, 1 ordering, all four types), 18 glossary terms. Topics: config-model, config-segments, config-profiles, config-overrides, config-business-policy, config-firewall, config-apps-qos, config-diagnosis. Sources: seven new reference sheets, mostly 7.0 pages via WebFetch; unresolved items in `content/reference/README.md` step 8. |
 | `overlay` (Section 5) | **Real content, written (step 9).** 7 lessons (overlay at a glance, Cloud VPN, hubs and spokes, dynamic branch-to-branch, non SD-WAN destinations, other network services, choosing and reading paths), 6 diagrams (`ov-*`), 19-question quiz (8 scenarios, 1 ordering, all four types), 16 glossary terms. Topics: overlay-ways, overlay-cloud-vpn, overlay-hubs, overlay-dynamic, overlay-nsd, overlay-services, overlay-diagnosis. Sources: six new reference sheets (7.0 pages via WebFetch, local Troubleshooting Guide). |
-| `sample`, `sample-two` | Dev placeholders, last in `course.yaml`; a later step removes them (tests still use them). |
 | `routing` (Section 6) | **Real content, written (step 10).** 8 lessons (big picture, static and default routes, OSPF, BGP, redistribution and route preference, filters and attributes, Overlay Flow Control, reading routes in the VCO), 7 diagrams (`rt-*`; those with prefixes are titled illustrative), 20-question quiz (8 scenarios, 3 ordering, all four types), 34 glossary terms. Topics: rt-model, rt-static, rt-ospf, rt-bgp, rt-redistribution, rt-filters, rt-ofc, rt-diagnosis. Sources: seven new reference sheets (7.0 Troubleshooting Guide read directly; 7.0 and 6.4 pages via WebFetch). Arista uses route preference (lower wins), not administrative distance. |
 | Section 7 onward | Not started. |
 
+The two dev placeholder sections were removed in step 11; `course.yaml` lists the six real sections.
+
 ## Current status
 
-Step 10 complete: housekeeping (Hub wording, Dynamic Branch to Branch default now quoted from the 7.0 Profile page, callout and packet-label placement fixes with unit tests), seven routing fact sheets, the real content of Section 6, and `docs/SIMULATOR-MODEL.md` sections 10 to 15 (routing model, reachability, assumptions 21 to 32, mock routing screens, build plan).
-Not built yet: the simulator and mock VCO, labs.
-Sources used in step 10: 7.0 Troubleshooting Guide (local PDF, read directly); 7.0 and 6.4 dynamic routing pages, 7.0 Overview, Edge and Profile device settings and Monitor Enterprise through WebFetch (verbatim quotes requested); the dedicated Overlay Flow Control pages were unreadable (HTTP 403).
-Open VERIFY items: see `content/reference/README.md` (step 10 list of items needing a real-VCO observation).
+Step 13 complete: the e2e root causes (decision 94); optional routing keys and validation; `ComputeRoutes` and `Reachability` with the verified order of operations, route preferences, attribute comparison, redistribution switches, filters, Overlay Flow Control exits and pins; the `/routes` and `/reachability` API; the Route Table Dump mock, Assumptions panel, reachability explainer and routing challenge; the `routing-demo` teaching topology; "Try it in the simulator" links in Section 6 lessons 1, 5 and 8.
+Not built yet: the flow tracer and labs (step 14).
+Open VERIFY items: see `content/reference/README.md`; the simulator's assumptions are 1 to 84 in `docs/SIMULATOR-MODEL.md`.

@@ -20,3 +20,4 @@
 | How to revert an override to the Profile value: not described in the pages read. | none | 7.0 | VERIFY |
 | A complete list of which settings can and cannot be overridden: not available; only per-setting statements above. | none | 7.0 | VERIFY |
 | Whether later Profile edits still reach an Edge that overrides that setting: a web-search summary says no for matching firewall rules; not read on a page. | none | 7.0 | VERIFY |
+| Whether OSPF settings can be overridden on an Edge: the Edge device-settings page lists OSPF among settings that offer Override, while the dynamic routing page says the OSPF configuration settings (the area table fields) cannot be overridden at the Edge level. The pages do not reconcile (the Override checkbox may cover only some OSPF settings). [needs observation] | none | 7.0 | VERIFY |

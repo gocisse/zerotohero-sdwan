@@ -17,14 +17,14 @@ topics: [rt-ospf]
 
 <Term id="ospf">OSPF</Term> is switched on in two places, in this order:
 
-1. **Profile:** **Configure > Profiles > (Profile) > Device > Routing & NAT > OSPF**. Here you define the areas. Each area has an Area ID; **Normal** is the default and the only supported <Term id="ospf-area">area</Term> type. These settings cannot be overridden on an Edge.
+1. **Profile:** **Configure > Profiles > (Profile) > Device > Routing & NAT > OSPF**. Here you define the areas. Each area has an Area ID; **Normal** is the default and the only supported <Term id="ospf-area">area</Term> type. The dynamic routing page says these settings cannot be overridden at the Edge level, although the Edge device-settings page lists OSPF among settings that offer Override (Section 4); the two pages do not agree, so check your release.
 2. **Edge interface:** then enable OSPF on the Edge's interfaces.
 
 Configure OSPF only on the **Global Segment**. OSPFv2 is IPv4; OSPFv3 is IPv6.
 
 ## Routed interfaces versus VLAN interfaces
 
-The guide says OSPF can be enabled on a LAN (routed or switched) or WAN interface of an Edge, but "to get full OSPF functionality" you must use a **routed** interface. On a **switched** (VLAN) interface the Edge only supports OSPF as a **passive** interface: it advertises the connected subnet but forms no neighbors there.
+The guide says OSPF can be enabled on a LAN (routed or switched) or WAN interface of an Edge, but "to get full OSPF functionality" you must use a **routed** interface. On a **switched** (VLAN) interface the Edge only supports OSPF as a **passive** interface: the guides we read do not say what passive does there. In general OSPF a passive interface sends no hellos and forms no neighbors, and the simulator assumes that.
 
 ## What the Edge learns and advertises
 

@@ -16,3 +16,5 @@
 | DMPO can treat each MPLS class of service as a separate link for steering when the private link has a CoS agreement. | https://cdn.allbound.com/velocloud-ab/2019/03/DMPO-White-Paper.pdf | WP2017 (p.4) | SECONDARY |
 | Per-flow SLA thresholds that define "brownout" for each application (loss, jitter values) are image-only. | none | 7.0 | VERIFY |
 | Per-release: Mandatory/Preferred/Available semantics are identical in 6.4 and 7.0 overview text; the policy-table "drops" wording was read for 7.0 only. | https://www.arista.com/en/admin-guide-vc-6-4/sd-wan-6-4-overview | 6.4 vs 7.0 | VERIFIED |
+| What Preferred steering does when the chosen link is a private link that is down or misses the SLA, and how DMPO picks among several equally healthy paths, are not stated. [needs observation] | none | 7.0 | VERIFY |
+| How many measured loss, latency or jitter values make a link degraded (brownout) for a flow is not available as text, so the simulator treats degraded only as a state set by the reader. | none | 7.0 | VERIFY |

@@ -40,8 +40,9 @@ test.describe('lessons', () => {
       const p = (await (await request.get('/api/progress')).json()) as { lessons: { lesson_id: string; status: string }[] }
       return p.lessons.find((x) => x.lesson_id === target.id)?.status
     }).toMatch(/visited|completed/)
-    await page.locator('main').evaluate((el) => el.scrollTo(0, el.scrollHeight))
+    // Scroll again on every poll: content above the end marker (diagrams, Predict blocks) may still be growing.
     await expect.poll(async () => {
+      await page.locator('main').evaluate((el) => el.scrollTo(0, el.scrollHeight))
       const p = (await (await request.get('/api/progress')).json()) as { lessons: { lesson_id: string; status: string }[] }
       return p.lessons.find((x) => x.lesson_id === target.id)?.status
     }).toBe('completed')

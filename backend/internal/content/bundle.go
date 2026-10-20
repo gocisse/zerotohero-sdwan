@@ -10,6 +10,7 @@ type Bundle struct {
 	Sections     []SectionBundle
 	Diagrams     []DiagramDoc
 	References   []ReferenceDoc
+	Topologies   []TopologyDoc
 	GlossaryPath string
 	HasGlossary  bool
 	Glossary     []GlossaryTerm

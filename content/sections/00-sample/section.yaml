@@ -1,8 +1,0 @@
-id: sample
-title: Sample section (placeholder)
-summary: PLACEHOLDER content used only to exercise the content engine. Not real VeloCloud material.
-estimated_minutes: 5
-placeholder: true
-lessons:
-  - sample-markdown
-  - sample-components

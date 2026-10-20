@@ -312,3 +312,39 @@ Sentences making a technical claim without a VERIFIED or OBSERVED row, per lesso
 | **Total** | **27** | none is a quiz correct answer |
 
 `docs/SIMULATOR-MODEL.md` additions: three statements without VERIFIED rows (OE1/OE2 order, Gateway reflection scoping, example topology values), all in assumptions 21 and 32 or labelled illustrative.
+
+## Step 12: simulator tunnels and paths (no new reading)
+
+No new pages were read. The overlay engine cites existing rows of `cloud-vpn`, `hubs-and-branches`, `tunnel-types`, `non-sdwan-destinations`, `overlay-paths`, `gateway-details`, `mtu-overhead`, `dmpo-steering`, `dmpo-monitoring` and `vco-overlay-ui` (a test checks every cited row exists and is VERIFIED or OBSERVED, and every not-modelled marker cites a VERIFY row). New VERIFY rows written to record what the engine must not guess: whether a Spoke moves local flows back to the primary Hub and how long it takes to treat a Hub as down; a Hub Edge behind a NAT; the effective MTU of tunnels to Non SD-WAN destinations; Preferred steering on a private link and how DMPO picks among equally healthy paths; the loss, latency and jitter values that make a link degraded; whether an Edge's Cloud VPN override replaces a whole sub-section. The OSPF override conflict is recorded in `edge-overrides` and `ospf` (decision 83).
+
+### Open VERIFY items that need a real-VCO observation (step 12)
+
+1. Defaults: Cloud VPN on or off; whether an Edge override can enable a tunnel type its Profile disables; whether an override replaces a sub-section.
+2. The conditions of "a secure overlay multi-path tunnel is possible"; Branch to Branch enabled at only one of two sites.
+3. What happens to in-flight flows at teardown; whether a flow prefers an existing direct tunnel over the Hub path.
+4. Hub failover: how long a Spoke takes to treat a Hub as down; whether local flows return to the primary Hub.
+5. A Hub Edge behind a NAT; Edge behaviour with the Orchestrator unreachable.
+6. Preferred steering on a private link; the numbers behind a degraded link; load balancing.
+7. The MTU of tunnels to Non SD-WAN destinations.
+8. Whether the Edge overrides OSPF settings (the two 7.0 pages disagree).
+
+### Step 12 claim audit (self-review)
+
+Every Section 2, 3 and 5 lesson was read in full against the engine. Lesson claims the engine cannot support (the engine has no routes, firewall logs, VPN Test, Flows tab or measurements): route reflection by the Gateway (step 13), "...-via-Hub" firewall log names and VPN Test (step 14), per-link measurements on the Links tab. Engine behaviours the lessons do not state, all shown as assumptions: Gateway derivation by region (44), Hub order deciding between Hubs while routing attributes are not modelled (59, lesson 5.3 says tie-breaker after attributes), hubs for VPN used for 7.0 as in 6.4 (61), the 180 s boundary (52), no hold time or remediation in a single decision (67, 68), VPN overhead for site-to-site flows (66). Mismatch fixed: lesson 4 of Section 4 and lesson 3 of Section 6 on OSPF overrides.
+
+## Step 13: simulator routing and reachability (no new reading)
+
+No new pages were read. The routing engine cites existing rows of `routing-overview`, `static-routes`, `ospf`, `bgp`, `route-redistribution-and-precedence`, `overlay-flow-control`, `overlay-paths` and `vco-routing-ui`; a test checks every cited row exists and is VERIFIED or OBSERVED and every not-modelled marker cites a VERIFY row. Five VERIFY rows were added to record what the engine must not guess: whether a route learned at this Edge beats a remote Edge connected or static route (order of operations against LR_ROUTED_VS_VELO), how the transit metric enters selection, the Logical ID tie-break direction and route age, what a passive OSPF interface does, and the local preference default and attribute handling across the overlay.
+
+### Open VERIFY items that need a real-VCO observation (step 13)
+
+1. The defaults of Overlay Prefix, Overlay Prefixes, Connected Routes, OSPF into BGP and BGP into OSPF, and of the static and connected Global Advertise Flags.
+2. The filter default action and evaluation order; the BGP local preference default.
+3. Whether a routed route beats a remote Edge route; the transit metric; the Logical ID direction; route age.
+4. What a passive OSPF interface does; connected and static routes into OSPF and BGP.
+5. How routes cross segments; whether static routes and BGP are per segment or per Profile.
+
+### Step 13 claim audit (self-review)
+
+Every Section 6 lesson was read in full against the engine. Lesson sentences changed: lesson 2 and the glossary entry for the ICMP probe said a failed probe shows SLA_STATE_DOWN (the guide only lists the code; now hedged, and assumption 72 in the simulator); lesson 3 said a passive interface advertises the connected subnet and forms no neighbors (the guides read do not say; now hedged, assumption 73). Gaps the engine has against lesson statements, none contradicted: static routes redistributed into BGP or OSPF on the owning Edge, the Networks field and Uplink flag of BGP, OSPF route filters, BGP community, AS-path regular expressions and As-Path-Exclude, the internal and uplink Global Advertise Flags, a flag taking effect only for routes learned afterwards (the engine shows the steady state), BGP per segment with a Profile default (authored per Edge), and the Gateway as the route reflector (the engine derives remote routes from advertisement and Cloud VPN settings, so a Gateway outage makes routes unreachable instead of absent).
+

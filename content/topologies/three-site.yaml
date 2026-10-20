@@ -1,0 +1,150 @@
+# TEACHING TOPOLOGY, not a real network. The 3-site worked example from docs/SIMULATOR-MODEL.md section 3, completed with
+# settings that exist in the fact sheets (content/reference/). Every name, id and number is invented.
+version: 1
+meta:
+  id: three-site
+  title: Three sites (teaching topology)
+  summary: A hub site and two branches on two Profiles. Branch A overrides a device setting and supersedes a Profile business rule; try moving an Edge to the other Profile.
+  teaching: true
+  notes: Invented for practice. Values such as ARP timeouts are opaque numbers; their meaning is not modelled.
+
+customer:
+  id: acme
+  name: Acme Ltd (invented)
+
+segments:
+  - { id: global, name: Global Segment, type: regular }
+  - { id: guest, name: Guest, type: private }
+
+gateways:
+  - { id: gw-eu, region: eu-west }
+
+links:
+  - { id: hq-inet, type: public, medium: wired, up_mbps: 500, down_mbps: 500 }
+  - { id: a-inet, type: public, medium: wired, up_mbps: 100, down_mbps: 100 }
+  - { id: a-mpls, type: private, medium: wired, up_mbps: 50, down_mbps: 50 }
+  - { id: b-inet, type: public, medium: wired, up_mbps: 100, down_mbps: 100 }
+
+profiles:
+  - id: branch
+    name: Branch Profile
+    description: Used by the two branches.
+    segments: [global, guest]
+    device:
+      connectivity.arp_timeouts: 120
+      routing.bfd: false
+      routing.ecmp: false
+      firewall.stateful_firewall: true
+    vlans:
+      - { id: 10, name: Corporate }
+      - { id: 20, name: Guest }
+    business_rules:
+      - id: branch-voice
+        name: Voice over the private link
+        segment: global
+        match: { application: voice }
+        action:
+          priority: high
+          network_service: multipath
+          steering: { mode: transport_group, group: private_wired, strictness: preferred }
+      - id: branch-streaming
+        name: Streaming straight to the Internet
+        segment: global
+        match: { application: streaming }
+        action: { priority: low, network_service: direct }
+      - id: branch-guest-web
+        name: Guest web traffic
+        segment: guest
+        match: { destination: internet }
+        action: { priority: normal, network_service: multipath }
+    firewall_rules:
+      - id: branch-allow-corp
+        name: Allow the corporate VLAN
+        match: { vlan: "10" }
+        action: allow
+      - id: branch-reject-telnet
+        name: Reject telnet
+        match: { protocol: tcp, destination_port: "23" }
+        action: reject
+
+  - id: hub
+    name: Hub Profile
+    description: Used by the hub site.
+    segments: [global, guest]
+    device:
+      connectivity.arp_timeouts: 60
+      routing.bfd: true
+    vlans:
+      - { id: 10, name: Corporate }
+      - { id: 30, name: Servers }
+    business_rules:
+      - id: hub-voice
+        name: Voice
+        segment: global
+        match: { application: voice }
+        action: { priority: high, network_service: multipath, steering: { mode: auto } }
+    firewall_rules:
+      - id: hub-allow-servers
+        name: Allow the server VLAN
+        match: { vlan: "30" }
+        action: allow
+
+sites:
+  - id: hq
+    name: Headquarters
+    region: eu-west
+    edges:
+      - id: hq-edge
+        name: HQ Edge
+        role: hub
+        profile: hub
+        interfaces:
+          - { id: ge1, kind: wan, link: hq-inet }
+          - { id: ge2, kind: lan, vlan: 10, segments: [global] }
+          - { id: ge3, kind: lan, vlan: 30, segments: [global] }
+
+  - id: branch-a
+    name: Branch A
+    region: eu-west
+    edges:
+      - id: a-edge
+        name: Branch A Edge
+        role: branch
+        profile: branch
+        interfaces:
+          - { id: ge1, kind: wan, link: a-inet }
+          - { id: ge2, kind: wan, link: a-mpls }
+          - { id: ge3, kind: lan, vlan: 10, segments: [global] }
+          - { id: ge4, kind: lan, vlan: 20, segments: [guest], override: true }
+          - { id: lo1, kind: loopback }
+        overrides:
+          device:
+            connectivity.arp_timeouts: 300
+          business_rules:
+            - id: a-voice-mpls
+              name: Branch A voice pinned to its MPLS link
+              segment: global
+              match: { application: voice }
+              action:
+                priority: high
+                network_service: multipath
+                steering: { mode: wan_link, link: a-mpls, strictness: mandatory }
+          firewall:
+            override: true
+            rules:
+              - id: a-allow-ssh
+                name: Allow SSH to the Edge's LAN
+                match: { protocol: tcp, destination_port: "22" }
+                action: allow
+
+  - id: branch-b
+    name: Branch B
+    region: eu-west
+    edges:
+      - id: b-edge
+        name: Branch B Edge
+        role: branch
+        profile: branch
+        interfaces:
+          - { id: ge1, kind: wan, link: b-inet }
+          - { id: ge3, kind: lan, vlan: 10, segments: [global] }

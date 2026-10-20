@@ -2,10 +2,20 @@ package content
 
 import (
 	"errors"
+	"io/fs"
 	"os"
 	"strings"
 	"testing"
+	"testing/fstest"
 )
+
+func fstestFS(files map[string]string) fs.FS {
+	m := fstest.MapFS{}
+	for k, v := range files {
+		m[k] = &fstest.MapFile{Data: []byte(v)}
+	}
+	return m
+}
 
 func TestLoadValidFixture(t *testing.T) {
 	c, err := Load(os.DirFS("testdata/valid"))
@@ -36,6 +46,12 @@ func TestLoadValidFixture(t *testing.T) {
 	if len(c.Glossary) != 2 || c.Glossary[0].ID != "widget" || c.Glossary[1].Aliases == nil {
 		t.Fatalf("glossary = %+v", c.Glossary)
 	}
+	if ts := c.Topologies(); len(ts) != 1 || ts[0].T.Meta.ID != "tiny" {
+		t.Fatalf("topologies = %+v", ts)
+	}
+	if _, ok := c.Topology("tiny"); !ok {
+		t.Error("topology not indexed by id")
+	}
 	tf := s.Quiz[1]
 	if tf.Type != TrueFalse || len(tf.Options) != 2 || tf.Correct[0] != "true" {
 		t.Errorf("true_false not normalized: %+v", tf)
@@ -57,6 +73,10 @@ func TestLoadInvalidFixtureReportsEverything(t *testing.T) {
 		{"sections/02-ghost/section.yaml", "cannot read file"},
 		{"diagrams/broken.yaml", "yaml"},
 		{"diagrams/bad-link.yaml", `to "ghost" is not a node`},
+		{"topologies/dangling.yaml", `unknown profile "ghost"`},
+		{"topologies/dangling.yaml", "duplicate edge id"},
+		{"topologies/dangling.yaml", "unknown setting"},
+		{"topologies/syntax.yaml", "surprise"},
 		{"stray/", "orphan"},
 		{"sections/02-ghost/note.txt", "orphan"},
 	}
@@ -95,5 +115,24 @@ func TestSplitFrontmatter(t *testing.T) {
 				t.Errorf("body = %q, want %q", body, tt.wantBody)
 			}
 		})
+	}
+}
+
+func TestTopologyFileNameMustMatchID(t *testing.T) {
+	fsys := fstestFS(map[string]string{
+		"course.yaml":           "title: T\ndescription: d\nsections: []\n",
+		"topologies/other.yaml": "version: 1\nmeta: { id: tiny, title: T, summary: s, teaching: true }\ncustomer: { id: c, name: C }\nprofiles: []\nsites: []\n",
+	})
+	_, err := Load(fsys)
+	var list ErrorList
+	if !errors.As(err, &list) {
+		t.Fatalf("want ErrorList, got %v", err)
+	}
+	found := false
+	for _, e := range list {
+		found = found || (e.File == "topologies/other.yaml" && strings.Contains(e.Message, "must equal the file name"))
+	}
+	if !found {
+		t.Errorf("missing file-name error in %v", list)
 	}
 }

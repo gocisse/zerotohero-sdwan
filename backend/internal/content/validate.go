@@ -88,6 +88,7 @@ func (v *validator) run() {
 	for _, r := range b.References {
 		validateReference(&v.errs, r)
 	}
+	validateTopologies(&v.errs, b.Topologies)
 	v.componentRefs(anyBrokenDiagram, b.GlossaryBad)
 
 	if !b.CourseBroken {

@@ -1,7 +1,0 @@
-id: sample-two
-title: Second sample section (placeholder)
-summary: PLACEHOLDER content so section-to-section flow (skip, continue) can be exercised. Not real VeloCloud material.
-estimated_minutes: 3
-placeholder: true
-lessons:
-  - sample-two-intro

@@ -1,0 +1,143 @@
+# TEACHING TOPOLOGY, not a real network. Every name, prefix and number is invented.
+# Branch A runs OSPF to its LAN router, Branch B runs BGP, Branch C has a static route and two LANs that can be summarised,
+# and the Hub has a static default route. The same prefix (10.40.0.0/24) is learned by OSPF at A and by BGP at B: two exits.
+# Questions to try: why can Branch B not reach 10.20.0.0/24 behind Branch A? why is 10.70.0.0/24 missing everywhere?
+version: 1
+meta:
+  id: routing-demo
+  title: Routing demo (teaching topology)
+  summary: Three branches and a Hub with OSPF, BGP, a static route, a default route, summarisable /24s and two exits for one prefix. Flip the unverified redistribution defaults, take a neighbor or a link down, and follow a prefix from the LAN router to another Edge.
+  teaching: true
+  notes: Invented for practice. Several defaults (the redistribution checkboxes, the filter default action) are not documented; the simulator shows them as assumptions you can switch.
+
+customer:
+  id: demo-routing
+  name: Demo Routing (invented)
+
+segments:
+  - { id: global, name: Global Segment, type: regular }
+
+gateways:
+  - { id: gw-1, region: demo-r1, roles: [data_plane, secure_vpn] }
+
+links:
+  - { id: a-inet, type: public, medium: wired, up_mbps: 100, down_mbps: 100 }
+  - { id: b-inet, type: public, medium: wired, up_mbps: 100, down_mbps: 100 }
+  - { id: c-inet, type: public, medium: wired, up_mbps: 100, down_mbps: 100 }
+  - { id: h-inet, type: public, medium: wired, up_mbps: 500, down_mbps: 500 }
+
+profiles:
+  - id: branch-ospf
+    name: Branch with OSPF
+    segments: [global]
+    cloud_vpn:
+      segments: [global]
+      branch_to_branch: { enabled: true, via: cloud_gateways }
+    routing:
+      ospf:
+        enabled: true
+        areas: [{ id: "0" }]
+        redistribute:
+          overlay_prefixes: true
+          default_route: none
+        summaries:
+          - { subnet: 10.60.0.0/22, metric_type: e2, metric: 20 }
+  - id: branch-bgp
+    name: Branch with BGP
+    segments: [global]
+    cloud_vpn:
+      segments: [global]
+      branch_to_branch: { enabled: true, via: cloud_gateways }
+  - id: branch-static
+    name: Branch with static routes
+    segments: [global]
+    cloud_vpn:
+      segments: [global]
+      branch_to_branch: { enabled: true, via: cloud_gateways }
+  - id: hub
+    name: Hub Profile
+    segments: [global]
+    cloud_vpn:
+      segments: [global]
+      branch_to_branch: { enabled: true, via: cloud_gateways }
+
+sites:
+  - id: site-a
+    name: Site A
+    region: demo-r1
+    edges:
+      - id: a-edge
+        name: Branch A
+        role: branch
+        profile: branch-ospf
+        logical_id: 1
+        interfaces:
+          - { id: ge1, kind: wan, link: a-inet }
+          - { id: ge3, kind: routed, address: 10.20.255.1/30 }
+        routing:
+          ospf:
+            interfaces: [{ id: ge3, mode: active, area: "0" }]
+          lan_routes:
+            - { id: a-lan, prefix: 10.20.0.0/24, protocol: ospf, via: ge3, ospf_type: intra, metric: 10 }
+            - { id: a-shared, prefix: 10.40.0.0/24, protocol: ospf, via: ge3, ospf_type: intra, metric: 10 }
+            - { id: a-ext, prefix: 10.70.0.0/24, protocol: ospf, via: ge3, ospf_type: e2, metric: 20 }
+
+  - id: site-b
+    name: Site B
+    region: demo-r1
+    edges:
+      - id: b-edge
+        name: Branch B
+        role: branch
+        profile: branch-bgp
+        logical_id: 2
+        interfaces:
+          - { id: ge1, kind: wan, link: b-inet }
+          - { id: ge3, kind: routed, address: 10.30.255.1/30 }
+        routing:
+          bgp:
+            local_asn: 65010
+            neighbors:
+              - { id: lan-r1, ip: 10.30.255.2, asn: 65002, inbound_filter: from-lan }
+            filters:
+              - id: from-lan
+                rules:
+                  - { id: deny-test, match: { prefix: 10.99.0.0/24 }, action: deny }
+                  - { id: prefer-b, match: { prefix: 10.30.0.0/24 }, action: permit, set: { local_preference: 200 } }
+          lan_routes:
+            - { id: b-lan, prefix: 10.30.0.0/24, protocol: bgp, via: lan-r1, bgp: { as_path: [65002] } }
+            - { id: b-shared, prefix: 10.40.0.0/24, protocol: bgp, via: lan-r1, bgp: { as_path: [65002, 65100] } }
+            - { id: b-test, prefix: 10.99.0.0/24, protocol: bgp, via: lan-r1, bgp: { as_path: [65002] } }
+
+  - id: site-c
+    name: Site C
+    region: demo-r1
+    edges:
+      - id: c-edge
+        name: Branch C
+        role: branch
+        profile: branch-static
+        logical_id: 3
+        interfaces:
+          - { id: ge1, kind: wan, link: c-inet }
+          - { id: ge3, kind: routed, address: 10.50.0.1/24 }
+          - { id: ge4, kind: routed, address: 10.60.0.1/24 }
+          - { id: ge5, kind: routed, address: 10.60.1.1/24 }
+        routing:
+          static_routes:
+            - { id: printers, subnet: 172.16.50.0/24, next_hop: 10.50.0.2, cost: 0, preferred: true, advertise: true, icmp_probe: true, description: Printer VLAN behind a LAN router }
+
+  - id: site-hub
+    name: Data center
+    region: demo-r1
+    edges:
+      - id: hub-edge
+        name: Hub
+        role: hub
+        profile: hub
+        logical_id: 4
+        interfaces:
+          - { id: ge1, kind: wan, link: h-inet }
+        routing:
+          static_routes:
+            - { id: default-internet, subnet: 0.0.0.0/0, next_hop: 203.0.113.1, interface: ge1, preferred: true, advertise: true, description: Internet breakout }

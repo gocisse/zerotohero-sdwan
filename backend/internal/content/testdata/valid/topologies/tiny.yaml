@@ -1,0 +1,42 @@
+version: 1
+meta: { id: tiny, title: Tiny (test fixture), summary: A fixture, teaching: true }
+customer: { id: c, name: C }
+segments:
+  - { id: global, name: Global Segment, type: regular }
+gateways:
+  - { id: gw1, region: r1 }
+links:
+  - { id: l1, type: public, medium: wired, up_mbps: 10, down_mbps: 10 }
+  - { id: l2, type: public, medium: wired, up_mbps: 10, down_mbps: 10 }
+profiles:
+  - id: p1
+    name: P1
+    segments: [global]
+    device: { routing.bfd: true }
+    vlans: [{ id: 10, name: Corp }]
+    cloud_vpn:
+      segments: [global]
+      branch_to_branch: { enabled: true, via: cloud_gateways }
+sites:
+  - id: s1
+    name: S1
+    region: r1
+    edges:
+      - id: e1
+        name: E1
+        role: branch
+        profile: p1
+        interfaces:
+          - { id: ge1, kind: wan, link: l1 }
+          - { id: ge2, kind: lan, vlan: 10, address: 10.1.0.1/24 }
+          - { id: ge3, kind: routed, address: 10.2.0.1/24 }
+        routing:
+          static_routes:
+            - { id: s1, subnet: 10.9.0.0/24, next_hop: 10.2.0.2, preferred: true, advertise: true }
+        overrides:
+          device: { routing.bfd: false }
+      - id: e2
+        name: E2
+        role: branch
+        profile: p1
+        interfaces: [{ id: ge1, kind: wan, link: l2 }]

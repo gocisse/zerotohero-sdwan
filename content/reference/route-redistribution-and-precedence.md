@@ -23,6 +23,9 @@ Read 2026-10-19. The Arista pages never use the term "administrative distance" (
 | Transit metric when an Edge learns a route: 0 from a directly connected peer Edge, 32 plus the Hub's order value via a Hub Edge, 90 via a Gateway. | https://www.arista.com/en/admin-guide-vc-7-0/sd-wan-7-0-configure-dynamic-routing-with-ospf-or-bgp | 7.0, summarised via WebFetch | VERIFIED |
 | Route pinning overrides the default preference of any dynamic route; ORC (Overlay Route Control) lets administrators set a community and the AS path action for prefixes advertised to the overlay without enabling BGP on the Edges. | https://www.arista.com/en/admin-guide-vc-7-0/sd-wan-7-0-overview | 7.0, summarised via WebFetch | VERIFIED |
 | Whether OSPF routes redistributed into BGP and back can loop, and what a loop-prevention tag does, is not described beyond the overlap rules above; the course treats general loop theory as an assumption. | none | 7.0 | VERIFY |
+| Whether a route learned from a routing protocol at this Edge beats a remote Edge connected or static route, given the order of operations (remote Edge routes before dynamic routes) and the Lost Reason LR_ROUTED_VS_VELO (a route learned from routing protocols beats a via-VeloCloud route), is not stated. [needs observation] | none | 7.0 | VERIFY |
+| How the transit metric (0, 32 plus the Hub's order, 90) enters route selection, and which of the three applies when an Edge could learn a route in more than one way, is not stated. [needs observation] | none | 7.0 | VERIFY |
+| The direction of the Logical ID tie-break between Edges (only the Gateway's higher-Logical-ID rule is stated) and how route age is measured are not stated. [needs observation] | none | 7.0 | VERIFY |
 
 ## Third-party outline statements: result
 

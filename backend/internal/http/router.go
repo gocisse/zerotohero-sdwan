@@ -37,6 +37,16 @@ func NewRouter(d Deps) http.Handler {
 		r.Get("/diagrams/{id}", DiagramHandler(d.Content, d.Log))
 		r.Get("/glossary", GlossaryHandler(d.Content, d.Log))
 
+		r.Get("/topologies", TopologiesHandler(d.Content, d.Log))
+		r.Get("/topologies/{id}", TopologyHandler(d.Content, d.Log))
+		r.Get("/topologies/{id}/edges/{edgeId}/effective-config", EffectiveConfigHandler(d.Content, d.Log))
+		r.Post("/topologies/{id}/what-if", WhatIfHandler(d.Content, d.Log))
+		r.Post("/topologies/{id}/tunnels", TunnelsHandler(d.Content, d.Log))
+		r.Post("/topologies/{id}/timeline", TimelineHandler(d.Content, d.Log))
+		r.Post("/topologies/{id}/paths", PathsHandler(d.Content, d.Log))
+		r.Post("/topologies/{id}/routes", RoutesHandler(d.Content, d.Log))
+		r.Post("/topologies/{id}/reachability", ReachabilityHandler(d.Content, d.Log))
+
 		h := &progressHandlers{d: d}
 		r.Post("/sections/{id}/quiz/attempts", h.submitAttempt)
 		r.Get("/sections/{id}/quiz/attempts", h.listAttempts)

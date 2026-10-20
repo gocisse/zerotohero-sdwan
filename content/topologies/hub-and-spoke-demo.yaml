@@ -1,0 +1,243 @@
+# TEACHING TOPOLOGY, not a real network. Built so that every overlay scenario is available at once:
+#   - "plain" Profile: no Cloud VPN (only Gateway tunnels)
+#   - "mesh" Profile: Cloud VPN with Branch to Branch via Cloud Gateways, no Hub, Dynamic Branch to Branch
+#   - "spoke" Profile: a primary and a secondary Hub, Hubs for VPN, one NSD via Gateway and one via Edge
+#   - "cluster-spoke" Profile: a Hub cluster
+# Every name, id and number is invented.
+version: 1
+meta:
+  id: hub-and-spoke-demo
+  title: Hub and spoke demo (teaching topology)
+  summary: Five Profiles that show no Cloud VPN, Cloud VPN without a Hub, a primary and secondary Hub, a Hub cluster, and Non SD-WAN destinations via Gateway and via Edge. Break links and Hubs and watch the tunnels.
+  teaching: true
+  notes: Invented for practice. Link bandwidth is not used by the simulator; only link type, medium and state matter here.
+
+customer:
+  id: demo-overlay
+  name: Demo Overlay (invented)
+
+segments:
+  - { id: global, name: Global Segment, type: regular }
+
+gateways:
+  - { id: gw-1, region: demo-r1, roles: [data_plane, secure_vpn] }
+  - { id: gw-2, region: demo-r1, roles: [data_plane] }
+
+links:
+  - { id: p1-inet, type: public, medium: wired, up_mbps: 100, down_mbps: 100 }
+  - { id: m1-inet, type: public, medium: wired, up_mbps: 100, down_mbps: 100 }
+  - { id: m1-lte, type: public, medium: wireless, up_mbps: 20, down_mbps: 20 }
+  - { id: m2-inet, type: public, medium: wired, up_mbps: 100, down_mbps: 100 }
+  - { id: s1-inet, type: public, medium: wired, up_mbps: 100, down_mbps: 100 }
+  - { id: s1-mpls, type: private, medium: wired, up_mbps: 50, down_mbps: 50 }
+  - { id: s2-inet, type: public, medium: wired, up_mbps: 100, down_mbps: 100 }
+  - { id: s2-mpls, type: private, medium: wired, up_mbps: 50, down_mbps: 50 }
+  - { id: s3-inet, type: public, medium: wired, up_mbps: 100, down_mbps: 100, mtu: 1400 }
+  - { id: hp-inet, type: public, medium: wired, up_mbps: 500, down_mbps: 500 }
+  - { id: hp-mpls, type: private, medium: wired, up_mbps: 200, down_mbps: 200 }
+  - { id: hs-inet, type: public, medium: wired, up_mbps: 500, down_mbps: 500 }
+  - { id: hs-mpls, type: private, medium: wired, up_mbps: 200, down_mbps: 200 }
+  - { id: c1-inet, type: public, medium: wired, up_mbps: 500, down_mbps: 500 }
+  - { id: c2-inet, type: public, medium: wired, up_mbps: 500, down_mbps: 500 }
+  - { id: cs1-inet, type: public, medium: wired, up_mbps: 100, down_mbps: 100 }
+
+clusters:
+  - { id: hub-cluster, name: Data center cluster, members: [hub-c1, hub-c2] }
+
+non_sdwan_destinations:
+  - id: azure-vhub
+    name: Azure virtual hub (invented)
+    via: gateway
+    type: azure_virtual_hub
+    mode: active_hot_standby
+    tunnels: 2
+    gateway: gw-1
+  - id: aws-vpn
+    name: AWS VPN gateway (invented)
+    via: edge
+    type: generic_ikev2
+    edge: spoke-2-edge
+    segment: global
+
+profiles:
+  - id: plain
+    name: Plain Profile (no Cloud VPN)
+    segments: [global]
+  - id: mesh
+    name: Mesh Profile (Cloud VPN, no Hub)
+    segments: [global]
+    cloud_vpn:
+      segments: [global]
+      branch_to_branch: { enabled: true, via: cloud_gateways }
+  - id: spoke
+    name: Spoke Profile (primary and secondary Hub)
+    segments: [global]
+    cloud_vpn:
+      segments: [global]
+      branch_to_hub: { enabled: true, hubs: [hub-p-edge, hub-s-edge] }
+      branch_to_branch: { enabled: true, via: hubs_for_vpn, dynamic: true }
+      nsd_via_gateway: [azure-vhub]
+      nsd_via_edge: [aws-vpn]
+    business_rules:
+      - id: spoke-voice
+        name: Voice prefers the private wired group
+        segment: global
+        match: { application: voice }
+        action:
+          priority: high
+          network_service: multipath
+          steering: { mode: transport_group, group: private_wired, strictness: preferred }
+      - id: spoke-video
+        name: Video on public wired, Available
+        segment: global
+        match: { application: video }
+        action:
+          priority: normal
+          network_service: multipath
+          steering: { mode: transport_group, group: public_wired, strictness: available }
+      - id: spoke-bulk
+        name: Bulk over the Internet link, Mandatory
+        segment: global
+        match: { application: bulk }
+        action:
+          priority: low
+          network_service: multipath
+          steering: { mode: transport_group, group: public_wired, strictness: mandatory }
+  - id: cluster-spoke
+    name: Cluster spoke Profile
+    segments: [global]
+    cloud_vpn:
+      segments: [global]
+      branch_to_hub: { enabled: true, hubs: [hub-cluster] }
+  - id: hub
+    name: Hub Profile
+    segments: [global]
+
+sites:
+  - id: plain-site
+    name: Plain site
+    region: demo-r1
+    edges:
+      - id: plain-1-edge
+        name: Plain Edge
+        role: branch
+        profile: plain
+        interfaces: [{ id: ge1, kind: wan, link: p1-inet }]
+
+  - id: mesh-1-site
+    name: Mesh site 1
+    region: demo-r1
+    edges:
+      - id: mesh-1-edge
+        name: Mesh Edge 1
+        role: branch
+        profile: mesh
+        interfaces:
+          - { id: ge1, kind: wan, link: m1-inet }
+          - { id: ge2, kind: wan, link: m1-lte }
+  - id: mesh-2-site
+    name: Mesh site 2
+    region: demo-r1
+    edges:
+      - id: mesh-2-edge
+        name: Mesh Edge 2
+        role: branch
+        profile: mesh
+        interfaces: [{ id: ge1, kind: wan, link: m2-inet }]
+
+  - id: spoke-1-site
+    name: Spoke site 1
+    region: demo-r1
+    edges:
+      - id: spoke-1-edge
+        name: Spoke Edge 1
+        role: branch
+        profile: spoke
+        logical_id: 1
+        interfaces:
+          - { id: ge1, kind: wan, link: s1-inet }
+          - { id: ge2, kind: wan, link: s1-mpls }
+        overrides:
+          business_rules:
+            - id: spoke-1-backup
+              name: Backup pinned to the Internet link
+              segment: global
+              match: { application: backup }
+              action:
+                priority: low
+                network_service: multipath
+                steering: { mode: wan_link, link: s1-inet, strictness: mandatory }
+  - id: spoke-2-site
+    name: Spoke site 2
+    region: demo-r1
+    edges:
+      - id: spoke-2-edge
+        name: Spoke Edge 2
+        role: branch
+        profile: spoke
+        logical_id: 2
+        interfaces:
+          - { id: ge1, kind: wan, link: s2-inet }
+          - { id: ge2, kind: wan, link: s2-mpls }
+  - id: spoke-3-site
+    name: Spoke site 3 (behind a NAT)
+    region: demo-r1
+    edges:
+      - id: spoke-3-edge
+        name: Spoke Edge 3
+        role: branch
+        profile: spoke
+        logical_id: 3
+        nat_blocks_incoming_vcmp: true
+        interfaces: [{ id: ge1, kind: wan, link: s3-inet }]
+
+  - id: hub-p-site
+    name: Data center A
+    region: demo-r1
+    edges:
+      - id: hub-p-edge
+        name: Primary Hub
+        role: hub
+        model: vc-hub
+        profile: hub
+        interfaces:
+          - { id: ge1, kind: wan, link: hp-inet }
+          - { id: ge2, kind: wan, link: hp-mpls }
+  - id: hub-s-site
+    name: Data center B
+    region: demo-r1
+    edges:
+      - id: hub-s-edge
+        name: Secondary Hub
+        role: hub
+        model: vc-hub
+        profile: hub
+        interfaces:
+          - { id: ge1, kind: wan, link: hs-inet }
+          - { id: ge2, kind: wan, link: hs-mpls }
+  - id: cluster-site
+    name: Data center cluster
+    region: demo-r1
+    edges:
+      - id: hub-c1
+        name: Cluster member 1
+        role: hub
+        model: vc-hub
+        profile: hub
+        interfaces: [{ id: ge1, kind: wan, link: c1-inet }]
+      - id: hub-c2
+        name: Cluster member 2
+        role: hub
+        model: vc-hub
+        profile: hub
+        interfaces: [{ id: ge1, kind: wan, link: c2-inet }]
+  - id: cs-site
+    name: Cluster spoke site
+    region: demo-r1
+    edges:
+      - id: cs-1-edge
+        name: Cluster spoke 1
+        role: branch
+        profile: cluster-spoke
+        logical_id: 7
+        interfaces: [{ id: ge1, kind: wan, link: cs1-inet }]

@@ -19,3 +19,4 @@ Read 2026-10-19 through WebFetch (verbatim quotes requested) unless a row says "
 | The Cloud VPN default state (on or off) and what Cloud VPN controls beyond the tunnel options were not stated. [needs observation] | none | 6.4 / 7.0 | VERIFY |
 | Whether per-Edge Cloud VPN overrides can enable a tunnel type the Profile disables: not stated. [needs observation] | none | 7.0 | VERIFY |
 | The syslog section says Cloud VPN (branch-to-branch VPN) must establish a path between a Profile's Edges and the syslog collectors. | https://www.arista.com/en/admin-guide-vc-7-0/sd-wan-7-0-configure-device-settings-for-profiles | 7.0 | VERIFIED |
+| Whether an Edge's Cloud VPN override replaces a whole sub-section (Branch to Hub, Branch to Branch, Non SD-WAN lists) or single fields is not stated. [needs observation] | none | 7.0 | VERIFY |

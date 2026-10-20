@@ -13,8 +13,8 @@ import (
 )
 
 // allowedRootDirs are the top-level directories permitted next to course.yaml.
-// "labs" is reserved for the future simulator scenarios.
-var allowedRootDirs = map[string]bool{"sections": true, "labs": true, "diagrams": true, "reference": true}
+// "labs" is reserved for the future simulator scenarios; "topologies" holds the simulator's teaching topologies.
+var allowedRootDirs = map[string]bool{"sections": true, "labs": true, "diagrams": true, "reference": true, "topologies": true}
 
 // Load reads, validates and builds the course from fsys (rooted at the content dir).
 // On failure the returned error is an ErrorList containing every problem found.
@@ -89,6 +89,8 @@ func ReadBundle(fsys fs.FS) (*Bundle, ErrorList) {
 			b.Extra = append(b.Extra, p)
 		}
 	}
+
+	readTopologies(fsys, b, &errs)
 
 	// Reference fact sheets are author material: not orphans, but every file must carry a claims table.
 	refEntries, _ := fs.ReadDir(fsys, "reference")
@@ -279,11 +281,12 @@ func unwrapPathErr(err error) error {
 // Build assembles a Course from a bundle that has already passed Validate.
 func Build(b *Bundle) *Course {
 	c := &Course{
-		Meta:     b.Course,
-		Glossary: append([]GlossaryTerm{}, b.Glossary...),
-		lessons:  map[string]*Lesson{},
-		sections: map[string]*Section{},
-		diagrams: map[string]*Diagram{},
+		Meta:       b.Course,
+		Glossary:   append([]GlossaryTerm{}, b.Glossary...),
+		lessons:    map[string]*Lesson{},
+		sections:   map[string]*Section{},
+		diagrams:   map[string]*Diagram{},
+		topologies: buildTopologies(b.Topologies),
 	}
 	for _, d := range b.Diagrams {
 		c.diagrams[d.D.ID] = d.D.normalized()

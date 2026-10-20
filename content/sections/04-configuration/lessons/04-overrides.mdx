@@ -15,7 +15,7 @@ topics: [config-overrides]
 
 ## How Override works
 
-On an Edge's page, **Configure > Edges > the Edge > Device**, some settings are inherited (see <Term id="inheritance" />) from the <Term id="profile" />. To edit one for this Edge, tick the <Term id="override">Override</Term> checkbox next to it. Arista's examples include ARP timeouts, BFD, VLAN settings, LAN interfaces, Wi-Fi radio, Global IPv6, ECMP, SNMP and OSPF. For example, "by default the Edge inherits the ARP settings from the associated Profile."
+On an Edge's page, **Configure > Edges > the Edge > Device**, some settings are inherited (see <Term id="inheritance" />) from the <Term id="profile" />. To edit one for this Edge, tick the <Term id="override">Override</Term> checkbox next to it. Arista's Edge device-settings page gives examples that include ARP timeouts, BFD, VLAN settings, LAN interfaces, Wi-Fi radio, Global IPv6, ECMP, SNMP and OSPF. (OSPF is a special case: Arista's dynamic routing page says the Profile's OSPF area settings cannot be overridden at the Edge level, and the two pages do not agree. See the note at the end of this lesson.) For example, "by default the Edge inherits the ARP settings from the associated Profile."
 
 ## What is set only on the Edge
 
@@ -49,7 +49,7 @@ Switching an Edge to another Profile has documented side effects: VLANs inherite
 - **Drift** is what happens when many Edges are overridden for small reasons. Each override is one more place to look when something behaves oddly, and the Edge no longer follows the Profile for that setting.
 
 <Callout variant="warning" title="What we could not confirm">
-  How the Orchestrator visibly marks an overridden setting, how to revert an override to the Profile value, and a complete list of settings that cannot be overridden are not in the pages we read. Whether later Profile edits still reach an Edge that overrides that setting is also unconfirmed.
+  How the Orchestrator visibly marks an overridden setting, how to revert an override to the Profile value, and a complete list of settings that cannot be overridden are not in the pages we read. Whether later Profile edits still reach an Edge that overrides that setting is also unconfirmed. Finally, Arista's pages disagree about OSPF: the Edge device-settings page lists it among settings that offer Override, while the dynamic routing page says the Profile's OSPF settings (the area table fields) cannot be overridden at the Edge level. Check your own release before relying on either.
 </Callout>
 
 ## What you would see in the VCO
@@ -57,6 +57,8 @@ Switching an Edge to another Profile has documented side effects: VLANs inherite
 - **Configure > Edges > (Edge) > Device**: an **Override** checkbox beside inherited settings.
 - **Business Policy** tab: **Rules From Profile** and **Edge Overrides**.
 - **Firewall** tab: an **Override** checkbox.
+
+[Try it in the simulator](/sim/branch-override-demo/edges/store-2-edge): open an Edge that overrides settings and a firewall rule, then use "What if?" to see which Edges keep their override.
 
 ## Key takeaways
 

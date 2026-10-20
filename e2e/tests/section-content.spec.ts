@@ -12,7 +12,7 @@ const SECTIONS: Array<[string, string]> = [
 // Per-section checks. Everything is discovered from the API: no lesson, diagram or question counts are hard-coded.
 for (const [sid, before] of SECTIONS)
   test.describe(`Section ${sid}`, () => {
-    test('sits after architecture and before the placeholders, with real lessons', async ({ request }) => {
+    test('sits right after its predecessor, with real lessons', async ({ request }) => {
       const course = await getCourse(request)
       const ids = course.sections.map((s) => s.id)
       expect(ids.indexOf(sid)).toBe(ids.indexOf(before) + 1)

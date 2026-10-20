@@ -5,6 +5,9 @@ export
 .PHONY: up down logs test fmt lint reset-db validate-content e2e
 
 COMPOSE := docker-compose
+# An idle or maintenance sleep during a run makes Playwright's timers expire when the Mac wakes (seen as sporadic timeouts),
+# so on macOS the suite runs under caffeinate.
+KEEP_AWAKE := $(shell command -v caffeinate >/dev/null 2>&1 && echo caffeinate -i)
 
 up: ## Build and start all services (creates .env from .env.example if missing)
 	@test -f .env || cp .env.example .env
@@ -39,7 +42,7 @@ e2e: ## Run the Playwright regression suite on a FRESH database (deletes the DB 
 	@if [ -z "$$E2E_KEEP_DB" ]; then echo "e2e: resetting the database volume for a fresh start"; $(COMPOSE) down -v; fi
 	$(COMPOSE) up --build -d
 	@echo "e2e: waiting for the stack"; for i in $$(seq 1 60); do curl -sf http://localhost:$${FRONTEND_PORT:-5173}/api/health >/dev/null && break; sleep 1; done; curl -sf http://localhost:$${FRONTEND_PORT:-5173}/api/health >/dev/null || { echo "stack did not become healthy"; exit 1; }
-	cd e2e && ( test -d node_modules || npm install ) && npx playwright install chromium >/dev/null && E2E_BASE_URL=http://localhost:$${FRONTEND_PORT:-5173} npx playwright test
+	cd e2e && ( test -d node_modules || npm install ) && npx playwright install chromium >/dev/null && E2E_BASE_URL=http://localhost:$${FRONTEND_PORT:-5173} $(KEEP_AWAKE) npx playwright test
 
 reset-db: ## Destroy the database volume (asks for confirmation)
 	@printf "This deletes ALL progress data. Type 'yes' to continue: " && read ans && [ "$$ans" = "yes" ] || { echo "Aborted."; exit 1; }

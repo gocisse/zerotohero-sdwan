@@ -104,17 +104,31 @@ test('dashboard shows the failed attempt and the weak topics the API reports', a
 })
 
 test('review: missed answers are due immediately, answering them updates the queue, and no attempt is created', async ({ page, request }) => {
-  const queue = await getJSON<{ due_count: number; questions: { id: string }[] }>(request, '/api/review/queue')
-  expect(queue.due_count).toBeGreaterThanOrEqual(Math.min(questions.length, 1))
-  expect(queue.questions.length).toBeLessThanOrEqual(15)
-  await expect(page.locator('body')).toBeVisible()
+  const queueOf = () => getJSON<{ due_count: number; questions: { id: string }[] }>(request, '/api/review/queue')
+  const first = await queueOf()
+  expect(first.due_count).toBeGreaterThanOrEqual(Math.min(questions.length, 1))
+  expect(first.questions.length).toBeLessThanOrEqual(15)
+  // The queue is shared state, most overdue first: on a database that already has answers it can start with questions of
+  // quizzes this file never failed. Learn those answers with blank review answers: a blank answer is wrong, so the
+  // question stays due (and moves to the back of the queue), and review answers never create a quiz attempt.
+  const learned = new Map<string, string | string[]>([...key].map(([id, r]) => [id, r.correct_answer]))
+  let queue = first
+  for (let guard = 0; !learned.has(queue.questions[0]!.id); guard++) {
+    expect(guard, 'every due question can be learned').toBeLessThan(first.due_count + 1)
+    const learn = await request.post('/api/review/answers', { data: { answers: [{ question_id: queue.questions[0]!.id, answer: null }] } })
+    expect(learn.ok()).toBeTruthy()
+    const r = ((await learn.json()) as { results: QuestionResult[] }).results[0]!
+    learned.set(r.question_id, r.correct_answer)
+    queue = await queueOf()
+  }
+  const qid = queue.questions[0]!.id
+  const correct = learned.get(qid)!
   const attemptsBefore = (await getJSON<{ attempts: unknown[] }>(request, `/api/sections/${section.id}/quiz/attempts`)).attempts.length
 
   await page.goto('/review')
   await expect(page.getByText(/Question 1 of /)).toBeVisible()
-  const qid = queue.questions[0]!.id
   const q = (await getQuizFor(request, qid)) ?? questions.find((x) => x.id === qid)!
-  await answerUI(page, q, key.get(qid)!.correct_answer)
+  await answerUI(page, q, correct)
   await page.getByRole('button', { name: 'Check answer' }).click()
   await expect(page.locator('[data-result=correct]')).toBeVisible()
 
