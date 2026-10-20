@@ -1,0 +1,90 @@
+# LAB, not a real network. Everything below happens on the teaching topology hub-and-spoke-demo (invented names and numbers).
+id: video-wrong-link
+title: Video is sent over the wrong link
+summary: The Profile says video belongs on the public wired links, but Spoke Edge 1 sends it over MPLS. Find which rule decides, where it comes from, and fix it with a rule change.
+difficulty: 2
+estimated_minutes: 15
+topology: hub-and-spoke-demo
+goals: [cfg-business-policy, cfg-overrides, dmpo-steering]
+screens:
+  - { label: Configure > Edges > Spoke Edge 1 > Business Policy, path: "edges/spoke-1-edge?tab=business-policy" }
+  - { label: Path explainer (flow and link steering), path: paths }
+fault:
+  patches:
+    - op: append
+      path: edges[spoke-1-edge]/overrides/business_rules
+      value:
+        id: spoke-1-video-mpls
+        name: Video pinned to MPLS
+        segment: global
+        match: { application: video }
+        action:
+          priority: normal
+          network_service: multipath
+          steering: { mode: wan_link, link: s1-mpls, strictness: mandatory }
+flow:
+  source: spoke-1-edge
+  destination: "edge:hub-p-edge"
+  application: video
+symptom: >-
+  A colleague reports that video from Spoke Edge 1 uses the MPLS link. The Spoke Profile has a video rule
+  that prefers the public wired transport group. Business rules and link steering follow the order the guides describe
+  where they describe one; where they do not, the simulator uses assumptions 1 and 3 (first match wins, Edge rules above
+  Profile rules), 62 (steering applies to the first leg), 67 (the current link states are used) and 90 (how a rule
+  matches a flow). Each shows as a badge.
+relies_on_assumptions: [1, 3, 62, 67, 90]
+tasks:
+  - id: which-link
+    type: inspect
+    prompt: Which WAN link does the first leg of the video flow use?
+    probe: { kind: trace_steered_link }
+    choices:
+      - { id: inet, text: "s1-inet (public, wired)", value: s1-inet }
+      - { id: mpls, text: "s1-mpls (private, wired)", value: s1-mpls }
+      - { id: none, text: "No link, the flow is dropped", value: none }
+    explanation: Link steering applies to the first leg. The rule that matches asks for the MPLS link as Mandatory, so that link is used.
+  - id: which-rule
+    type: diagnose
+    prompt: Which rule decides what happens to the video flow?
+    probe: { kind: trace_matched_rule }
+    choices:
+      - { id: profile, text: "The Profile's video rule", value: spoke-video }
+      - { id: edge, text: "The Edge-level video rule", value: spoke-1-video-mpls }
+      - { id: bulk, text: "The bulk rule", value: spoke-bulk }
+      - { id: nomatch, text: "No rule matches", value: none }
+    explanation: An Edge rule with the same match as a Profile rule supersedes it, so the Edge's rule decides and the Profile's video rule is listed as superseded.
+  - id: rule-owner
+    type: inspect
+    prompt: Where does the deciding rule come from?
+    probe: { kind: trace_matched_owner }
+    choices:
+      - { id: edge, text: "An override on Spoke Edge 1", value: Spoke Edge 1 }
+      - { id: profile, text: "The Spoke Profile", value: "Spoke Profile (primary and secondary Hub)" }
+      - { id: customer, text: "A customer-wide setting", value: customer }
+    explanation: The Edge's Business Policy tab has an Edge Overrides section next to Rules From Profile; the deciding rule is in the Edge Overrides section.
+  - id: fix-it
+    type: fix
+    prompt: Choose the change that sends video over the public wired link again, then check the result.
+    probe: { kind: trace_steered_link }
+    equals: s1-inet
+    explanation: Profile rules cannot be edited at the Edge, and an Edge rule with the same match supersedes the Profile's. Removing the Edge override lets the Profile's rule decide again.
+hints:
+  - { task: which-link, text: Run the path explainer for the video flow and read the link steering line. }
+  - { task: which-rule, text: Open the Business Policy tab of Spoke Edge 1. It has two sections; read both. }
+  - { task: fix-it, text: Editing the Profile's video rule will not help while another rule supersedes it. }
+fixes:
+  - id: remove-edge-rule
+    title: Remove the Edge-level video rule
+    description: Delete the video rule from Spoke Edge 1's overrides so the Profile's rule applies.
+    patches:
+      - { op: remove, path: "edges[spoke-1-edge]/overrides/business_rules[spoke-1-video-mpls]" }
+  - id: edit-profile-rule
+    title: Change the Profile's video rule to the private wired group
+    description: Edit the Spoke Profile's video rule so it prefers the private wired transport group.
+    patches:
+      - { op: set, path: "profiles[spoke]/business_rules[spoke-video]/action/steering/group", value: private_wired }
+  - id: make-available
+    title: Change the Edge rule's strictness to Available
+    description: Keep the Edge rule but make its link steering Available instead of Mandatory.
+    patches:
+      - { op: set, path: "edges[spoke-1-edge]/overrides/business_rules[spoke-1-video-mpls]/action/steering/strictness", value: available }

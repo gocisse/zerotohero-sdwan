@@ -20,10 +20,14 @@ import OverlayChallengePage from './sim/OverlayChallengePage'
 import PathExplainerPage from './sim/PathExplainerPage'
 import ReachabilityPage from './sim/ReachabilityPage'
 import RoutesPage from './sim/RoutesPage'
+import SelfCheckPage from './sim/SelfCheckPage'
 import RoutingChallengePage from './sim/RoutingChallengePage'
+import LabRunnerPage from './sim/LabRunnerPage'
+import LabsPage from './sim/LabsPage'
 import SimLayout from './sim/SimLayout'
 import TimelinePage from './sim/TimelinePage'
 import TopologyLayout from './sim/TopologyLayout'
+import TracePage from './sim/TracePage'
 import TopologyPicker from './sim/TopologyPicker'
 import WhatIfPage from './sim/WhatIfPage'
 
@@ -45,6 +49,9 @@ export default function App() {
                 <Route path="review" element={<ReviewPage />} />
                 <Route path="sim" element={<SimLayout />}>
                   <Route index element={<TopologyPicker />} />
+                  <Route path="labs" element={<LabsPage />} />
+                  <Route path="self-check" element={<SelfCheckPage />} />
+                  <Route path="labs/:labId" element={<LabRunnerPage />} />
                   <Route path=":topologyId" element={<TopologyLayout />}>
                     <Route index element={<EdgesPage />} />
                     <Route path="edges/:edgeId" element={<EdgePage />} />
@@ -58,6 +65,7 @@ export default function App() {
                     <Route path="routes" element={<RoutesPage />} />
                     <Route path="reachability" element={<ReachabilityPage />} />
                     <Route path="routing-challenge" element={<RoutingChallengePage />} />
+                    <Route path="trace" element={<TracePage />} />
                   </Route>
                 </Route>
                 <Route path="*" element={<NotFound />} />

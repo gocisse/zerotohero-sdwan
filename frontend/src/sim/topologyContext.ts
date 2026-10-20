@@ -1,5 +1,5 @@
 import { useOutletContext } from 'react-router-dom'
-import type { Conditions, RoutingAssumptions, TopologyDetail } from '../api'
+import type { Conditions, TraceAssumptions, TopologyDetail } from '../api'
 
 export interface TopologyCtx {
   detail: TopologyDetail
@@ -8,8 +8,10 @@ export interface TopologyCtx {
   conditions: Conditions
   setConditions: (c: Conditions) => void
   /** Routing assumption switches the reader has changed (missing keys use the documented defaults). In memory only. */
-  assumptions: Partial<RoutingAssumptions>
-  setAssumptions: (a: Partial<RoutingAssumptions>) => void
+  assumptions: Partial<TraceAssumptions>
+  setAssumptions: (a: Partial<TraceAssumptions>) => void
+  /** The query string that keeps a lab's faulted state on links to other simulator screens (empty outside a lab). */
+  labSearch: string
 }
 
 export const useTopologyCtx = () => useOutletContext<TopologyCtx>()

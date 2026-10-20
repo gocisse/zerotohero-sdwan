@@ -52,7 +52,7 @@ The diagnostics name all three comparisons but do not give the order in which th
 Branches B and C reach a data center prefix 10.30.0.0/24 (illustrative) that sites A and D both connect to. You want A to be the exit.
 
 1. **Inside one Edge**, if two BGP neighbors offer the prefix, add an inbound filter on the neighbor towards A: Match Prefix, Action Permit, Action set Local Preference with a higher number. That makes this Edge prefer A's neighbor.
-2. **Between Edges**, the guides say you can steer the outcome with **route pinning**, BGP local preference or OSPF costs, and the OFC **Preferred VPN Exits** list lets you reorder exits for a particular subnet (lesson 7). Reordering is the most direct documented control.
+2. **Between Edges**, the guides say you can steer the outcome with **<Term id="route-pinning">route pinning</Term>**, BGP local preference or OSPF costs, and the OFC **<Term id="preferred-vpn-exits">Preferred VPN Exits</Term>** list lets you reorder exits for a particular subnet (lesson 7). Reordering is the most direct documented control.
 3. **Verify** with **Show BGP Routes per Prefix** (the best path and the attributes compared) and **List Routes per Prefix** on a remote Edge: the first entry is the best path.
 
 <Callout variant="warning" title="What we cannot promise">

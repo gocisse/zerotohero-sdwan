@@ -2,6 +2,7 @@ import { lazy, Suspense, useCallback, useEffect, useMemo, useRef, useState } fro
 import { Link, useParams } from 'react-router-dom'
 import { fetchLesson, putLessonProgress, type Lesson } from '../api'
 import ErrorPanel from '../components/ErrorPanel'
+import CapstoneCard from '../components/CapstoneCard'
 import SectionQuizCard from '../components/SectionQuizCard'
 import { flattenLessons, useCourseState } from '../course/context'
 import { nextSectionPath } from '../lib/course'
@@ -37,6 +38,8 @@ export default function LessonPage() {
       {isLastInSection && section && section.question_count > 0 && (
         <SectionQuizCard sectionId={section.id} questionCount={section.question_count} nextPath={afterSection.to} />
       )}
+
+      {!next && <CapstoneCard />}
 
       <nav
         aria-label="Lesson navigation"

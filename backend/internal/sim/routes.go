@@ -912,6 +912,7 @@ func (s *rtState) routeSet() *RouteSet {
 	}
 	s.nm(RNMRtCrossSegment, "Routes crossing segments") // rule: nm-rt-cross-segment
 	s.nm(RNMRtLoops, "Redistribution loops")            // rule: nm-rt-redistribution-loops
+	s.nm(RNMRtReflector, "Gateway as route reflector")  // rule: nm-rt-gateway-reflector
 	rs.NotModelled = s.nms
 	rs.Assumptions = s.as.Describe(s.used)
 	return rs

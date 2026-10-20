@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom'
 import ErrorPanel from '../components/ErrorPanel'
 import { AssumptionsPanel, RoutingConditions } from './RoutingControls'
 import { addressOf, netmask, sortPrefixes, sourceText } from './routingText'
+import { withLab } from './labParams'
 import { useTopologyCtx } from './topologyContext'
 import { useRouteSet } from './useRouteSet'
 import { Bases, BasisBadge, NotModelledNote } from './ui'
@@ -18,7 +19,7 @@ const td = 'px-2 py-1.5 align-top text-xs'
  * Columns the model cannot fill (Type, Order, Next Hop Name) are left out; columns the simulator adds are marked.
  */
 export default function RoutesPage() {
-  const { detail, topologyId } = useTopologyCtx()
+  const { detail, topologyId, labSearch } = useTopologyCtx()
   const { data, error, busy } = useRouteSet()
   const edges = useMemo(() => detail.topology.sites.flatMap((s) => s.edges), [detail])
   const [edgeId, setEdgeId] = useState(edges[0]?.id ?? '')
@@ -56,6 +57,13 @@ export default function RoutesPage() {
             />
           )}
         </p>
+        {data.not_modelled
+          .filter((n) => n.rule === 'nm-rt-gateway-reflector')
+          .map((n) => (
+            <p key={n.rule} className="mt-1 text-xs text-slate-600 dark:text-slate-300" data-gateway-note>
+              Not modelled: Gateway as route reflector. {n.reason} <BasisBadge basis={n.basis} />
+            </p>
+          ))}
         {bases.gateway_route_table && (
           <p className="mt-1 text-xs text-slate-600 dark:text-slate-300">
             The Gateway Route Table tab is not built: its columns were not read.{' '}
@@ -301,7 +309,7 @@ export default function RoutesPage() {
       )}
       <p className="mt-4 text-sm">
         Why is a prefix missing or unreachable?{' '}
-        <Link to={`/sim/${topologyId}/reachability`} className="font-medium underline">
+        <Link to={withLab(`/sim/${topologyId}/reachability`, labSearch)} className="font-medium underline">
           Ask the reachability explainer
         </Link>
         .

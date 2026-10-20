@@ -27,6 +27,10 @@ type ProgressStore interface {
 	SectionStates(ctx context.Context) (map[string]domain.SectionState, error)
 	QuestionStates(ctx context.Context) ([]domain.QuestionState, error)
 	AnswerHistory(ctx context.Context) ([]domain.AnswerEvent, error)
+	LabProgressAll(ctx context.Context) (map[string]domain.LabProgress, error)
+	SetLabStatus(ctx context.Context, labID, status string, now time.Time) (domain.LabProgress, error)
+	RecordLabAttempt(ctx context.Context, labID string, now time.Time) (domain.LabProgress, error)
+	UseLabHint(ctx context.Context, labID string, n int, now time.Time) (domain.LabProgress, error)
 }
 
 const maxBody = 1 << 20
@@ -262,6 +266,8 @@ type progressDTO struct {
 	LessonsTotal      int                  `json:"lessons_total"`
 	Lessons           []lessonProgressDTO  `json:"lessons"`
 	Sections          []sectionProgressDTO `json:"sections"`
+	// Labs is informational: no lab is ever required.
+	Labs labsBlockDTO `json:"labs"`
 }
 
 // progress summarizes the current content only: rows for ids no longer in /content are ignored.
@@ -326,6 +332,12 @@ func (h *progressHandlers) progress(w http.ResponseWriter, r *http.Request) {
 		if out.LessonsTotal > 0 {
 			out.OverallPercentage = grading.Percentage(out.LessonsCompleted, out.LessonsTotal)
 		}
+		labs, err := h.labsBlock(r, c)
+		if err != nil {
+			h.fail(w, "load lab progress", err)
+			return
+		}
+		out.Labs = labs
 		writeJSON(w, http.StatusOK, out)
 	})(w, r)
 }

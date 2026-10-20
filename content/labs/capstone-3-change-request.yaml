@@ -1,0 +1,95 @@
+# LAB, not a real network. Everything below happens on the teaching topology capstone-network (invented names and numbers).
+id: capstone-3-change-request
+title: "Capstone 3: The change request"
+summary: A change ticket says to switch BFD on in the Branch Profile so that North, South and East all get it. One Edge carries an override. Predict what the change reaches, try it in the what-if, then apply the right changes and verify all three Edges.
+difficulty: 2
+estimated_minutes: 15
+topology: capstone-network
+goals: [cfg-profiles, cfg-overrides, cfg-model, cfg-diagnosis]
+screens:
+  - { label: What-if (try the Profile change), path: what-if }
+  - { label: Configure > Edges > East Edge > Device, path: "edges/east-edge?tab=device" }
+  - { label: Configure > Edges > North Edge > Device, path: "edges/north-edge?tab=device" }
+fault: {}
+symptom: >-
+  Change ticket: "Turn BFD on for all branches; they all use the Branch Profile." BFD is a Routing and NAT setting of the
+  Profile, and an Edge may override it (the guides document that an inherited setting has an Override check box). The
+  values of device settings are shown as opaque values (assumption 33): the simulator does not model what BFD does or
+  which values are allowed. The answers rest on that assumption, which shows as a badge.
+relies_on_assumptions: [33]
+tasks:
+  - id: layer-north
+    type: inspect
+    prompt: Open North Edge's Device tab. Which layer does North's BFD value come from today?
+    probe: { kind: effective_source, edge: north-edge, field: routing.bfd }
+    choices:
+      - { id: profile, text: "The Branch Profile", value: profile }
+      - { id: override, text: "An override on North Edge", value: edge-override }
+      - { id: default, text: "A built-in default", value: default }
+      - { id: unset, text: "Nowhere: it is not set", value: unset }
+    explanation: North has no override for BFD, so the value is inherited from the Profile and a Profile change will reach it.
+  - id: layer-east
+    type: predict
+    prompt: Before you try the change in the what-if, decide which layer East's BFD value comes from. Will a Profile change reach East?
+    probe: { kind: effective_source, edge: east-edge, field: routing.bfd }
+    choices:
+      - { id: profile, text: "The Branch Profile, so the change will reach East", value: profile }
+      - { id: override, text: "An override on East Edge, so the change will not reach East", value: edge-override }
+      - { id: default, text: "A built-in default, so the change will reach East", value: default }
+    explanation: East has its own BFD override, so its value comes from East and not from the Profile. A Profile edit changes what Edges inherit, so the what-if shows East unchanged for BFD (this follows from what Override means; the guides do not describe an edit of a Profile setting explicitly).
+  - id: fix-north
+    type: fix
+    prompt: Apply the change so that North's BFD value is true, then check the result.
+    probe: { kind: effective_value, edge: north-edge, field: routing.bfd }
+    equals: "true"
+    explanation: Setting BFD in the Branch Profile reaches every Edge that inherits it, including North and South.
+  - id: fix-south
+    type: fix
+    prompt: The same change must reach South. Check that South's BFD value is true.
+    probe: { kind: effective_value, edge: south-edge, field: routing.bfd }
+    equals: "true"
+    explanation: South inherits from the Profile as North does, so the Profile change is enough.
+  - id: fix-east
+    type: fix
+    prompt: East must follow the ticket too. Choose the changes so that East's BFD value is true, then check the result.
+    probe: { kind: effective_value, edge: east-edge, field: routing.bfd }
+    equals: "true"
+    explanation: The Profile change alone does not reach East, because its override wins. Either remove East's override so it inherits, or set East's own value, after asking why East was overridden.
+hints:
+  - { task: layer-north, text: "On an Edge's Device tab an inherited setting shows an Override check box that is not ticked." }
+  - { task: layer-east, text: "Compare East's Device tab with North's. Look for a ticked Override." }
+  - { task: fix-north, text: "Try the change in the what-if first: set_profile_setting on the Branch Profile, setting routing.bfd." }
+  - { task: fix-east, text: "The what-if diff lists every Edge. Find the one that did not change." }
+fixes:
+  - id: profile-bfd-on
+    title: Set BFD on in the Branch Profile
+    description: Change the Branch Profile's BFD setting to on. Edges that inherit it follow.
+    patches:
+      - { op: set, path: "profiles[branch]/device/routing.bfd", value: true }
+  - id: profile-and-clear-east
+    title: Set BFD on in the Branch Profile and remove East's override
+    description: Change the Profile, and delete East's own BFD value so East inherits the Profile's.
+    patches:
+      - { op: set, path: "profiles[branch]/device/routing.bfd", value: true }
+      - { op: remove, path: "edges[east-edge]/overrides/device/routing.bfd" }
+  - id: east-only
+    title: Set BFD on in East's override only
+    description: Leave the Profile alone and change East's own BFD value.
+    patches:
+      - { op: set, path: "edges[east-edge]/overrides/device/routing.bfd", value: true }
+  - id: profile-ecmp-on
+    title: Set ECMP on in the Branch Profile
+    description: Change the Branch Profile's ECMP setting instead.
+    patches:
+      - { op: set, path: "profiles[branch]/device/routing.ecmp", value: true }
+debrief:
+  - finding: "BFD is a Routing and NAT setting of the Profile, and an Edge can override it."
+    where: "Edge Device tab sections include Connectivity (Interfaces, VLAN, ARP timeouts, Loopback Interfaces), Routing and NAT (BFD, OSPF)"
+  - finding: "The Profiles list has a Used By column, which is where you check what a change to the Branch Profile reaches."
+    where: "the list has a Used By column"
+  - finding: "An override is a check box beside an inherited setting on the Edge."
+    where: "Override: a checkbox beside an inherited setting"
+  - finding: "How the Edge editor visually flags East's override is not confirmed by the guides read."
+    where: "Configure > Edges > East Edge > Device tab (override marking)"
+    unverified: true
+    note: The guides do not say how an override is marked in the editor, or whether an Overview tab shows the effective configuration; confirm in a lab VCO.

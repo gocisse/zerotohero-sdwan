@@ -33,7 +33,7 @@ DMPO detects an SLA failure or an outage within **300 to 500 ms**. What it then 
 | Situation | Typical reaction |
 |---|---|
 | Outage, another healthy link exists, strictness allows moving | steers the flow to the healthy link |
-| Brownout, a healthy link exists | steers the flow away (Preferred) or applies remediation (Available, Mandatory) |
+| Brownout, a healthy link exists | steers the flow away (Preferred) or applies <Term id="on-demand-remediation">remediation</Term> (Available, Mandatory) |
 | Brownout on every link, or only one link | on-demand remediation, which the next lesson covers |
 | Outage under Mandatory | no steering; packets are dropped by policy |
 

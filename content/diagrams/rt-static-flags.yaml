@@ -37,7 +37,7 @@ steps:
 
   - title: Advertise reaches other sites
     narration: >-
-      With **Advertise** ticked, the route is shared over VCRP. The Gateway reflects it and Branch B can reach the prefix.
+      With **Advertise** ticked, the route is shared over VCRP. The Gateway reflects it to the Edges the Profile settings allow, and Branch B can reach the prefix if a path exists.
     highlight: [edge-a, a-gw, gw, gw-b, edge-b]
     packets:
       - { path: [edge-a, a-gw, gw, gw-b, edge-b], label: static route, color_style: overlay-tunnel }

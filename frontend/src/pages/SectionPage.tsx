@@ -1,4 +1,5 @@
 import { Link, useParams } from 'react-router-dom'
+import CapstoneCard from '../components/CapstoneCard'
 import ErrorPanel from '../components/ErrorPanel'
 import { useCourseState } from '../course/context'
 import { formatDateTime, pct } from '../lib/course'
@@ -70,6 +71,7 @@ export default function SectionPage() {
           </Link>
         </section>
       )}
+      {state.course.sections[state.course.sections.length - 1]?.id === section.id && <CapstoneCard />}
     </div>
   )
 }

@@ -58,7 +58,7 @@ the layers live.
 ## Monitoring and telemetry
 
 Edges and Gateways report to the Orchestrator, which keeps the history. The guide lists default retention periods: a year for link
-statistics, link quality and Edge health statistics and for events; two weeks for path statistics and for high-resolution flow
+statistics, <Term id="link-quality">link quality</Term> and Edge health statistics and for events; two weeks for path statistics and for high-resolution flow
 statistics; and a year, at one-hour rollup, for low-resolution flow statistics. Link Insights, a monitoring feature added to the
 on-premises Orchestrator in 7.0, has the Orchestrator measure link degradation at 30-second intervals.
 
@@ -69,7 +69,7 @@ then disconnected.
 ## Trust and software
 
 - **Certificates.** The Orchestrator has a built-in certificate authority that issues X.509 certificates to Edges and Gateways. They are used to
-  authenticate the management-plane TLS tunnels between the Orchestrator and its devices and the IKEv2/IPsec tunnels between Edges and
+  authenticate the management-plane TLS tunnels between the Orchestrator and its devices and the IKEv2/<Term id="ipsec">IPsec</Term> tunnels between Edges and
   Gateways.
 - **Software.** Edge software images are managed from the Orchestrator, with per-Edge overrides, and enterprise users can upgrade one Edge,
   a set, or all of them.
@@ -110,17 +110,17 @@ This is the question people ask first, and the honest answer is "some of it is d
   a restart while disconnected: the control-plane configuration is never cached, so some features wait for the Orchestrator to return.
 </Predict>
 
-## What you would see in the VCO
-
-- **Monitor > Edges**: the status column and the per-Edge tabs show what the Orchestrator knows about each Edge. An Edge that has stopped sending heartbeats is marked OFFLINE by the Orchestrator.
-- **Configure > Segments**, **Configure > Network Services** and **Configure > Profiles**: the layers described above.
-- **Service Settings > Edge Management**: where Edge software images are managed.
-- For an on-premises Orchestrator, a disaster-recovery view called **Replication** is reached through the Orchestrator tab. (We read this
-  path in the on-premises guide; the hosted service may differ.)
-
 ## Key takeaways
 
 - The Orchestrator is the management plane: configure, monitor, troubleshoot, and issue certificates.
 - Edges and Gateways report to its Upload process: activations, heartbeats, statistics, routing information.
 - Configuration is layered: building blocks, then Profiles, then Edges with overrides.
 - What happens to Edge forwarding without the Orchestrator is not documented in our sources, so we do not claim it.
+
+## What would you look for in the VCO
+
+- **Monitor > Edges**: the status column and the per-Edge tabs show what the Orchestrator knows about each Edge. An Edge that has stopped sending heartbeats is marked OFFLINE by the Orchestrator.
+- **Configure > Segments**, **Configure > Network Services** and **Configure > Profiles**: the layers described above.
+- **Service Settings > Edge Management**: where Edge software images are managed.
+- For an on-premises Orchestrator, a disaster-recovery view called **Replication** is reached through the Orchestrator tab. (We read this
+  path in the on-premises guide; the hosted service may differ.)

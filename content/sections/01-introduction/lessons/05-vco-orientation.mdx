@@ -58,7 +58,7 @@ Click an Edge in **Monitor > Edges** and you get a set of tabs. This is the scre
 | Applications | Usage by application or category |
 | Sources | Client devices and operating systems |
 | Destinations | Where traffic goes, by domain, FQDN or IP |
-| Business Priority | Network use by business-policy priority |
+| <Term id="business-priority">Business Priority</Term> | Network use by business-policy priority |
 | System | CPU, memory, flow and tunnel counts, interface statistics |
 
 The same page has a **Shortcuts** menu with entries such as Configure, View Events, Remote Diagnostics, Generate Diagnostic Bundle,
@@ -80,11 +80,11 @@ The pages we read show:
 - **Configure > Edges**: the list of Edges. Each Edge has an Overview tab (where the activation email is sent) and a **Business Policy**
   tab.
 - **Configure > Profiles**: templates (a <Term id="profile" />) applied to many Edges. The list shows how many Edges use each Profile and has *View* links for
-  device settings, business policy and firewall. A Profile opens on a **Device** tab, where options such as Cloud VPN live, and also has
-  an Overview tab. A default **Quick Start Profile** exists after installation.
-- **Business Policy** (<Term id="business-policy" />) rules, with an **Action** tab where you choose link steering: **Auto** (the default), **Transport Group**,
+  device settings, business policy and firewall. A Profile opens on a **Device** tab, where options such as <Term id="cloud-vpn">Cloud VPN</Term> live, and also has
+  an Overview tab. A default **<Term id="quick-start-profile">Quick Start Profile</Term>** exists after installation.
+- **Business Policy** (<Term id="business-policy" />) rules, with an **Action** tab where you choose <Term id="link-steering">link steering</Term>: **Auto** (the default), **<Term id="transport-group">Transport Group</Term>**,
   **Interface** or **WAN Link**.
-- **Configure > Overlay Flow Control**: the overlay's routing view.
+- **Configure > <Term id="overlay-flow-control">Overlay Flow Control</Term>**: the overlay's routing view.
 
 <Callout variant="warning" title="Menu paths we could not confirm">
   The guide has chapters for **Segments** and **Network Services**, but we did not read which menu path leads to them. The same is true
@@ -146,3 +146,9 @@ The Testing and Troubleshooting chapter names the entry point the **Diagnostics*
 - Monitor > Edges, then an Edge's tabs, is where most investigations start: QoE, Links, Paths, Applications.
 - Profiles are templates; Business Policy decides link steering; Overlay Flow Control is the routing view.
 - Some labels and paths are unconfirmed: the warning boxes say which.
+
+## What would you look for in the VCO
+
+- Can you find each row of the table above in your own Orchestrator, and does the name on screen match?
+- Does your Orchestrator say Diagnostics or Test & Troubleshoot?
+- Which tab of an Edge would you open first when one site feels slow?

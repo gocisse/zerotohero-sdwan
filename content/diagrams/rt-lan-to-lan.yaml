@@ -39,7 +39,7 @@ steps:
 
   - title: 3. Reflected to the other Edge
     narration: >-
-      The Gateway acts as a route reflector, so Branch B learns the route without a tunnel to Branch A. On Branch B it is a **remote route**.
+      The Gateway acts as a route reflector (based on Profile settings), so Branch B learns the route without a tunnel to Branch A. On Branch B it is a **remote route**.
     highlight: [gw, gw-b, edge-b]
     packets:
       - { path: [gw, gw-b, edge-b], label: remote route, color_style: overlay-tunnel }

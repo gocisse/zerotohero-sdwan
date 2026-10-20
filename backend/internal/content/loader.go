@@ -91,48 +91,9 @@ func ReadBundle(fsys fs.FS) (*Bundle, ErrorList) {
 	}
 
 	readTopologies(fsys, b, &errs)
+	readLabs(fsys, b, &errs)
 
-	// Reference fact sheets are author material: not orphans, but every file must carry a claims table.
-	refEntries, _ := fs.ReadDir(fsys, "reference")
-	for _, e := range refEntries {
-		p := path.Join("reference", e.Name())
-		if ignored(e.Name()) || e.Name() == "README.md" {
-			continue
-		}
-		doc := ReferenceDoc{Path: p}
-		if e.IsDir() && e.Name() == "observations" {
-			// User observations from a real or lab VCO: one claims table per note file.
-			obs, _ := fs.ReadDir(fsys, p)
-			for _, o := range obs {
-				op := path.Join(p, o.Name())
-				if ignored(o.Name()) || o.Name() == "README.md" {
-					continue
-				}
-				if o.IsDir() {
-					b.Extra = append(b.Extra, op+"/")
-					continue
-				}
-				od := ReferenceDoc{Path: op}
-				if data, err := fs.ReadFile(fsys, op); err != nil {
-					errs.add(op, "cannot read file: %v", unwrapPathErr(err))
-				} else {
-					od.Content = string(data)
-				}
-				b.References = append(b.References, od)
-			}
-			continue
-		}
-		if e.IsDir() {
-			b.Extra = append(b.Extra, p+"/")
-			continue
-		}
-		if data, err := fs.ReadFile(fsys, p); err != nil {
-			errs.add(p, "cannot read file: %v", unwrapPathErr(err))
-		} else {
-			doc.Content = string(data)
-		}
-		b.References = append(b.References, doc)
-	}
+	b.References = readReferences(fsys, b, &errs)
 
 	sectionEntries, err := fs.ReadDir(fsys, "sections")
 	if err != nil && !errors.Is(err, fs.ErrNotExist) {
@@ -287,6 +248,7 @@ func Build(b *Bundle) *Course {
 		sections:   map[string]*Section{},
 		diagrams:   map[string]*Diagram{},
 		topologies: buildTopologies(b.Topologies),
+		labs:       buildLabs(b.Labs),
 	}
 	for _, d := range b.Diagrams {
 		c.diagrams[d.D.ID] = d.D.normalized()
@@ -326,4 +288,51 @@ func fillTrueFalse(q *Question) {
 	if q.Type == TrueFalse && len(q.Options) == 0 {
 		q.Options = []Option{{ID: "true", Text: "True"}, {ID: "false", Text: "False"}}
 	}
+}
+
+// readReferences reads the fact sheets and observation files. Reference fact sheets are author material: not
+// orphans, but every file must carry a claims table.
+func readReferences(fsys fs.FS, b *Bundle, errs *ErrorList) []ReferenceDoc {
+	var refs []ReferenceDoc
+	refEntries, _ := fs.ReadDir(fsys, "reference")
+	for _, e := range refEntries {
+		p := path.Join("reference", e.Name())
+		if ignored(e.Name()) || e.Name() == "README.md" {
+			continue
+		}
+		doc := ReferenceDoc{Path: p}
+		if e.IsDir() && e.Name() == "observations" {
+			// User observations from a real or lab VCO: one claims table per note file.
+			obs, _ := fs.ReadDir(fsys, p)
+			for _, o := range obs {
+				op := path.Join(p, o.Name())
+				if ignored(o.Name()) || o.Name() == "README.md" {
+					continue
+				}
+				if o.IsDir() {
+					b.Extra = append(b.Extra, op+"/")
+					continue
+				}
+				od := ReferenceDoc{Path: op}
+				if data, err := fs.ReadFile(fsys, op); err != nil {
+					errs.add(op, "cannot read file: %v", unwrapPathErr(err))
+				} else {
+					od.Content = string(data)
+				}
+				refs = append(refs, od)
+			}
+			continue
+		}
+		if e.IsDir() {
+			b.Extra = append(b.Extra, p+"/")
+			continue
+		}
+		if data, err := fs.ReadFile(fsys, p); err != nil {
+			errs.add(p, "cannot read file: %v", unwrapPathErr(err))
+		} else {
+			doc.Content = string(data)
+		}
+		refs = append(refs, doc)
+	}
+	return refs
 }

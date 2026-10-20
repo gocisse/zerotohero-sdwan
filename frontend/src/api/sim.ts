@@ -168,6 +168,14 @@ export interface TopologyDetail {
   settings: SettingDef[]
   /** Evidence for screen-level claims (tab names, transport groups, the build stub). */
   ui_bases: Record<string, Basis>
+  /** Set when the topology is a lab's faulted state: what the lab starts from. */
+  lab?: {
+    id: string
+    conditions: Conditions
+    assumptions: Record<string, boolean | string>
+    fixes: string[]
+    flow?: FlowSpec
+  }
 }
 
 export interface EffectiveSetting {
@@ -317,15 +325,31 @@ export interface WhatIfResult {
   not_modelled: NotModelled[]
 }
 
+/**
+ * The lab whose faulted state the simulator screens show (set by the topology layout from ?lab=&fixes=). Every
+ * topology request carries it, so the mock VCO screens inspect the lab's network instead of the authored file.
+ */
+let labContext: { lab: string; fixes: string } | null = null
+export function setLabContext(ctx: { lab: string; fixes: string } | null): void {
+  labContext = ctx
+}
+export function labQuery(): string {
+  if (!labContext || !labContext.lab) return ''
+  const q = new URLSearchParams({ lab: labContext.lab })
+  if (labContext.fixes) q.set('fixes', labContext.fixes)
+  return `?${q.toString()}`
+}
+
 export const fetchTopologies = () =>
   getJSON<{ topologies: TopologySummary[] }>('/api/topologies').then((r) => r.topologies)
-export const fetchTopology = (id: string) => getJSON<TopologyDetail>(`/api/topologies/${encodeURIComponent(id)}`)
+export const fetchTopology = (id: string) =>
+  getJSON<TopologyDetail>(`/api/topologies/${encodeURIComponent(id)}${labQuery()}`)
 export const fetchEffectiveConfig = (topologyId: string, edgeId: string) =>
   getJSON<EffectiveConfig>(
-    `/api/topologies/${encodeURIComponent(topologyId)}/edges/${encodeURIComponent(edgeId)}/effective-config`,
+    `/api/topologies/${encodeURIComponent(topologyId)}/edges/${encodeURIComponent(edgeId)}/effective-config${labQuery()}`,
   )
 export const postWhatIf = (topologyId: string, change: Change) =>
-  sendJSON<WhatIfResult>('POST', `/api/topologies/${encodeURIComponent(topologyId)}/what-if`, change)
+  sendJSON<WhatIfResult>('POST', `/api/topologies/${encodeURIComponent(topologyId)}/what-if${labQuery()}`, change)
 
 // ---- Overlay: tunnels, paths, timeline (step 12) ----
 
@@ -502,11 +526,17 @@ export interface TimelineResult {
 }
 
 export const postTunnels = (topologyId: string, conditions: Conditions) =>
-  sendJSON<TunnelSet>('POST', `/api/topologies/${encodeURIComponent(topologyId)}/tunnels`, conditions)
+  sendJSON<TunnelSet>('POST', `/api/topologies/${encodeURIComponent(topologyId)}/tunnels${labQuery()}`, conditions)
 export const postTimeline = (topologyId: string, conditions: Conditions, events: TimelineEvent[]) =>
-  sendJSON<TimelineResult>('POST', `/api/topologies/${encodeURIComponent(topologyId)}/timeline`, { conditions, events })
+  sendJSON<TimelineResult>('POST', `/api/topologies/${encodeURIComponent(topologyId)}/timeline${labQuery()}`, {
+    conditions,
+    events,
+  })
 export const postPath = (topologyId: string, flow: Flow, conditions: Conditions) =>
-  sendJSON<PathDecision>('POST', `/api/topologies/${encodeURIComponent(topologyId)}/paths`, { flow, conditions })
+  sendJSON<PathDecision>('POST', `/api/topologies/${encodeURIComponent(topologyId)}/paths${labQuery()}`, {
+    flow,
+    conditions,
+  })
 
 // ---- routing (step 13) ----
 
@@ -525,7 +555,7 @@ export interface RoutingAssumptions {
 }
 
 export interface AssumptionSwitch {
-  key: keyof RoutingAssumptions
+  key: string
   label: string
   kind: 'bool' | 'choice'
   choices?: string[]
@@ -668,15 +698,127 @@ export interface ReachResult {
 }
 
 export const postRoutes = (topologyId: string, conditions: Conditions, assumptions?: Partial<RoutingAssumptions>) =>
-  sendJSON<RouteSet>('POST', `/api/topologies/${encodeURIComponent(topologyId)}/routes`, { conditions, assumptions })
+  sendJSON<RouteSet>('POST', `/api/topologies/${encodeURIComponent(topologyId)}/routes${labQuery()}`, {
+    conditions,
+    assumptions,
+  })
 export const postReachability = (
   topologyId: string,
   query: { source: string; destination: string; segment?: string; destination_segment?: string },
   conditions: Conditions,
   assumptions?: Partial<RoutingAssumptions>,
 ) =>
-  sendJSON<ReachResult>('POST', `/api/topologies/${encodeURIComponent(topologyId)}/reachability`, {
+  sendJSON<ReachResult>('POST', `/api/topologies/${encodeURIComponent(topologyId)}/reachability${labQuery()}`, {
     query,
+    conditions,
+    assumptions,
+  })
+
+// ---- the flow tracer (step 14) ----
+
+/** The routing switches plus the three the flow tracer adds. */
+export interface TraceAssumptions extends RoutingAssumptions {
+  policy_edge_first: boolean
+  fw_evaluation: 'first_match' | 'last_match'
+  fw_default_action: 'allow' | 'drop'
+}
+
+export interface FlowSpec {
+  source: string
+  source_ip?: string
+  source_interface?: string
+  destination: string
+  segment?: string
+  application?: string
+  protocol?: string
+  port?: number
+  dscp?: string
+  traffic_class?: string
+  packet_size?: number
+}
+
+export interface RuleVerdict {
+  rule_id: string
+  name?: string
+  owner: string
+  matched: boolean
+  chosen: boolean
+  reason: string
+  basis: Basis
+  also?: Basis[]
+}
+
+export interface FwVerdict {
+  rule_id: string
+  group: string
+  owner: string
+  action: string
+  matched: boolean
+  decisive: boolean
+  reason: string
+}
+
+export interface RemedMech {
+  name: string
+  candidate: boolean
+  conditions: string
+  basis: Basis
+  also?: Basis[]
+}
+
+export type TraceStageId = 'segment' | 'policy' | 'firewall' | 'route' | 'path' | 'remediation' | 'mtu' | 'return'
+export type TraceStatus = 'ok' | 'blocked' | 'failed' | 'info' | 'not-modelled' | 'skipped' | 'not-reached'
+
+export interface TraceStage {
+  number: number
+  id: TraceStageId
+  title: string
+  status: TraceStatus
+  input: string[]
+  decision: string
+  reason: string
+  details?: string[]
+  basis: Basis
+  also?: Basis[]
+  not_modelled?: NotModelled[]
+  heuristic?: string
+  lesson_ref: string
+  screen: string
+  rules?: RuleVerdict[]
+  firewall?: FwVerdict[]
+  route?: SimRoute
+  candidates?: SimRoute[]
+  path?: PathDecision
+  remediation?: RemedMech[]
+  mtu?: MtuResult
+  reachability?: ReachResult
+}
+
+export interface TraceResult {
+  flow: FlowSpec
+  verdict: 'delivered' | 'blocked' | 'unreachable' | 'not-modelled'
+  blocked_at: number
+  blocked_stage: TraceStageId | ''
+  summary: string
+  stages: TraceStage[]
+  assumptions: AssumptionSwitch[]
+  depends_on: {
+    switch: AssumptionSwitch
+    flipped_value: boolean | string
+    new_outcome: string
+    new_first_failing: string
+  }[]
+  not_modelled: NotModelled[]
+}
+
+export const postTrace = (
+  topologyId: string,
+  flow: FlowSpec,
+  conditions: Conditions,
+  assumptions?: Partial<TraceAssumptions>,
+) =>
+  sendJSON<TraceResult>('POST', `/api/topologies/${encodeURIComponent(topologyId)}/trace${labQuery()}`, {
+    flow,
     conditions,
     assumptions,
   })

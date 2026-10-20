@@ -28,6 +28,15 @@ type Flow struct {
 	Application  string   `json:"application,omitempty"`
 	TrafficClass string   `json:"traffic_class,omitempty"` // real_time, transactional or bulk (informational)
 	Segment      string   `json:"segment,omitempty"`       // default: the Global Segment
+	// Matched lets a caller that already evaluated business policy (the flow tracer) hand the result over, so the
+	// rules are evaluated in one place only.
+	Matched *MatchedPolicy `json:"-"`
+}
+
+// MatchedPolicy is a business-policy result handed to SelectPath. Rule is nil when no rule matched.
+type MatchedPolicy struct {
+	Rule  *BusinessRule
+	Owner string
 }
 
 // FlowError is returned for a flow that names things the topology does not have.
@@ -187,6 +196,9 @@ func SelectPath(t *Topology, cond Conditions, flow Flow, clock Clock) (*PathDeci
 		return nil, err
 	}
 	rule, owner := matchRule(ec, flow)
+	if flow.Matched != nil {
+		rule, owner = flow.Matched.Rule, flow.Matched.Owner
+	}
 	st := Steering{}
 	d.NetworkService = NetMultipath // rule: assume-2
 	if rule != nil {
@@ -256,45 +268,10 @@ func SelectPath(t *Topology, cond Conditions, flow Flow, clock Clock) (*PathDeci
 }
 
 // matchRule finds the business rule the flow matches: Edge rules first, then Profile rules that are not
-// superseded, first match wins (assumptions 1 and 3). Rules that match on fields a flow does not carry are skipped.
+// superseded, first match wins (assumptions 1 and 3). Rules that match on fields a flow does not carry never match.
 func matchRule(ec *Effective, flow Flow) (*BusinessRule, string) {
-	for _, sp := range ec.BusinessPolicy {
-		if sp.Segment.ID != flow.Segment {
-			continue
-		}
-		var cands []EffectiveRule
-		cands = append(cands, sp.EdgeOverrides...) // rule: assume-3
-		for _, r := range sp.FromProfile {
-			if r.SupersededBy == "" {
-				cands = append(cands, r)
-			}
-		}
-		for _, r := range cands { // rule: assume-1
-			m := r.Rule.Match
-			if m.Source != "" || m.Protocol != "" || m.Port != "" || m.DSCP != "" {
-				continue
-			}
-			if m.Application != "" && m.Application != flow.Application {
-				continue
-			}
-			switch m.Destination {
-			case "", "any":
-			case "edge":
-				if flow.Destination.Kind != "edge" {
-					continue
-				}
-			case "nsd":
-				if flow.Destination.Kind != "nsd" {
-					continue
-				}
-			default:
-				continue
-			}
-			rule := r.Rule
-			return &rule, r.Owner.Name
-		}
-	}
-	return nil, ""
+	ev := evaluateRules(ec, RuleCtx{Segment: flow.Segment, Application: flow.Application, DestKind: flow.Destination.Kind}, true)
+	return ev.Matched, ev.Owner
 }
 
 func optionBasis(kind string) (Basis, []Basis) {

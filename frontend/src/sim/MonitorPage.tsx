@@ -6,6 +6,7 @@ import ConditionsPanel from './ConditionsPanel'
 import { linkSetting } from './conditions'
 import { StateBadge } from './overlayUi'
 import { modeLabel, typeLabel } from './overlayText'
+import { keepLab } from './labParams'
 import { useTopologyCtx } from './topologyContext'
 import { useTunnels } from './useTunnels'
 import { BasisBadge, Bases } from './ui'
@@ -49,7 +50,7 @@ export default function MonitorPage() {
   if (!edge) return <p className="text-sm text-slate-500">This topology has no Edges.</p>
   const select = (i: number) => {
     const n = (i + TABS.length) % TABS.length
-    setParams({ edge: edge.id, tab: TABS[n]!.id }, { replace: true })
+    setParams(keepLab(params, { edge: edge.id, tab: TABS[n]!.id }), { replace: true })
     tabRefs.current[n]?.focus()
   }
   const links = wanLinks(edge, t.links)
@@ -64,7 +65,7 @@ export default function MonitorPage() {
           <select
             className="rounded-md border border-slate-300 bg-white px-2 py-1 text-sm dark:border-slate-700 dark:bg-slate-900"
             value={edge.id}
-            onChange={(e) => setParams({ edge: e.target.value, tab }, { replace: true })}
+            onChange={(e) => setParams(keepLab(params, { edge: e.target.value, tab }), { replace: true })}
             data-monitor-edge
           >
             {edges.map((e) => (
@@ -100,7 +101,7 @@ export default function MonitorPage() {
                 aria-selected={tab === x.id}
                 aria-controls={`mpanel-${x.id}`}
                 tabIndex={tab === x.id ? 0 : -1}
-                onClick={() => setParams({ edge: edge.id, tab: x.id }, { replace: true })}
+                onClick={() => setParams(keepLab(params, { edge: edge.id, tab: x.id }), { replace: true })}
                 onKeyDown={(e) => {
                   if (e.key === 'ArrowRight') {
                     e.preventDefault()

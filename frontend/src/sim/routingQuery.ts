@@ -48,6 +48,15 @@ export function defaultQuery(t: Topology): { source: string; destination: string
   return { source: src?.id ?? '', destination: dest }
 }
 
+const SECTION_OF_PREFIX: Record<string, string> = {
+  ov: 'overlay',
+  rt: 'routing',
+  cfg: 'configuration',
+  dmpo: 'dmpo',
+  arch: 'architecture',
+}
+
+/** The course path of a lesson id; the section follows from the id's prefix. */
 export function lessonHref(ref: string): string {
-  return ref.startsWith('ov-') ? `/course/overlay/${ref}` : `/course/routing/${ref}`
+  return `/course/${SECTION_OF_PREFIX[ref.split('-')[0] ?? ''] ?? 'routing'}/${ref}`
 }

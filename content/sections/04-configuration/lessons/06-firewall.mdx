@@ -50,7 +50,7 @@ A stateful firewall enforces symmetric routing and matching is **directional**: 
 
 ## Profile, Edge and logging
 
-Edges inherit the firewall rules, security settings and Stateful Firewall settings from the Profile. Profile rules cannot be updated at the Edge, and **Edge override rules take priority**. Logs: the Edge can send firewall logs to the Orchestrator and to a syslog collector, and you view them at **Monitor > Firewall Logs**.
+Edges inherit the firewall rules, security settings and Stateful Firewall settings from the Profile. Profile rules cannot be updated at the Edge, and **Edge override rules take priority**. Logs: the Edge can send firewall logs to the Orchestrator and to a syslog <Term id="collector">collector</Term>, and you view them at **Monitor > Firewall Logs**.
 
 <Callout variant="warning" title="What we could not confirm">
   How firewall rules are ordered when several match, the default action when none matches, whether the firewall or business policy is applied first, and whether general firewall rules are scoped to a segment were not stated in the pages we read. The diagram is therefore illustrative.

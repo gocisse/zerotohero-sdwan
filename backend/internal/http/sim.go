@@ -4,6 +4,7 @@ import (
 	"errors"
 	"log/slog"
 	"net/http"
+	"strings"
 
 	"github.com/go-chi/chi/v5"
 
@@ -40,6 +41,16 @@ type topologyDTO struct {
 	Settings []settingDTO  `json:"settings"`
 	// UIBases is the evidence behind screen-level claims (tab names, transport groups, the build stub).
 	UIBases map[string]sim.Basis `json:"ui_bases"`
+	// Lab is set when the topology is a lab's faulted state: the conditions and assumption values the lab starts from.
+	Lab *labStateDTO `json:"lab,omitempty"`
+}
+
+type labStateDTO struct {
+	ID          string         `json:"id"`
+	Conditions  sim.Conditions `json:"conditions"`
+	Assumptions map[string]any `json:"assumptions"`
+	Fixes       []string       `json:"fixes"`
+	Flow        *sim.FlowSpec  `json:"flow,omitempty"`
 }
 
 func settingDTOs() []settingDTO {
@@ -78,17 +89,29 @@ func TopologiesHandler(src ContentSource, log *slog.Logger) http.HandlerFunc {
 // TopologyHandler returns one authored topology (GET /api/topologies/{id}).
 func TopologyHandler(src ContentSource, log *slog.Logger) http.HandlerFunc {
 	return withCourse(src, log, func(w http.ResponseWriter, r *http.Request, c *content.Course) {
-		id := chi.URLParam(r, "id")
-		t, ok := c.Topology(id)
+		t, ok := resolveTopology(w, r, c)
 		if !ok {
-			notFound(w, "topology", id)
 			return
 		}
 		warns := t.Warnings
 		if warns == nil {
 			warns = []sim.Issue{}
 		}
-		writeJSON(w, http.StatusOK, topologyDTO{Topology: t.T, Warnings: warns, Settings: settingDTOs(), UIBases: sim.UIBases()})
+		dto := topologyDTO{Topology: t.T, Warnings: warns, Settings: settingDTOs(), UIBases: sim.UIBases()}
+		if labID := r.URL.Query().Get("lab"); labID != "" {
+			if lab, ok := c.Lab(labID); ok {
+				fixes := []string{}
+				if f := r.URL.Query().Get("fixes"); f != "" {
+					fixes = strings.Split(f, ",")
+				}
+				as := lab.Lab.Fault.Assumptions
+				if as == nil {
+					as = map[string]any{}
+				}
+				dto.Lab = &labStateDTO{ID: labID, Conditions: lab.Lab.Fault.Conditions, Assumptions: as, Fixes: fixes, Flow: lab.Lab.Flow}
+			}
+		}
+		writeJSON(w, http.StatusOK, dto)
 	})
 }
 
@@ -97,9 +120,8 @@ func TopologyHandler(src ContentSource, log *slog.Logger) http.HandlerFunc {
 func EffectiveConfigHandler(src ContentSource, log *slog.Logger) http.HandlerFunc {
 	return withCourse(src, log, func(w http.ResponseWriter, r *http.Request, c *content.Course) {
 		id := chi.URLParam(r, "id")
-		t, ok := c.Topology(id)
+		t, ok := resolveTopology(w, r, c)
 		if !ok {
-			notFound(w, "topology", id)
 			return
 		}
 		edge := chi.URLParam(r, "edgeId")
@@ -121,9 +143,8 @@ func EffectiveConfigHandler(src ContentSource, log *slog.Logger) http.HandlerFun
 func WhatIfHandler(src ContentSource, log *slog.Logger) http.HandlerFunc {
 	return withCourse(src, log, func(w http.ResponseWriter, r *http.Request, c *content.Course) {
 		id := chi.URLParam(r, "id")
-		t, ok := c.Topology(id)
+		t, ok := resolveTopology(w, r, c)
 		if !ok {
-			notFound(w, "topology", id)
 			return
 		}
 		var ch sim.Change
@@ -149,9 +170,8 @@ func WhatIfHandler(src ContentSource, log *slog.Logger) http.HandlerFunc {
 // The body may be empty: no conditions. Nothing is stored.
 func TunnelsHandler(src ContentSource, log *slog.Logger) http.HandlerFunc {
 	return withCourse(src, log, func(w http.ResponseWriter, r *http.Request, c *content.Course) {
-		t, ok := c.Topology(chi.URLParam(r, "id"))
+		t, ok := resolveTopology(w, r, c)
 		if !ok {
-			notFound(w, "topology", chi.URLParam(r, "id"))
 			return
 		}
 		var cond sim.Conditions
@@ -174,9 +194,8 @@ type timelineRequest struct {
 // TimelineHandler replays timed events (POST /api/topologies/{id}/timeline).
 func TimelineHandler(src ContentSource, log *slog.Logger) http.HandlerFunc {
 	return withCourse(src, log, func(w http.ResponseWriter, r *http.Request, c *content.Course) {
-		t, ok := c.Topology(chi.URLParam(r, "id"))
+		t, ok := resolveTopology(w, r, c)
 		if !ok {
-			notFound(w, "topology", chi.URLParam(r, "id"))
 			return
 		}
 		var req timelineRequest
@@ -203,9 +222,8 @@ type pathRequest struct {
 // PathsHandler decides the path of a flow (POST /api/topologies/{id}/paths).
 func PathsHandler(src ContentSource, log *slog.Logger) http.HandlerFunc {
 	return withCourse(src, log, func(w http.ResponseWriter, r *http.Request, c *content.Course) {
-		t, ok := c.Topology(chi.URLParam(r, "id"))
+		t, ok := resolveTopology(w, r, c)
 		if !ok {
-			notFound(w, "topology", chi.URLParam(r, "id"))
 			return
 		}
 		var req pathRequest

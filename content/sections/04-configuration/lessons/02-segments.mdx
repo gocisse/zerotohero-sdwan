@@ -46,14 +46,14 @@ Every Enterprise has a **Global Segment**. Its type can be set to **Regular** or
 - **Interfaces**: by default an interface's settings apply to all segments, and an interface setting has a Segments field.
 - **VLANs**: an Edge can have up to 32 VLANs across 16 segments.
 - **Business policy**: rules are segment aware. A Segment drop-down at the top of the page picks which segment's rules you are editing.
-- **Firewall**: Port Forwarding and 1:1 NAT rules pick the segment the LAN IP belongs to, and the syslog collector is set per segment.
+- **Firewall**: Port Forwarding and 1:1 NAT rules pick the segment the LAN IP belongs to, and the syslog <Term id="collector">collector</Term> is set per segment.
 - **Limits**: the default maximum number of segments for an Enterprise is 16, and the system maximum can be raised (the guide mentions 128).
 - **Diagnostics**: ping, traceroute and route views take a Segment selector.
 
 Some Device settings are *segment aware* (they apply to multiple segments) and others *segment agnostic* (they apply only to the segment you pick in the Segment menu).
 
 <Callout variant="warning" title="What we could not confirm">
-  Whether traffic can pass between two segments and how, whether general firewall rules are scoped by segment, and the segment limits for each Edge model were not stated in the pages we read. Do not assume isolation between segments is absolute without checking your design.
+  Whether traffic can pass between two segments and how, whether general <Term id="firewall-policy">firewall rules</Term> are scoped by segment, and the segment limits for each Edge model were not stated in the pages we read. Do not assume isolation between segments is absolute without checking your design.
 </Callout>
 
 ## What you would see in the VCO

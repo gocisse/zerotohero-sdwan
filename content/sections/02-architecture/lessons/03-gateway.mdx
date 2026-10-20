@@ -25,7 +25,7 @@ or deployed on-premises. Step through the diagram to see its jobs one at a time.
 
 In the course's three-planes framing, the Gateway is the **control plane**: Arista's on-premises guide calls it the control and routing
 plane. What matters most is the job it does for Edges: it **reflects routes between Edges**. Branch B learns what is behind Branch A because
-the Gateway passes the routes along, so the two Edges do not each need a tunnel to every other Edge. (Simple arithmetic: a full mesh of tunnels grows with every pair of sites, which is what a Gateway or Hub in the middle avoids.)
+the Gateway passes the routes along (based on Profile settings), so the two Edges do not each need a tunnel to every other Edge. (Simple arithmetic: a full mesh of tunnels grows with every pair of sites, which is what a Gateway or Hub in the middle avoids.)
 
 It is also managed by the Orchestrator. A dedicated management process on the Gateway talks to the Orchestrator and is kept separate from the
 process that forwards traffic, so the Orchestrator can still push a fix or an update if the forwarding process fails.
@@ -51,7 +51,7 @@ In the Orchestrator's operator view a Gateway can be given roles:
 |---|---|
 | **Data plane** | The Gateway forwards data-plane traffic from source to destination |
 | **Control plane** | The Gateway is called a **Super Gateway** and is assigned to an Enterprise |
-| **Secure VPN** | The Gateway builds IPsec tunnels to <Term id="non-sd-wan-destination">Non SD-WAN Destinations</Term>; it acts as the tunnel *initiator* |
+| **Secure VPN** | The Gateway builds <Term id="ipsec">IPsec</Term> tunnels to <Term id="non-sd-wan-destination">Non SD-WAN Destinations</Term>; it acts as the tunnel *initiator* |
 
 Gateways are grouped into a <Term id="gateway-pool" />, and in the operator view each Gateway shows a status (Connected, Degraded, Never
 Activated, Not in Use, Offline, Out of Service or Quiesced) and the number of Edges connected to it.
@@ -94,16 +94,16 @@ deployed geographically for low latency. The on-premises reference design adds t
   primary and a secondary Gateway assigned by geolocation. Those figures are a snapshot from that document; check the current number if it matters to you.
 </Callout>
 
-## What you would see in the VCO
-
-- **Monitor > Edges** lists Edges together with the **Gateways** they use, and an Edge has a **View Gateways** shortcut.
-- An Edge's **Paths** tab shows the paths to its SD-WAN peers (the peers can be other Edges and Gateways).
-- **Diagnostics > Remote Diagnostics > List Paths** checks the active tunnel paths between local WAN links and each peer, **and the Gateway status**.
-- In the Operator portal, **Gateway Management > Gateways** shows each Gateway's status; you will only see this if you are an operator or partner.
-
 ## Key takeaways
 
 - The Gateway reflects routes between Edges: that is its control-plane job, and why Edges need no full mesh.
 - Carrying user traffic through a Gateway is an option, used for example to reach cloud services.
 - Roles: data plane, control plane (Super Gateway), Secure VPN. A Partner Gateway is a service provider's on-premise Gateway with two interfaces.
 - A Gateway that loses the Orchestrator keeps its control plane running, unless it restarts while disconnected.
+
+## What would you look for in the VCO
+
+- **Monitor > Edges** lists Edges together with the **Gateways** they use, and an Edge has a **View Gateways** shortcut.
+- An Edge's **Paths** tab shows the paths to its SD-WAN peers (the peers can be other Edges and Gateways).
+- **Diagnostics > Remote Diagnostics > List Paths** checks the active tunnel paths between local WAN links and each peer, **and the Gateway status**.
+- In the Operator portal, **Gateway Management > Gateways** shows each Gateway's status; you will only see this if you are an operator or partner.

@@ -89,16 +89,16 @@ management port.
 4. For Hubs, Partner Gateways and on-premises components, use the inbound rules above, and **confirm** the unconfirmed rows in your release's documentation.
 5. Test with the tools in the Orchestrator rather than by guessing (below).
 
-## What you would see in the VCO
-
-- **Monitor > Edges**: an Edge that cannot reach the Orchestrator stops sending heartbeats and is marked OFFLINE once the configured limit passes.
-- **Remote Diagnostics > List Paths**: shows which tunnels are up and the Gateway status for an Edge you can reach.
-- **Remote Diagnostics > VPN Test**: shows branch-to-branch connectivity.
-- Edge settings: the **UDP hole punching** option on an overlay interface, for NAT cases where incoming tunnels are blocked.
-
 ## Key takeaways
 
 - Edge: outbound TCP 443 to the Orchestrator, outbound UDP 2426 to Gateways and Edges.
 - Behind NAT, direct tunnels also need incoming UDP 2426 from other Edges, or they will not likely come up.
 - Partner Gateway: inbound UDP 2426, 4500, 500, and ESP when NAT is not used. On-prem Orchestrator: inbound 80 and 443.
 - Hub inbound rules and DNS/NTP are not confirmed in our sources: check your release docs.
+
+## What would you look for in the VCO
+
+- **Monitor > Edges**: an Edge that cannot reach the Orchestrator stops sending heartbeats and is marked OFFLINE once the configured limit passes.
+- **Remote Diagnostics > List Paths**: shows which tunnels are up and the Gateway status for an Edge you can reach.
+- **Remote Diagnostics > VPN Test**: shows branch-to-branch connectivity.
+- Edge settings: the **UDP hole punching** option on an overlay interface, for NAT cases where incoming tunnels are blocked.

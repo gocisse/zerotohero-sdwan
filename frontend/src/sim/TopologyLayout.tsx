@@ -1,6 +1,6 @@
 import { useState } from 'react'
-import { NavLink, Outlet, useParams } from 'react-router-dom'
-import { fetchTopology, type Conditions, type RoutingAssumptions } from '../api'
+import { NavLink, Outlet, useParams, useSearchParams } from 'react-router-dom'
+import { fetchTopology, setLabContext, type Conditions, type TraceAssumptions } from '../api'
 import ErrorPanel from '../components/ErrorPanel'
 import type { TopologyCtx } from './topologyContext'
 import { useAsync } from './useAsync'
@@ -12,18 +12,21 @@ const tab = (active: boolean) =>
       : 'text-slate-600 hover:bg-slate-200 dark:text-slate-300 dark:hover:bg-slate-800'
   }`
 
-/** /sim/:topologyId: loads the topology once and shares it with the Edge list, what-if and challenge screens. */
+/** /sim/:topologyId: loads the topology once and shares it with the Edge list, what-if and challenge screens. With
+ * ?lab=<id>&fixes=a,b the screens show a lab's faulted state instead of the authored topology. */
 export default function TopologyLayout() {
   const { topologyId = '' } = useParams()
-  const state = useAsync(() => fetchTopology(topologyId), topologyId)
-  const [conditions, setConditions] = useState<{ topologyId: string; value: Conditions }>({ topologyId, value: {} })
-  const [assume, setAssume] = useState<{ topologyId: string; value: Partial<RoutingAssumptions> }>({
-    topologyId,
-    value: {},
-  })
-  const currentAssume = assume.topologyId === topologyId ? assume.value : {}
-  // Conditions belong to one topology: switching topology starts from none.
-  const current = conditions.topologyId === topologyId ? conditions.value : {}
+  const [params] = useSearchParams()
+  const lab = params.get('lab') ?? ''
+  const fixes = params.get('fixes') ?? ''
+  // The API client attaches the lab to every request of this layout's screens.
+  setLabContext(lab ? { lab, fixes } : null)
+  const labKey = `${topologyId}|${lab}|${fixes}`
+  const labSearch = lab ? `?${new URLSearchParams(fixes ? { lab, fixes } : { lab }).toString()}` : ''
+  const state = useAsync(() => fetchTopology(topologyId), labKey)
+  // What the reader changed; until then the lab's own starting conditions and assumptions (or none) apply.
+  const [condEdit, setCondEdit] = useState<{ key: string; value: Conditions } | null>(null)
+  const [assumeEdit, setAssumeEdit] = useState<{ key: string; value: Partial<TraceAssumptions> } | null>(null)
   if (state.status === 'loading') return <p className="text-slate-500">Loading…</p>
   if (state.status === 'error') {
     return (
@@ -37,8 +40,29 @@ export default function TopologyLayout() {
     )
   }
   const { topology } = state.data
+  // Conditions and assumption switches start from the lab's fault; the first edit takes over (a what-if, nothing stored).
+  const current = condEdit?.key === labKey ? condEdit.value : (state.data.lab?.conditions ?? {})
+  const currentAssume =
+    assumeEdit?.key === labKey ? assumeEdit.value : ((state.data.lab?.assumptions ?? {}) as Partial<TraceAssumptions>)
   return (
     <div>
+      {state.data.lab && (
+        <p
+          role="note"
+          data-lab-banner
+          className="mb-3 rounded-md border border-sky-300 bg-sky-50 px-3 py-2 text-sm text-sky-950 dark:border-sky-700 dark:bg-sky-950/40 dark:text-sky-100"
+        >
+          {state.data.lab.id.startsWith('self-check-')
+            ? 'You are looking at the network of a self-check task.'
+            : `You are looking at the network of a lab, with its fault${state.data.lab.fixes.length > 0 ? ' and the fixes you applied' : ''}.`}{' '}
+          <NavLink
+            to={state.data.lab.id.startsWith('self-check-') ? '/sim/self-check' : `/sim/labs/${state.data.lab.id}`}
+            className="font-medium underline"
+          >
+            {state.data.lab.id.startsWith('self-check-') ? 'Back to the self-check' : 'Back to the lab'}
+          </NavLink>
+        </p>
+      )}
       <p className="text-sm text-slate-500 dark:text-slate-400">
         <NavLink to="/sim" className="underline">
           Simulator
@@ -52,44 +76,50 @@ export default function TopologyLayout() {
         aria-label="Simulator sections"
         className="mt-4 flex flex-wrap gap-1 border-b border-slate-200 pb-2 dark:border-slate-800"
       >
-        <NavLink to={`/sim/${topologyId}`} end className={({ isActive }) => tab(isActive)}>
+        <NavLink to={`/sim/${topologyId}${labSearch}`} end className={({ isActive }) => tab(isActive)}>
           Configure &gt; Edges
         </NavLink>
-        <NavLink to={`/sim/${topologyId}/what-if`} className={({ isActive }) => tab(isActive)}>
+        <NavLink to={`/sim/${topologyId}/what-if${labSearch}`} className={({ isActive }) => tab(isActive)}>
           What if?
         </NavLink>
-        <NavLink to={`/sim/${topologyId}/challenge`} className={({ isActive }) => tab(isActive)}>
+        <NavLink to={`/sim/${topologyId}/challenge${labSearch}`} className={({ isActive }) => tab(isActive)}>
           Challenge
         </NavLink>
         <span className="mx-1 self-center text-xs text-slate-400" aria-hidden>
           |
         </span>
-        <NavLink to={`/sim/${topologyId}/map`} className={({ isActive }) => tab(isActive)}>
+        <NavLink to={`/sim/${topologyId}/map${labSearch}`} className={({ isActive }) => tab(isActive)}>
           Map
         </NavLink>
-        <NavLink to={`/sim/${topologyId}/monitor`} className={({ isActive }) => tab(isActive)}>
+        <NavLink to={`/sim/${topologyId}/monitor${labSearch}`} className={({ isActive }) => tab(isActive)}>
           Monitor &gt; Edges
         </NavLink>
-        <NavLink to={`/sim/${topologyId}/paths`} className={({ isActive }) => tab(isActive)}>
+        <NavLink to={`/sim/${topologyId}/paths${labSearch}`} className={({ isActive }) => tab(isActive)}>
           Path explainer
         </NavLink>
-        <NavLink to={`/sim/${topologyId}/timeline`} className={({ isActive }) => tab(isActive)}>
+        <NavLink to={`/sim/${topologyId}/timeline${labSearch}`} className={({ isActive }) => tab(isActive)}>
           Timeline
         </NavLink>
-        <NavLink to={`/sim/${topologyId}/overlay-challenge`} className={({ isActive }) => tab(isActive)}>
+        <NavLink to={`/sim/${topologyId}/overlay-challenge${labSearch}`} className={({ isActive }) => tab(isActive)}>
           Overlay challenge
         </NavLink>
         <span className="mx-1 self-center text-xs text-slate-400" aria-hidden>
           |
         </span>
-        <NavLink to={`/sim/${topologyId}/routes`} className={({ isActive }) => tab(isActive)}>
+        <NavLink to={`/sim/${topologyId}/routes${labSearch}`} className={({ isActive }) => tab(isActive)}>
           Route Table Dump
         </NavLink>
-        <NavLink to={`/sim/${topologyId}/reachability`} className={({ isActive }) => tab(isActive)}>
+        <NavLink to={`/sim/${topologyId}/reachability${labSearch}`} className={({ isActive }) => tab(isActive)}>
           Reachability explainer
         </NavLink>
-        <NavLink to={`/sim/${topologyId}/routing-challenge`} className={({ isActive }) => tab(isActive)}>
+        <NavLink to={`/sim/${topologyId}/routing-challenge${labSearch}`} className={({ isActive }) => tab(isActive)}>
           Routing challenge
+        </NavLink>
+        <span className="mx-1 self-center text-xs text-slate-400" aria-hidden>
+          |
+        </span>
+        <NavLink to={`/sim/${topologyId}/trace${labSearch}`} className={({ isActive }) => tab(isActive)}>
+          Flow tracer
         </NavLink>
       </nav>
       {state.data.warnings.length > 0 && (
@@ -108,9 +138,10 @@ export default function TopologyLayout() {
               detail: state.data,
               topologyId,
               conditions: current,
-              setConditions: (value: Conditions) => setConditions({ topologyId, value }),
+              setConditions: (value: Conditions) => setCondEdit({ key: labKey, value }),
               assumptions: currentAssume,
-              setAssumptions: (value: Partial<RoutingAssumptions>) => setAssume({ topologyId, value }),
+              setAssumptions: (value: Partial<TraceAssumptions>) => setAssumeEdit({ key: labKey, value }),
+              labSearch,
             } satisfies TopologyCtx
           }
         />

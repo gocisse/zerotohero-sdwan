@@ -209,4 +209,4 @@ var overlayRules = []Rule{
 }
 
 // Rules is the full registry: step 11 rules plus the overlay rules.
-var Rules = append(append(append(append([]Rule{}, baseRules...), overlayRules...), uiRules...), routingRules...)
+var Rules = append(append(append(append(append([]Rule{}, baseRules...), overlayRules...), uiRules...), routingRules...), traceRules...)

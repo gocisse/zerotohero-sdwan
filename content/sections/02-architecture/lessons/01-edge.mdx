@@ -88,7 +88,7 @@ over it; if the Orchestrator sees no heartbeat for a configured time, it marks t
 ## Whose configuration is it?
 
 Most of an Edge's configuration is **inherited**. Edges inherit their settings from the Profile they are assigned to. When one site needs
-to be different, you tick the **Override** checkbox next to the setting and change it for that Edge only. Inheritance and overrides get a
+to be different, you tick the **Override** checkbox next to the setting and change it for that Edge only. <Term id="inheritance">Inheritance</Term> and overrides get a
 full treatment in a later section; for now the picture to keep is: **Profile by default, override by exception.**
 
 Edge software works the same way: images are managed from the Orchestrator, and per-Edge assignments are available too.
@@ -99,16 +99,16 @@ Edge software works the same way: images are managed from the Orchestrator, and 
   while it cannot reach the Orchestrator. We therefore do not claim a behaviour here. Lesson 2 collects what is documented.
 </Callout>
 
-## What you would see in the VCO
-
-- **Configure > Edges** lists the Edges. Opening one shows its configuration with the inherited values and the **Override** checkboxes.
-- **Configure > Edges > Add Edge** (the provisioning form) is where the name, model, Profile and optional serial number are entered.
-- **Monitor > Edges** shows each Edge's status, its links and its Gateways. An Edge that has stopped sending heartbeats is marked OFFLINE by the Orchestrator (where exactly that shows depends on your release).
-- The Edge's **Overview** tab in Configure > Edges is where the activation email is sent for the pull method.
-
 ## Key takeaways
 
 - The Edge sits between the LAN and the transports, and builds tunnels over them.
 - The WAN overlay is enabled per interface; DHCP, NAT rules and a DNS proxy are examples of LAN-side services.
 - A new Edge is provisioned in the Orchestrator, gets an activation key valid for one month, and activates by push or pull.
 - Configuration is inherited from a Profile; an Override changes a setting for one Edge.
+
+## What would you look for in the VCO
+
+- **Configure > Edges** lists the Edges. Opening one shows its configuration with the inherited values and the **Override** checkboxes.
+- **Configure > Edges > Add Edge** (the provisioning form) is where the name, model, Profile and optional serial number are entered.
+- **Monitor > Edges** shows each Edge's status, its links and its Gateways. An Edge that has stopped sending heartbeats is marked OFFLINE by the Orchestrator (where exactly that shows depends on your release).
+- The Edge's **Overview** tab in Configure > Edges is where the activation email is sent for the pull method.

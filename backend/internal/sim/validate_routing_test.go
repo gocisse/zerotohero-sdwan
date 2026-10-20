@@ -42,7 +42,7 @@ func TestShippedRoutingDemoHasNoIssues(t *testing.T) {
 
 func TestEarlierTopologiesNeedNoRoutingKeys(t *testing.T) {
 	for name, tp := range loadContentTopologies(t) {
-		if name == "routing-demo.yaml" {
+		if name == "routing-demo.yaml" || name == "capstone-network.yaml" {
 			continue
 		}
 		if tp.OverlayFlowControl != nil {

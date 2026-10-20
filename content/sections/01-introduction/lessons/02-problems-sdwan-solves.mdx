@@ -53,8 +53,8 @@ cloud-based service, and with policy-based, network-wide control over applicatio
 
 Two ideas to keep:
 
-1. **Central policy.** Rules about applications and links are written once and applied to many sites. Arista says link steering, link
-   remediation and QoS are applied automatically from the business policy, with room for site-specific overrides.
+1. **Central policy.** Rules about applications and links are written once and applied to many sites. Arista says <Term id="link-steering">link steering</Term>, link
+   <Term id="on-demand-remediation">remediation</Term> and <Term id="qos">QoS</Term> are applied automatically from the business policy, with room for site-specific overrides.
 2. **Many links, one network.** An Edge can aggregate multiple links (Arista's overview lists private line, cable, DSL, 4G or 5G and
    satellite) and steer traffic over the best ones. We call the property of not caring which kind of link it is
    <Term id="transport-independence" />.
@@ -94,10 +94,17 @@ The Orchestrator documentation describes two ways an Edge can be **activated**:
   it against your requirements. Throughout this course, we mark what is claimed versus what is documented behavior.
 </Callout>
 
-## What you would see in the VCO
+## Key takeaways
+
+- The five problems: cost, agility, visibility, branch rollout, and transport choice.
+- SD-WAN separates intent (central policy) from transport (whichever links a site has).
+- Zero-touch means a non-expert plugs the Edge in; activation is either pushed (auto) or pulled (email).
+- In the VCO, Profiles and Edge activation are where the rollout story becomes visible.
+
+## What would you look for in the VCO
 
 - **Configure > Profiles.** A **Profile** is a template configuration that you define once and apply to many Edges. The list shows
-  how many Edges use each Profile (the *Used By* column). After installation a default **Quick Start Profile** exists.
+  how many Edges use each Profile (the *Used By* column). After installation a default **<Term id="quick-start-profile">Quick Start Profile</Term>** exists.
 - **Configure > Edges.** The list of Edges. From an Edge's Overview you can send the activation email described above.
 - **Service Settings > Edge Auto-activation.** The inventory of Edges waiting to auto-activate (*Available Inventory*) and those already
   assigned (*Assigned Inventory*).
@@ -107,10 +114,3 @@ The Orchestrator documentation describes two ways an Edge can be **activated**:
   Menu and tab names above come from the 7.0 documentation. Labels differ between releases and between guides, so treat them as a map,
   not a script. Lesson 5 lists what is and is not confirmed.
 </Callout>
-
-## Key takeaways
-
-- The five problems: cost, agility, visibility, branch rollout, and transport choice.
-- SD-WAN separates intent (central policy) from transport (whichever links a site has).
-- Zero-touch means a non-expert plugs the Edge in; activation is either pushed (auto) or pulled (email).
-- In the VCO, Profiles and Edge activation are where the rollout story becomes visible.

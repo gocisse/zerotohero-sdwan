@@ -64,6 +64,7 @@ const (
 	RNMRtLoops        = "nm-rt-redistribution-loops"
 	RNMRtPassive      = "nm-rt-passive-ospf"
 	RNMRtASPath       = "nm-rt-overlay-attributes"
+	RNMRtReflector    = "nm-rt-gateway-reflector"
 
 	RA69AdvertiseDefaults = "assume-69"
 	RA70LastResort        = "assume-70"
@@ -160,6 +161,7 @@ var routingRules = []Rule{
 	{ID: RNMRtOFCRest, Status: StatusNotModelled, Sheet: sheetOFC, Claim: "The default state of each Global Advertise Flag other than the two named exclusions", Text: "not modelled: the internal, external and uplink Global Advertise Flags, Eligible VPN Exits and Use NSD policy."},
 	{ID: RNMRtLoops, Status: StatusNotModelled, Sheet: sheetPrec, Claim: "Whether OSPF routes redistributed into BGP and back can loop", Text: "not modelled: redistribution loops. Redistribution is computed in one pass; routes the LAN would learn back are not fed in again."},
 	{ID: RNMRtPassive, Status: StatusNotModelled, Sheet: sheetOSPF, Claim: "What a passive OSPF interface on a switched LAN interface does", Text: "not modelled: what a passive OSPF interface does beyond the documented support statement."},
+	{ID: RNMRtReflector, Status: StatusNotModelled, Sheet: sheetRO, Claim: "whether routes are reflected between an Edge's primary and secondary Gateway", Text: "not modelled: the Gateway as route reflector. Remote routes come from advertisement and Cloud VPN settings; what happens to learned routes when the reflecting Gateway is unreachable is not documented."},
 	{ID: RNMRtASPath, Status: StatusNotModelled, Sheet: sheetBGP, Claim: "what happens to the AS path and attributes of a route carried through the overlay from one Edge to another", Text: "not modelled: how the overlay changes the AS path and attributes of a route carried between Edges."},
 
 	{ID: RA69AdvertiseDefaults, Status: StatusAssumption, Assumption: 69, Text: "The Global Advertise Flags for static and connected routes default to on when the topology does not set them (only the External OSPF and NSD iBGP defaults are documented)."},

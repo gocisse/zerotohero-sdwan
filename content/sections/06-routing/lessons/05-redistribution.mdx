@@ -21,7 +21,7 @@ topics: [rt-redistribution]
 
 | into the overlay | how |
 |---|---|
-| connected | the Global Advertise Flags control it (lesson 7) |
+| connected | the <Term id="global-advertise-flags">Global Advertise Flags</Term> control it (lesson 7) |
 | static | tick **Advertise** on the static route |
 | OSPF | automatic, but External OSPF stays out until its flag is enabled |
 | BGP | a route with advertise True and reachable Yes |
@@ -69,7 +69,7 @@ Inside the dynamic routes each type has a <Term id="route-preference" /> number 
 | eBGP | 1003 |
 | iBGP | 1004 |
 
-OSPF external types (OE1, OE2) are printed with far larger numbers, so they lose to BGP. The diagnostics agree: an OSPF route with an intra- or inter-area metric beats a BGP route, and a BGP route beats an OE1 or OE2 route. If preferences tie, the Edge compares protocol attributes (BGP attributes or OSPF metrics), then the Logical ID of the next-hop device, then route age (oldest wins). You can change the outcome by **pinning** a route, adjusting BGP local preference or OSPF costs, or editing preferred exits.
+OSPF external types (OE1, OE2) are printed with far larger numbers, so they lose to BGP. The diagnostics agree: an OSPF route with an intra- or inter-area metric beats a BGP route, and a BGP route beats an OE1 or OE2 route. If preferences tie, the Edge compares protocol attributes (BGP attributes or OSPF metrics), then the Logical ID of the next-hop device, then route age (oldest wins). You can change the outcome by **pinning** a route, adjusting BGP <Term id="local-preference">local preference</Term> or OSPF costs, or editing preferred exits.
 
 <Callout variant="info" title="Our word for it">
   "Administrative distance" is the general routing term. In Arista's guides the equivalent is the route preference. The glossary keeps both names so searching either finds the entry.
@@ -90,6 +90,8 @@ The documented protections are narrow. The system redistributes **only the best 
 - **List OSPF Redistributed Routes** and **List BGP Redistributed Routes**.
 
 [Try it in the simulator](/sim/routing-demo/reachability): Branch B cannot reach a prefix behind Branch A because a redistribution check box default is not documented. Flip the switch in the Assumptions panel and watch the answer change.
+
+[Try a lab](/sim/labs/which-route-wins): three sources offer one prefix. Predict the winner and read why the others lost.
 
 ## Key takeaways
 

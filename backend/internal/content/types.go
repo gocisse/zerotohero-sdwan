@@ -95,6 +95,7 @@ type Course struct {
 	sections   map[string]*Section
 	diagrams   map[string]*Diagram
 	topologies []*Topology
+	labs       []*Lab
 }
 
 // Section is a validated section with its lessons in order.

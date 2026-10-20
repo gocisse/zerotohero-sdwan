@@ -46,6 +46,11 @@ func NewRouter(d Deps) http.Handler {
 		r.Post("/topologies/{id}/paths", PathsHandler(d.Content, d.Log))
 		r.Post("/topologies/{id}/routes", RoutesHandler(d.Content, d.Log))
 		r.Post("/topologies/{id}/reachability", ReachabilityHandler(d.Content, d.Log))
+		r.Post("/topologies/{id}/trace", TraceHandler(d.Content, d.Log))
+
+		r.Get("/self-check", SelfCheck(d.Content, d))
+		r.Post("/self-check/grade", SelfCheckGrade(d.Content, d))
+		r.Post("/self-check/screens/{taskId}/check", SelfCheckScreen(d.Content, d))
 
 		h := &progressHandlers{d: d}
 		r.Post("/sections/{id}/quiz/attempts", h.submitAttempt)
@@ -56,6 +61,15 @@ func NewRouter(d Deps) http.Handler {
 		r.Get("/progress/topics", h.topics)
 		r.Get("/review/queue", h.reviewQueue)
 		r.Post("/review/answers", h.reviewAnswers)
+
+		lh := &labHandlers{progressHandlers{d: d}}
+		r.Get("/labs", lh.list)
+		r.Get("/labs/{id}", lh.get)
+		r.Post("/labs/{id}/tasks/{taskId}/check", lh.check)
+		r.Post("/labs/{id}/fix", lh.fix)
+		r.Put("/labs/{id}/status", lh.status)
+		r.Post("/labs/{id}/hints/{n}", lh.hint)
+		r.Get("/labs/{id}/debrief", lh.debrief)
 	})
 	return r
 }

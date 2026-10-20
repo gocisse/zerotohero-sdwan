@@ -1,0 +1,107 @@
+# LAB, not a real network. Everything below happens on the teaching topology capstone-network (invented names and numbers).
+id: capstone-2-hub-incident
+title: "Capstone 2: The Hub incident"
+summary: The Primary Hub is unreachable and South's MPLS link is degraded at the same time. Work out what changes for the branches and what does not, using only behaviour the guides document.
+difficulty: 3
+estimated_minutes: 20
+topology: capstone-network
+goals: [ov-hubs, ov-diagnosis, ov-cloud-vpn, dmpo-steering]
+screens:
+  - { label: Map (the Hub tunnels), path: map }
+  - { label: Monitor > Edges > Links (mock), path: "monitor?edge=south-edge&tab=links" }
+  - { label: Path explainer, path: paths }
+  - { label: Flow tracer, path: trace }
+fault:
+  conditions:
+    hubs_unreachable: [hub-p]
+    links_degraded: [s-mpls]
+flow:
+  source: north-edge
+  destination: "edge:south-edge"
+symptom: >-
+  At 09:10 the Primary Hub stops answering, and South's MPLS link becomes degraded in the same hour. Branch to Branch
+  VPN goes through the Hubs (Hubs for VPN), with the Primary Hub first and the Secondary Hub second. This incident has no
+  configuration fix: the question is what changes and what does not. The answers rest on assumption 59 (Hub order decides
+  between Hubs), assumption 61 (with Hubs for VPN the standing path uses only Hubs), assumption 46 (a tunnel's paths are
+  the pairs of same-type links, and a tunnel stays up while one of its paths is up); the last question also rests on assumptions 32 and 81 (how the Gateway reflects a route and what a remote route keeps); the simulator shows each as a badge. What a degraded link triggers (remediation, steering away)
+  is not documented in enough detail to be asked about here.
+relies_on_assumptions: [32, 46, 59, 61, 81]
+tasks:
+  - id: which-hub
+    type: predict
+    prompt: Before you look, decide which Hub North's flow to South uses now.
+    probe: { kind: trace_path_via }
+    choices:
+      - { id: primary, text: "The Primary Hub", value: hub-p }
+      - { id: secondary, text: "The Secondary Hub", value: hub-s }
+      - { id: direct, text: "A direct tunnel, without a Hub", value: none }
+    explanation: If the primary Hub is unreachable, a Spoke updates its local flow's route to use the secondary Hub, so the Secondary Hub carries the flow.
+  - id: primary-tunnel
+    type: inspect
+    prompt: What is the state of South's Hub tunnel to the Primary Hub?
+    probe: { kind: tunnel_state, tunnel: "hub:south-edge:hub-p" }
+    choices:
+      - { id: up, text: "up", value: up }
+      - { id: degraded, text: "degraded", value: degraded }
+      - { id: down, text: "down", value: down }
+      - { id: not-established, text: "not established", value: not-established }
+    explanation: The Hub tunnel is configured and permanent, so it still exists, but the peer does not answer, so every path of it is down.
+  - id: rejected
+    type: diagnose
+    prompt: Why is the option through the Primary Hub not usable?
+    probe: { kind: path_rejected_code, field: via-hub }
+    choices:
+      - { id: peer, text: "The peer is unreachable", value: peer_unreachable }
+      - { id: cloud, text: "Cloud VPN is disabled", value: cloud_vpn_disabled }
+      - { id: traffic, text: "No traffic has flowed yet", value: no_traffic_yet }
+      - { id: nat, text: "A NAT blocks incoming UDP 2426 at the peer", value: nat_blocks_direct }
+    explanation: Hub tunnels are permanent; this one is not usable because the Hub does not answer, which is what the condition says.
+  - id: secondary-tunnel
+    type: inspect
+    prompt: South's MPLS link is degraded. What is the state of South's Hub tunnel to the Secondary Hub?
+    probe: { kind: tunnel_state, tunnel: "hub:south-edge:hub-s" }
+    choices:
+      - { id: up, text: "up", value: up }
+      - { id: degraded, text: "degraded", value: degraded }
+      - { id: down, text: "down", value: down }
+      - { id: not-established, text: "not established", value: not-established }
+    explanation: A tunnel is made of paths, one per pair of same-type links. The path through the degraded MPLS link is weak but the Internet path is healthy, so the tunnel stays up (assumption 46 says how the simulator counts paths).
+  - id: unaffected
+    type: inspect
+    prompt: What is the state of North's Hub tunnel to the Secondary Hub? (Nothing is wrong at North.)
+    probe: { kind: tunnel_state, tunnel: "hub:north-edge:hub-s" }
+    choices:
+      - { id: up, text: "up", value: up }
+      - { id: degraded, text: "degraded", value: degraded }
+      - { id: down, text: "down", value: down }
+    explanation: North's links are healthy and the Secondary Hub answers, so this tunnel is unaffected by both problems.
+  - id: still-delivered
+    type: inspect
+    prompt: In the reachability explainer, can North still reach 10.30.0.0/24 behind South? What is the outcome?
+    probe:
+      kind: reach_outcome
+      flow: { source: north-edge, destination: 10.30.0.0/24 }
+    choices:
+      - { id: reachable, text: "reachable", value: reachable }
+      - { id: unreachable, text: "unreachable", value: unreachable }
+    explanation: The Secondary Hub is reachable and the route to South's LAN does not depend on which Hub carries it, so the prefix is still reachable; only the Hub it uses changed.
+hints:
+  - { task: which-hub, text: "Branch to Branch goes through the Hubs. Ask which Hub is next in the list when the first does not answer." }
+  - { task: primary-tunnel, text: "Open the map and select the line from South to the Primary Hub." }
+  - { task: secondary-tunnel, text: "A degraded link weakens one path, not the whole tunnel." }
+  - { task: unaffected, text: "Compare with a Spoke that has no problem at all." }
+debrief:
+  - finding: "Which Hub carries the branch-to-branch flow now, and whether a Dynamic tunnel exists."
+    where: "Observing tunnels: Diagnostics > Remote Diagnostics > List Paths"
+  - finding: "The state and quality of each path of South's tunnels, including the degraded MPLS link."
+    where: "The Paths tab shows paths to peers"
+  - finding: "The per-link metrics of South's MPLS link."
+    where: "The Links tab lists per-link metrics"
+  - finding: "Branch-to-branch connectivity between two Edges, pass or fail."
+    where: "VPN Test (branch-to-branch connectivity between Edges, Pass or Fail, latency)"
+  - finding: "Which Hub was named in the traffic that went through the Hub."
+    where: "Monitor > Firewall Logs records VPN traffic via Hub"
+  - finding: "The tunnel-specific event names for the Hub going down are not confirmed by the guides read."
+    where: "Monitor > Events"
+    unverified: true
+    note: The guides list link and Edge events in an appendix; the event names for a Hub tunnel going down were not read. Confirm them in a lab VCO.

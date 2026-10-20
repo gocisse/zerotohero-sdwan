@@ -35,7 +35,7 @@ You can add several routes for the same network with different metrics; the Edge
 <Diagram id="rt-static-flags" />
 
 - **Preferred** is about the *local* decision on this Edge: with it, the static route wins over a route learned through the VPN; without it, any available VPN route can match first, and the static route is a last resort.
-- **Advertise** is about *global reachability*: with it, the route is shared over VCRP so other Edges can reach the prefix, and it can be redistributed into BGP or OSPF. Without it, the route stays local. Leave it off for private resources.
+- **Advertise** is about *global reachability*: with it, the route is shared over VCRP so other Edges can reach the prefix, and it can be redistributed into BGP or <Term id="ospf">OSPF</Term>. Without it, the route stays local. Leave it off for private resources.
 
 <Predict
   prompt="You add a static route for 192.168.50.0/24 behind a LAN router and tick Preferred but not Advertise. What can reach that prefix through this Edge?"

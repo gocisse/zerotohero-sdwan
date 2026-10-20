@@ -1,0 +1,54 @@
+# LAB, not a real network. Everything below happens on the teaching topology hub-and-spoke-demo (invented names and numbers).
+id: mtu-ipsec
+title: MTU - a large packet on an IPsec path
+summary: Spoke Edge 3's Internet link has a 1400-byte MTU. Work out what that does to the packets of a VPN flow, using only the overhead numbers the guides print. This lab is diagnose-only.
+difficulty: 3
+estimated_minutes: 12
+topology: hub-and-spoke-demo
+goals: [arch-mtu-overhead]
+screens:
+  - { label: Path explainer (MTU line), path: paths }
+  - { label: Monitor > Edges > Links of Spoke Edge 3, path: "monitor?edge=spoke-3-edge&tab=links" }
+fault: {}
+flow:
+  source: spoke-3-edge
+  destination: "edge:spoke-1-edge"
+  packet_size: 1350
+symptom: >-
+  Users behind Spoke Edge 3 say large transfers to Spoke Edge 1 are slow. The Internet link of Spoke Edge 3 has an MTU of
+  1400 bytes. VPN (IPsec) traffic adds 97 to 112 bytes of overhead. The guides do not give a fix for this and the lab
+  does not ask for one. It relies on assumptions 64 (a link's MTU is its authored value) and 66 (flows between Edges
+  are VPN traffic).
+relies_on_assumptions: [64, 66]
+tasks:
+  - id: effective-min
+    type: inspect
+    prompt: What is the smallest effective packet MTU, in bytes, of the first leg of this flow?
+    probe: { kind: trace_mtu_min }
+    choices:
+      - { id: a, text: "1388", value: "1388" }
+      - { id: b, text: "1288", value: "1288" }
+      - { id: c, text: "1341", value: "1341" }
+      - { id: d, text: "1400", value: "1400" }
+    explanation: The path MTU is 1400. VPN overhead is up to 112 bytes, so the smallest effective MTU is 1400 - 112 = 1288 bytes.
+  - id: limiting
+    type: diagnose
+    prompt: What limits the path MTU?
+    probe: { kind: trace_mtu_limiting }
+    choices:
+      - { id: link, text: "The 1400-byte Internet link of Spoke Edge 3", value: link s3-inet }
+      - { id: hub, text: "The Hub's link", value: link hp-inet }
+      - { id: max, text: "The 1500-byte maximum", value: the 1500-byte maximum }
+    explanation: The path MTU is the smaller of the two links of the first leg, and Spoke Edge 3's link is the smaller one.
+  - id: predict-fit
+    type: predict
+    prompt: Decide first - what happens to a 1350-byte packet on this path?
+    probe: { kind: trace_mtu_fit, size: 1350 }
+    choices:
+      - { id: fits, text: "It fits in every case", value: fits }
+      - { id: depends, text: "It fits or not depending on the padding of that packet", value: depends_on_padding }
+      - { id: frag, text: "It is larger than the effective MTU, so the Edge fragments it", value: fragments }
+    explanation: The effective MTU is between 1288 and 1303 bytes. 1350 is larger than both, so the Edge fragments the packet (IP fragmentation, RFC 791).
+hints:
+  - { task: effective-min, text: Subtract the larger overhead from the path MTU to get the smaller effective MTU. }
+  - { task: limiting, text: The path explainer shows which link limits the MTU. }

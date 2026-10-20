@@ -19,8 +19,8 @@ A <Term id="prefix" /> such as a branch LAN reaches another site in three stages
 
 <Diagram id="rt-lan-to-lan" />
 
-1. **Learned locally.** The Edge gets the prefix from a directly connected interface, from a static route you configured, or from a dynamic protocol (OSPF or BGP) with a LAN router. Arista calls these *local routes*.
-2. **Carried across the overlay.** The Edge sends its locally learned routes to the Gateway, according to its configuration. The Gateway acts as a route reflector, so every Edge learns the routes without a full mesh of tunnels. The overlay's routing protocol is <Term id="vcrp" />.
+1. **Learned locally.** The Edge gets the prefix from a directly connected interface, from a <Term id="static-route">static route</Term> you configured, or from a dynamic protocol (<Term id="ospf">OSPF</Term> or BGP) with a LAN router. Arista calls these *local routes*.
+2. **Carried across the overlay.** The Edge sends its locally learned routes to the Gateway, according to its configuration. The Gateway acts as a route reflector, reflecting routes from one Edge to the others based on Profile settings, so those Edges learn the routes without a full mesh of tunnels. The overlay's routing protocol is <Term id="vcrp" />.
 3. **Handed to the remote LAN.** A remote Edge installs the route as a *remote route* learned through VCRP and, if you enable it, redistributes it to its own LAN routers.
 
 Each stage is a separate switch. A prefix can be perfectly healthy in stage 1 and still never reach stage 3: this section is about finding which stage stopped it.
@@ -34,11 +34,11 @@ Each Edge builds a <Term id="routing-table">routing table</Term> (the guides use
 | Type | the <Term id="route-type" />, such as Cloud, Edge2Edge or any (underlay or connected) |
 | Cost, Preference, Order | the numbers used to compare routes |
 | Reachable | whether the route is currently usable, with a reason code |
-| Next Hop | the exit interface for local routes; for overlay routes the kind of next hop (Cloud gateway, Cloud VPN, edge to edge) |
+| <Term id="next-hop">Next Hop</Term> | the exit interface for local routes; for overlay routes the kind of next hop (Cloud gateway, Cloud VPN, edge to edge) |
 | Lost Reason | why a route lost to the next preferred one |
 
 <Callout variant="info" title="Route preference, not administrative distance">
-  Many routers rank route sources by an *administrative distance*. The Arista guides do not use that term. They use a fixed order of operations and a numeric <Term id="route-preference" />, where a lower value wins. Lesson 5 covers it.
+  Many routers rank route sources by an *<Term id="administrative-distance">administrative distance</Term>*. The Arista guides do not use that term. They use a fixed order of operations and a numeric <Term id="route-preference" />, where a lower value wins. Lesson 5 covers it.
 </Callout>
 
 ## Where a route can come from
@@ -67,12 +67,12 @@ Diagnostics report routes per segment, and you can run Route Table Dump for one 
 
 ## What you would see in the VCO
 
-- **Configure > Edges > (Edge) > Device > Routing & NAT**: Static Route Settings, OSPF, BGP, Overlay Route Control.
-- **Configure > Overlay Flow Control**: the overlay's route list and exits (lesson 7).
+- **Configure > Edges > (Edge) > Device > Routing & NAT**: Static Route Settings, OSPF, BGP, <Term id="overlay-route-control">Overlay Route Control</Term>.
+- **Configure > <Term id="overlay-flow-control">Overlay Flow Control</Term>**: the overlay's route list and exits (lesson 7).
 - **Diagnostics > Remote Diagnostics > Route Table Dump** and **List Routes per Prefix**.
-- **Monitor > Routing**: BGP neighbor state and the Gateway route table.
+- **Monitor > Routing**: <Term id="bgp-neighbor">BGP neighbor</Term> state and the Gateway route table.
 
-[Try it in the simulator](/sim/routing-demo/routes): a teaching network with OSPF, BGP, a static route and a default route. Read each Edge's route table in the layout of the Route Table Dump test and see where every route came from.
+[Try it in the simulator](/sim/routing-demo/routes): a teaching network with OSPF, BGP, a static route and a <Term id="default-route">default route</Term>. Read each Edge's route table in the layout of the Route Table Dump test and see where every route came from.
 
 ## Key takeaways
 

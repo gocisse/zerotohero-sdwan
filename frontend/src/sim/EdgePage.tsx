@@ -5,6 +5,7 @@ import ErrorPanel from '../components/ErrorPanel'
 import BusinessPolicyTab from './BusinessPolicyTab'
 import DeviceTab from './DeviceTab'
 import FirewallTab from './FirewallTab'
+import { keepLab, withLab } from './labParams'
 import { useTopologyCtx } from './topologyContext'
 import { useAsync } from './useAsync'
 
@@ -18,7 +19,7 @@ const TABS = [
 
 /** Mock Edge editor: /sim/:topologyId/edges/:edgeId?tab=device|business-policy|firewall. */
 export default function EdgePage() {
-  const { topologyId, detail } = useTopologyCtx()
+  const { topologyId, detail, labSearch } = useTopologyCtx()
   const { edgeId = '' } = useParams()
   const [params, setParams] = useSearchParams()
   const tabRefs = useRef<(HTMLButtonElement | null)[]>([])
@@ -28,7 +29,7 @@ export default function EdgePage() {
   const select = (i: number) => {
     const t = TABS[(i + TABS.length) % TABS.length]
     if (!t) return
-    setParams({ tab: t.id }, { replace: true })
+    setParams(keepLab(params, { tab: t.id }), { replace: true })
     tabRefs.current[(i + TABS.length) % TABS.length]?.focus()
   }
 
@@ -37,7 +38,7 @@ export default function EdgePage() {
     return (
       <ErrorPanel title={`Edge "${edgeId}" is not in this topology`}>
         <p className="mt-2 text-sm">
-          <Link to={`/sim/${topologyId}`} className="underline">
+          <Link to={withLab(`/sim/${topologyId}`, labSearch)} className="underline">
             Back to Configure &gt; Edges
           </Link>
         </p>
@@ -52,7 +53,7 @@ export default function EdgePage() {
   return (
     <div>
       <p className="text-sm text-slate-500 dark:text-slate-400">
-        <Link to={`/sim/${topologyId}`} className="underline">
+        <Link to={withLab(`/sim/${topologyId}`, labSearch)} className="underline">
           Configure &gt; Edges
         </Link>{' '}
         / {ec.edge.name}
@@ -84,7 +85,7 @@ export default function EdgePage() {
             aria-selected={active === t.id}
             aria-controls={`panel-${t.id}`}
             tabIndex={active === t.id ? 0 : -1}
-            onClick={() => setParams({ tab: t.id }, { replace: true })}
+            onClick={() => setParams(keepLab(params, { tab: t.id }), { replace: true })}
             onKeyDown={(e) => {
               if (e.key === 'ArrowRight') {
                 e.preventDefault()

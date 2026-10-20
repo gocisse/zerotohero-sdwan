@@ -5,6 +5,7 @@ import ErrorPanel from '../components/ErrorPanel'
 import { useCourseState } from '../course/context'
 import { formatDateTime, pct } from '../lib/course'
 import { useProgress } from '../progress/context'
+import GoalCoverageView from '../progress/GoalCoverageView'
 
 export default function ProgressPage() {
   const course = useCourseState()
@@ -56,6 +57,37 @@ export default function ProgressPage() {
         <p className="mt-2 text-sm text-slate-600 dark:text-slate-400">
           {progress.lessons_completed} of {progress.lessons_total} lessons completed
         </p>
+      </section>
+
+      <GoalCoverageView progress={progress} topics={topics} />
+
+      <section
+        aria-label="Labs"
+        className="mt-6 rounded-lg border border-slate-200 p-5 dark:border-slate-800"
+        data-labs-block
+      >
+        <div className="flex flex-wrap items-baseline justify-between gap-2">
+          <h2 className="font-medium">Labs</h2>
+          <Link to="/sim/labs" className="text-sm underline">
+            All labs
+          </Link>
+        </div>
+        <p className="mt-1 text-sm text-slate-600 dark:text-slate-400" data-testid="labs-summary">
+          {progress.labs.completed} of {progress.labs.total} completed · {progress.labs.started} in progress ·{' '}
+          {progress.labs.skipped} skipped. Labs are optional.
+        </p>
+        <ul className="mt-2 space-y-1 text-sm">
+          {progress.labs.items.map((l) => (
+            <li key={l.lab_id} data-lab-progress={l.lab_id} data-lab-status={l.status}>
+              <Link to={`/sim/labs/${l.lab_id}`} className="underline">
+                {l.title}
+              </Link>
+              : {l.status.replace('_', ' ')}
+              {l.attempts > 0 ? ` · ${l.attempts} checks` : ''}
+              {l.hints_used > 0 ? ` · ${l.hints_used} hints` : ''}
+            </li>
+          ))}
+        </ul>
       </section>
 
       <section

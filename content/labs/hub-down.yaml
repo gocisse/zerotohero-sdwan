@@ -1,0 +1,78 @@
+# LAB, not a real network. Everything below happens on the teaching topology hub-and-spoke-demo (invented names and numbers).
+id: hub-down
+title: A Hub is down - what do Spokes do?
+summary: The primary Hub is unreachable. See what a Spoke's flows do about it, using only the behaviour the guides document.
+difficulty: 2
+estimated_minutes: 10
+topology: hub-and-spoke-demo
+goals: [ov-hubs, ov-diagnosis]
+screens:
+  - { label: Map (the Hub tunnels), path: map }
+  - { label: Path explainer, path: paths }
+  - { label: Timeline (Hub failover), path: timeline }
+fault:
+  conditions:
+    hubs_unreachable: [hub-p-edge]
+flow:
+  source: spoke-1-edge
+  destination: "edge:spoke-2-edge"
+symptom: >-
+  Spoke Edge 1 and Spoke Edge 2 reach each other through their Hubs (Branch to Branch is set to Hubs for VPN). The
+  Primary Hub has just become unreachable. The guides say what a Spoke does with its own flows; they do not say
+  everything, and this lab asks only about what they say (it does not ask about local flows after the primary Hub returns,
+  which is not documented). The answers also rest on assumption 59 (Hub order decides between
+  Hubs), assumption 61 (with Hubs for VPN the standing path uses only Hubs) and assumption 46 (a tunnel's paths are the
+  pairs of same-type links); the simulator shows each as a badge.
+relies_on_assumptions: [46, 59, 61]
+tasks:
+  - id: which-hub
+    type: predict
+    prompt: Before you look, decide which Hub Spoke Edge 1's flow to Spoke Edge 2 uses now.
+    probe: { kind: trace_path_via }
+    choices:
+      - { id: primary, text: "The Primary Hub", value: hub-p-edge }
+      - { id: secondary, text: "The Secondary Hub", value: hub-s-edge }
+      - { id: cluster, text: "The Hub cluster", value: hub-cluster }
+      - { id: none, text: "No path", value: none }
+    explanation: If the primary Hub goes down, the Spoke updates its local flow's route to use the secondary Hub, which is why the Secondary Hub carries the flow.
+  - id: tunnel-state
+    type: inspect
+    prompt: What is the state of Spoke Edge 1's tunnel to the Primary Hub?
+    probe: { kind: tunnel_state, tunnel: "hub:spoke-1-edge:hub-p-edge" }
+    choices:
+      - { id: up, text: "up", value: up }
+      - { id: degraded, text: "degraded", value: degraded }
+      - { id: down, text: "down", value: down }
+      - { id: notest, text: "not established", value: not-established }
+    explanation: The Hub tunnel is permanent and configured, so it still exists; its paths are down because the peer is unreachable.
+  - id: why-rejected
+    type: diagnose
+    prompt: Why is the option through the Primary Hub rejected?
+    probe: { kind: path_rejected_code, field: via-hub }
+    choices:
+      - { id: peer, text: "The Hub is unreachable", value: peer_unreachable }
+      - { id: b2h, text: "Branch to Hub is not enabled", value: branch_to_hub_disabled }
+      - { id: linkdown, text: "The Spoke's WAN link is down", value: link_down }
+      - { id: nolink, text: "The two Edges share no matching link pair", value: no_matching_link_pair }
+    explanation: The Spoke's own links are up and the tunnel is configured; the Hub it points at cannot be reached, so that option is rejected and the next Hub is used.
+  - id: peer-flows
+    type: predict
+    prompt: >-
+      The Primary Hub comes back after a minute. Which Hub do PEER flows (flows another Spoke started toward Spoke Edge 1)
+      keep using until they are flushed?
+    probe:
+      kind: timeline_peer_hub
+      edge: spoke-1-edge
+      events:
+        - { at_s: 10, type: hub_down, target: hub-p-edge }
+        - { at_s: 60, type: hub_up, target: hub-p-edge }
+    choices:
+      - { id: primary, text: "The Primary Hub again, as soon as it is back", value: hub-p-edge }
+      - { id: secondary, text: "The Secondary Hub: they are not moved back until flushed", value: hub-s-edge }
+    explanation: >-
+      The guides say that when the primary Hub returns, peer flows are not moved back; the affected flows must be flushed.
+      Whether a Spoke's own (local) flows move back is not documented, so this lab does not ask.
+hints:
+  - { task: which-hub, text: The Hub list in the Spoke's Profile is ordered. The order matters when the first one is not usable. }
+  - { task: tunnel-state, text: The map lists the Spoke's tunnels with a state for each. }
+  - { task: why-rejected, text: Run the path explainer and read the reason of the first rejected option. }

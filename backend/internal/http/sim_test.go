@@ -187,3 +187,47 @@ func TestRoutingEndpoints(t *testing.T) {
 		})
 	}
 }
+
+func TestTraceEndpoint(t *testing.T) {
+	course, err := content.Load(os.DirFS("../content/testdata/valid"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	src := fakeContent{c: course}
+	post := func(path, body string) *httptest.ResponseRecorder {
+		rec := httptest.NewRecorder()
+		simRouter(t, src).ServeHTTP(rec, httptest.NewRequest(http.MethodPost, path, strings.NewReader(body)))
+		return rec
+	}
+	tests := []struct {
+		name         string
+		rec          *httptest.ResponseRecorder
+		wantCode     int
+		wantContains []string
+	}{
+		{"delivered", post("/api/topologies/tiny/trace", `{"flow":{"source":"e2","destination":"10.9.0.4"}}`), 200,
+			[]string{`"verdict":"delivered"`, `"id":"segment"`, `"id":"policy"`, `"id":"firewall"`, `"id":"route"`, `"id":"path"`, `"id":"remediation"`, `"id":"mtu"`, `"id":"return"`, `"fw_default_action"`, `"depends_on"`, `"summary"`}},
+		{"unreachable names the stage", post("/api/topologies/tiny/trace", `{"flow":{"source":"e2","destination":"10.9.0.4"},"conditions":{"links_down":["l1"]}}`), 200, []string{`"verdict":"unreachable"`}},
+		{"firewall default switch", post("/api/topologies/tiny/trace", `{"flow":{"source":"e2","destination":"10.9.0.4"},"assumptions":{"fw_default_action":"drop"}}`), 200, []string{`"verdict":"blocked"`, `"blocked_stage":"firewall"`}},
+		{"bad assumption", post("/api/topologies/tiny/trace", `{"flow":{"source":"e2","destination":"10.9.0.4"},"assumptions":{"fw_evaluation":"x"}}`), 400, []string{"invalid_assumptions"}},
+		{"bad flow", post("/api/topologies/tiny/trace", `{"flow":{"source":"zz","destination":"10.9.0.4"}}`), 400, []string{"invalid_query"}},
+		{"bad json", post("/api/topologies/tiny/trace", `{`), 400, []string{"bad_request"}},
+		{"unknown topology", post("/api/topologies/zz/trace", `{}`), 404, []string{"not_found"}},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			body := tt.rec.Body.String()
+			if tt.rec.Code != tt.wantCode {
+				t.Fatalf("code = %d, want %d: %s", tt.rec.Code, tt.wantCode, body)
+			}
+			if !json.Valid([]byte(body)) {
+				t.Errorf("body is not JSON: %s", body)
+			}
+			for _, s := range tt.wantContains {
+				if !strings.Contains(body, s) {
+					t.Errorf("body missing %q: %s", s, body)
+				}
+			}
+		})
+	}
+}

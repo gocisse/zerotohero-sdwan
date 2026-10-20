@@ -1,4 +1,5 @@
 import { Link } from 'react-router-dom'
+import { withLab } from './labParams'
 import { useTopologyCtx } from './topologyContext'
 
 const link =
@@ -6,7 +7,7 @@ const link =
 
 /** Mock "Configure > Edges" (and a small "Configure > Profiles" with a Used By column). */
 export default function EdgesPage() {
-  const { detail, topologyId } = useTopologyCtx()
+  const { detail, topologyId, labSearch } = useTopologyCtx()
   const t = detail.topology
   const edges = t.sites.flatMap((s) => s.edges.map((e) => ({ ...e, site: s })))
   const used = (pid: string) => edges.filter((e) => e.profile === pid).length
@@ -45,7 +46,7 @@ export default function EdgesPage() {
                     className="border-b border-slate-100 last:border-b-0 dark:border-slate-800/60"
                   >
                     <td className="px-3 py-2">
-                      <Link to={`/sim/${topologyId}/edges/${e.id}`} className={link}>
+                      <Link to={withLab(`/sim/${topologyId}/edges/${e.id}`, labSearch)} className={link}>
                         {e.name}
                       </Link>
                     </td>
@@ -54,12 +55,15 @@ export default function EdgesPage() {
                     <td className="px-3 py-2">{p?.name ?? e.profile}</td>
                     <td className="px-3 py-2">{n > 0 ? `${n} device setting${n === 1 ? '' : 's'}` : 'none'}</td>
                     <td className="px-3 py-2">
-                      <Link to={`/sim/${topologyId}/edges/${e.id}?tab=business-policy`} className={link}>
+                      <Link
+                        to={withLab(`/sim/${topologyId}/edges/${e.id}?tab=business-policy`, labSearch)}
+                        className={link}
+                      >
                         Business Policy
                       </Link>
                     </td>
                     <td className="px-3 py-2">
-                      <Link to={`/sim/${topologyId}/edges/${e.id}?tab=firewall`} className={link}>
+                      <Link to={withLab(`/sim/${topologyId}/edges/${e.id}?tab=firewall`, labSearch)} className={link}>
                         Firewall
                       </Link>
                     </td>

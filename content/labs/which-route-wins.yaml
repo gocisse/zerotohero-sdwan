@@ -1,0 +1,64 @@
+# LAB, not a real network. Everything below happens on the teaching topology routing-demo (invented names and numbers).
+id: which-route-wins
+title: Which route wins, and why?
+summary: One prefix reaches Branch C from three places - a static route, an OSPF route and a BGP route with a very high local preference. Predict the winner, then read why the others lost.
+difficulty: 3
+estimated_minutes: 15
+topology: routing-demo
+goals: [rt-redistribution, rt-bgp, rt-ofc]
+screens:
+  - { label: Remote Diagnostics > Route Table Dump (mock) for Branch C, path: routes }
+  - { label: Reachability explainer, path: reachability }
+fault:
+  patches:
+    - op: append
+      path: edges[hub-edge]/routing/static_routes
+      value: { id: shared-static, subnet: 10.40.0.0/24, interface: ge1, preferred: true, advertise: true, description: Shared service reached through the Hub }
+    - op: set
+      path: edges[b-edge]/routing/lan_routes[b-shared]/bgp/local_preference
+      value: 900
+flow:
+  source: c-edge
+  destination: 10.40.0.9
+symptom: >-
+  10.40.0.0/24 is offered by the Hub (a static route with Preferred and Advertise ticked), by Branch A (OSPF intra-area)
+  and by Branch B (eBGP, with local preference 900 set by its LAN router). Branch C has all three in its table. The order
+  of operations and route preferences are the ones the guides print. The lab also rests on assumption 23 (a BGP filter
+  permits what it does not match, so Branch B's route is installed), assumption 69 (the static Advertise flag is on),
+  assumption 81 (a remote route keeps the owner's attributes) and assumption 32 (the Gateway reflects to Edges with Cloud VPN
+  on); each shows as a badge and the first two have switches.
+relies_on_assumptions: [23, 32, 69, 81]
+tasks:
+  - id: predict-winner
+    type: predict
+    prompt: Before you open the route table, decide which source wins at Branch C.
+    probe: { kind: route_field, edge: c-edge, prefix: 10.40.0.0/24, rank: 1, field: source }
+    choices:
+      - { id: static, text: "The remote static route from the Hub", value: remote-static }
+      - { id: dyn, text: "A dynamic route learned by OSPF at Branch A or by BGP at Branch B", value: remote-dynamic }
+      - { id: nsd, text: "A remote Non SD-WAN static route", value: nsd-remote }
+      - { id: conn, text: "A connected route", value: connected }
+    explanation: The order of operations puts remote Edge routes (remote connected, then remote static) ahead of every dynamic route, so the static route wins before any preference number is compared.
+  - id: second
+    type: inspect
+    prompt: Which route type is second in Branch C's candidate list?
+    probe: { kind: route_field, edge: c-edge, prefix: 10.40.0.0/24, rank: 2, field: route_type }
+    choices:
+      - { id: o, text: "OSPF intra-area (O)", value: O }
+      - { id: ebgp, text: "eBGP", value: eBGP }
+      - { id: ibgp, text: "iBGP", value: iBGP }
+      - { id: oe2, text: "OSPF external type 2", value: O E2 }
+    explanation: Among dynamic routes the lower preference wins. OSPF intra-area is 1001 and eBGP is 1003, so OSPF comes first.
+  - id: why-bgp-lost
+    type: diagnose
+    prompt: Why does the eBGP route, with local preference 900, lose to the OSPF route?
+    probe: { kind: route_field, edge: c-edge, prefix: 10.40.0.0/24, rank: 3, field: lost_reason_code }
+    choices:
+      - { id: lp, text: "Its local preference is lower", value: LR_BGP_LOCAL_PREF }
+      - { id: aspath, text: "Its AS path is longer", value: LR_BGP_ASPATH_LEN }
+      - { id: inter, text: "An OSPF intra-area or inter-area route beats a BGP route", value: LR_EXT_OSPF_INTER }
+      - { id: metric, text: "Its OSPF metric is higher", value: LR_EXT_METRIC_VAL }
+    explanation: Local preference only compares two BGP routes. Between an OSPF intra-area route and a BGP route the guides' diagnostics say OSPF wins (LR_EXT_OSPF_INTER), however high the local preference is.
+hints:
+  - { task: predict-winner, text: "The guides give a fixed order of operations before any numbers are compared. Where do remote Edge routes sit in it?" }
+  - { task: why-bgp-lost, text: "Read Lost Reason in the Route Table Dump for Branch C. The code names the comparison that decided." }

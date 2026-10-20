@@ -15,21 +15,21 @@ topics: [config-business-policy]
 
 ## Match and action
 
-The business policy lets the administrator control QoS, steering and services for application traffic. A rule has a **Match** and an **Action**: *which traffic, and what to do with it*.
+The business policy lets the administrator control <Term id="qos">QoS</Term>, steering and services for application traffic. A rule has a **Match** and an **Action**: *which traffic, and what to do with it*.
 
 <Diagram id="cfg-bp-classify" />
 
 **Match** (the Match tab):
 - **Source**: Any, an object group, or Define (VLAN, interface, IP address, ports, operating system).
 - **Destination**: Any, an object group, or Define (Internet, Edge, Non SD-WAN Destination, domain name, protocol, ports).
-- **Application**: Any, or a specific application, optionally with a DSCP value to match.
+- **Application**: Any, or a specific application, optionally with a <Term id="dscp">DSCP</Term> value to match.
 - Protocols you can match: GRE, ICMP, TCP and UDP.
 
 **Action** (the Action tab):
 - **Priority**: High, Normal or Low.
 - **Network service**: Direct, Multi-Path or Internet Backhaul (the last only when the destination is Internet).
 - **Link steering**: Auto, Transport Group, Interface or WAN Link, with Mandatory, Preferred or Available. Interface and WAN Link are allowed only at the Edge override level; Transport Group works at both Profile and Edge.
-- **Service class**: Real-time, Transactional or Bulk, for custom applications only.
+- **<Term id="service-class">Service class</Term>**: Real-time, Transactional or Bulk, for custom applications only.
 - Rate limit (per flow, in both directions), NAT, and inner and outer DSCP tags.
 
 ## Order and defaults

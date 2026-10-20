@@ -69,3 +69,21 @@ type AnswerEvent struct {
 	Partial    float64
 	At         time.Time
 }
+
+// Lab statuses. "not_started" is implicit: a lab without a row.
+const (
+	LabNotStarted = "not_started"
+	LabStarted    = "started"
+	LabCompleted  = "completed"
+	LabSkipped    = "skipped"
+)
+
+// LabProgress is the stored state of one lab.
+type LabProgress struct {
+	LabID         string
+	Status        string
+	Attempts      int
+	HintsUsed     int
+	LastAttemptAt *time.Time
+	CompletedAt   *time.Time
+}

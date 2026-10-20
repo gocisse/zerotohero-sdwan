@@ -19,7 +19,7 @@ In a Profile or on an Edge: **Routing & NAT > BGP**, toggle it On and enter the 
 
 ## Neighbors, iBGP and eBGP
 
-A <Term id="bgp-neighbor">neighbor</Term> has an IP address, the neighbor's ASN, and an Inbound and an Outbound filter. If the neighbor's ASN equals yours the session is <Term id="ibgp" />; if it differs it is <Term id="ebgp" />. The visible difference in the form: **Max-hop** applies only to eBGP (default 1); with iBGP multi-hop is inherent and the field is fixed. The timers are Keep-alive 60 s and Hold 180 s by default. The **Uplink** flag marks a neighbor that is your WAN overlay towards MPLS, with an Uplink Community.
+A <Term id="bgp-neighbor">neighbor</Term> has an IP address, the neighbor's ASN, and an Inbound and an Outbound filter. If the neighbor's ASN equals yours the session is <Term id="ibgp" />; if it differs it is <Term id="ebgp" />. The visible difference in the form: **Max-hop** applies only to eBGP (default 1); with iBGP multi-hop is inherent and the field is fixed. The timers are Keep-alive 60 s and Hold 180 s by default. The **Uplink** flag marks a neighbor that is your WAN overlay towards MPLS, with an Uplink <Term id="community">Community</Term>.
 
 <Callout variant="info" title="Two kinds of BGP">
   The Gateway reflects overlay routes between Edges with its own route-reflector behaviour (VCRP). That is not the BGP session you configure with a LAN router; do not confuse the two.
@@ -29,7 +29,7 @@ A <Term id="bgp-neighbor">neighbor</Term> has an IP address, the neighbor's ASN,
 
 <Diagram id="rt-redistribution" />
 
-1. **Redistribution into BGP** (Advanced Settings). **Overlay Prefix** redistributes prefixes learned from the overlay; **Connected Routes** redistributes the connected interface subnets; **OSPF** redistributes OSPF routes, with BGP metric 20 by default. Defaults for Overlay Prefix and Connected Routes are not stated.
+1. **<Term id="redistribution">Redistribution</Term> into BGP** (Advanced Settings). **Overlay Prefix** redistributes prefixes learned from the overlay; **Connected Routes** redistributes the connected interface subnets; **OSPF** redistributes OSPF routes, with BGP metric 20 by default. Defaults for Overlay Prefix and Connected Routes are not stated.
 2. **Network statement.** The **Default Route** option adds a network statement to advertise the default route to the neighbor; the **Networks** field lists network addresses BGP advertises. A network statement names a prefix; redistribution names a *source*.
 3. **Default route behaviour.** Neighbor and global settings combine and the neighbor wins: Yes/Yes always advertises the default route, No/No never; Conditional advertises it only when the Edge learns one.
 
@@ -58,7 +58,7 @@ A BGP route enters the overlay route table when List BGP Routes shows **advertis
 
 ## What you would see in the VCO
 
-- **Configure > Profiles or Edges > Device > Routing & NAT > BGP**: Local ASN, Neighbors, Advanced Settings, Filter List.
+- **Configure > Profiles or Edges > Device > Routing & NAT > BGP**: Local ASN, Neighbors, Advanced Settings, <Term id="bgp-filter">Filter List</Term>.
 - **Monitor > Routing > BGP Edge Neighbor State**, plus the Diagnostics tests above.
 
 ## Key takeaways

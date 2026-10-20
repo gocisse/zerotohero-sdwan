@@ -1,0 +1,164 @@
+# LAB, not a real network. Everything below happens on the teaching topology capstone-network (invented names and numbers).
+id: capstone-1-monday-morning
+title: "Capstone 1: Monday morning"
+summary: Two tickets arrive at once. South cannot reach a prefix behind North, and bulk transfers from South take the MPLS link. Several things are wrong; find them in a sensible order with the flow tracer and the mock screens, then fix them.
+difficulty: 3
+estimated_minutes: 25
+topology: capstone-network
+goals: [rt-diagnosis, rt-bgp, rt-redistribution, cfg-business-policy, cfg-overrides, dmpo-steering]
+screens:
+  - { label: Flow tracer (start here), path: trace }
+  - { label: Reachability explainer, path: reachability }
+  - { label: Remote Diagnostics > Route Table Dump (mock), path: routes }
+  - { label: Configure > Edges > South Edge > Business Policy, path: "edges/south-edge?tab=business-policy" }
+  - { label: Path explainer (flow and link steering), path: paths }
+fault:
+  patches:
+    - op: set
+      path: edges[south-edge]/routing/bgp/redistribute
+      value: { overlay_prefix: false }
+    - op: append
+      path: edges[south-edge]/overrides/business_rules
+      value:
+        id: south-bulk-mpls
+        name: Bulk pinned to MPLS (old ticket)
+        segment: global
+        match: { application: bulk }
+        action:
+          priority: low
+          network_service: multipath
+          steering: { mode: wan_link, link: s-mpls, strictness: mandatory }
+flow:
+  source: south-edge
+  destination: 10.20.0.0/24
+symptom: >-
+  Ticket 1: hosts at South cannot reach 10.20.0.0/24, which sits behind North (OSPF to its LAN router). Ticket 2: the
+  nightly bulk transfer from South to the data center goes over the MPLS link, but the Branch Profile asks for the
+  Internet link. The two tickets may or may not share a cause. Where the guides describe the behaviour the simulator
+  uses it; where they do not it uses assumptions: 83 (the reachability stages follow the diagnostic order of lesson 8,
+  and the redistribution stage applies to an Edge that runs OSPF or BGP), 22 (the redistribution check boxes are all off
+  by default, until observed), 32 and 81 (how the Gateway reflects a route and what a remote route keeps), 86 (a firewall
+  with no matching rule allows the flow), 1 and 3 (first match wins, Edge rules above Profile rules), 62 (link steering
+  applies to the first leg), 67 (the current link states are used) and 90 (how a rule matches a flow). Each shows as a
+  badge.
+relies_on_assumptions: [1, 3, 22, 32, 62, 67, 81, 83, 86, 90]
+tasks:
+  - id: first-look
+    type: inspect
+    prompt: Run the flow tracer for the first ticket (South to 10.20.0.0/24). At which stage does the flow stop?
+    probe: { kind: trace_blocked_stage }
+    choices:
+      - { id: segment, text: "Segment and source interface", value: segment }
+      - { id: policy, text: "Business policy", value: policy }
+      - { id: firewall, text: "Firewall", value: firewall }
+      - { id: route, text: "Route lookup", value: route }
+      - { id: path, text: "Path selection", value: path }
+      - { id: return, text: "Return path", value: return }
+    explanation: The flow is not stopped by a policy, a firewall or a missing path. It stops where the route is looked up and handed to the LAN side.
+  - id: cause-1
+    type: diagnose
+    prompt: In the reachability explainer, which stage of the route's life fails first?
+    probe: { kind: reach_first_failing }
+    choices:
+      - { id: known, text: "The owning Edge never learned the prefix", value: known }
+      - { id: advertised, text: "The owning Edge does not advertise it into the overlay", value: advertised }
+      - { id: filtered, text: "A filter or the overlap rule holds it back", value: filtered }
+      - { id: redistributed, text: "South does not hand overlay routes to its LAN routers", value: redistributed }
+      - { id: winner, text: "No route reaches South, or another route wins", value: winner }
+      - { id: path, text: "The route exists but its path is not built", value: path }
+    explanation: North knows and advertises the prefix and South installs it. South's BGP settings do not redistribute overlay prefixes, so South's LAN router never learns the route. This is a BGP setting on the Edge, not an OSPF or overlay problem.
+  - id: other-direction
+    type: inspect
+    prompt: Is the opposite direction healthy? Trace North to 10.30.0.0/24 (South's LAN). What is the verdict?
+    probe:
+      kind: trace_verdict
+      flow: { source: north-edge, destination: 10.30.0.0/24 }
+    choices:
+      - { id: delivered, text: "delivered", value: delivered }
+      - { id: blocked, text: "blocked", value: blocked }
+      - { id: unreachable, text: "unreachable", value: unreachable }
+    explanation: North reaches South's LAN, because South advertises its LAN prefix into the overlay. The fault is in what South hands to its LAN router, not in what it advertises. Always test both directions before you blame a Hub.
+  - id: bulk-link
+    type: inspect
+    prompt: Trace South's bulk traffic to the Primary Hub. Which WAN link does the first leg use?
+    probe:
+      kind: trace_steered_link
+      flow: { source: south-edge, destination: "edge:hub-p", application: bulk }
+    choices:
+      - { id: inet, text: "s-inet (public, wired)", value: s-inet }
+      - { id: mpls, text: "s-mpls (private, wired)", value: s-mpls }
+      - { id: none, text: "No link, the flow is dropped", value: none }
+    explanation: Link steering applies to the first leg. The rule that matches asks for the MPLS link as Mandatory.
+  - id: bulk-owner
+    type: diagnose
+    prompt: Where does the rule that decides for bulk traffic come from?
+    probe:
+      kind: trace_matched_owner
+      flow: { source: south-edge, destination: "edge:hub-p", application: bulk }
+    choices:
+      - { id: edge, text: "An override on South Edge", value: South Edge }
+      - { id: profile, text: "The Branch Profile", value: Branch Profile }
+      - { id: customer, text: "A customer-wide setting", value: customer }
+    explanation: South's Business Policy tab has an Edge Overrides section next to Rules From Profile (this mock tab shows the Edge Overrides first; the guides do not say which comes first in the real tab). An Edge rule with the same match supersedes the Profile's (assumption 3), so the ticket is a second, unrelated fault.
+  - id: fix-reach
+    type: fix
+    prompt: Choose the change that makes 10.20.0.0/24 reachable from South, then check the result.
+    probe: { kind: reach_outcome }
+    equals: reachable
+    explanation: Ticking Overlay Prefix in South's BGP settings redistributes the prefixes learned from the overlay to its BGP neighbors, so its LAN router learns 10.20.0.0/24.
+  - id: fix-bulk
+    type: fix
+    prompt: Choose the change that sends South's bulk traffic over the Internet link again, then check the result.
+    probe:
+      kind: trace_steered_link
+      flow: { source: south-edge, destination: "edge:hub-p", application: bulk }
+    equals: s-inet
+    explanation: Profile rules cannot be edited at the Edge, and an Edge rule with the same match supersedes the Profile's. Removing the Edge override lets the Profile's Mandatory Internet rule decide again.
+hints:
+  - { task: first-look, text: "The flow tracer lists eight stages. Read the first one that is not green." }
+  - { task: cause-1, text: "North's side is healthy. Ask what South gives to its own LAN router." }
+  - { task: other-direction, text: "A one-way problem points at the Edge on the failing side." }
+  - { task: bulk-owner, text: "Open the Business Policy tab of South Edge and read both sections, Rules From Profile and Edge Overrides." }
+  - { task: fix-reach, text: "Lesson 4 lists the BGP check boxes. Which one sends remote prefixes to the LAN?" }
+  - { task: fix-bulk, text: "Changing the Profile will not help while another rule supersedes it." }
+fixes:
+  - id: overlay-prefix
+    title: Tick Overlay Prefix in South's BGP settings
+    description: Redistribute the prefixes learned from the overlay to South's BGP neighbors.
+    patches:
+      - { op: set, path: "edges[south-edge]/routing/bgp/redistribute/overlay_prefix", value: true }
+  - id: connected
+    title: Tick Connected Routes in South's BGP settings
+    description: Redistribute South's own interface subnets to its BGP neighbors.
+    patches:
+      - { op: set, path: "edges[south-edge]/routing/bgp/redistribute/connected", value: true }
+  - id: remove-bulk-override
+    title: Remove South's bulk override
+    description: Delete the bulk rule from South Edge's overrides so the Profile's rule applies.
+    patches:
+      - { op: remove, path: "edges[south-edge]/overrides/business_rules[south-bulk-mpls]" }
+  - id: bulk-available
+    title: Change South's bulk override to Available
+    description: Keep the Edge rule but make its link steering Available instead of Mandatory.
+    patches:
+      - { op: set, path: "edges[south-edge]/overrides/business_rules[south-bulk-mpls]/action/steering/strictness", value: available }
+  - id: profile-bulk-private
+    title: Change the Profile's bulk rule to the private wired group
+    description: Edit the Branch Profile's bulk rule so it uses the private wired transport group.
+    patches:
+      - { op: set, path: "profiles[branch]/business_rules[branch-bulk]/action/steering/group", value: private_wired }
+debrief:
+  - finding: "South's BGP settings did not redistribute overlay prefixes to its LAN router (Overlay Prefix off)."
+    where: "BGP is activated under the BGP area of Routing and NAT"
+  - finding: "To prove it you would list the routes the Edge holds for a prefix."
+    where: "List Routes per Prefix lists all possible routes"
+  - finding: "A Remote Diagnostics test shows the Edge's route table from the Orchestrator."
+    where: "Route Table Dump"
+  - finding: "Bulk traffic left on MPLS because an Edge override superseded the Profile's rule."
+    where: "Edge Business Policy tab: sections \"Rules From Profile\" and \"Edge Overrides\""
+  - finding: "You read the path of the flow on the Edge's Paths tab."
+    where: "The Paths tab shows paths to peers"
+  - finding: "Where the Overlay Prefix check box sits on the BGP screen is not confirmed by the guides read."
+    where: "Configure > Edges > (Edge) > Device tab > Routing and NAT > BGP"
+    unverified: true
+    note: The guides name Routing and NAT and a BGP area but the exact path to the Overlay Prefix check box was not read; confirm it in a lab VCO.

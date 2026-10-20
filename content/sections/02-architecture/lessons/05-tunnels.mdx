@@ -24,7 +24,7 @@ topics: [tunnel-architecture]
 | Edge or Gateway to a <Term id="non-sd-wan-destination" /> | an Edge or Gateway and a site not running VeloCloud | an IPsec tunnel (high level only here) |
 
 Which of these exist is controlled by <Term id="cloud-vpn" />, a setting you switch on per segment in the device settings of a Profile. It
-has three options: Branch to Hub VPN, Branch to Branch VPN and Edge to Non SD-WAN via Gateway.
+has three options: Branch to Hub VPN, <Term id="branch-to-branch-vpn">Branch to Branch VPN</Term> and Edge to Non SD-WAN via Gateway.
 
 ## Hubs, in concept
 
@@ -98,15 +98,15 @@ connectivity between Edges; run it when traffic between branches, or between a H
   from other Edges are blocked.
 </Predict>
 
-## What you would see in the VCO
-
-- **Configure > Profiles**, then the device settings: the **Cloud VPN** section, per segment, with the Branch to Hub and Branch to Branch options and the
-  Dynamic Branch to Branch setting.
-- **Monitor > Edges > (an Edge) > Paths**: the paths to peers. A direct tunnel to another Edge should appear among the peers while it exists.
-- **Diagnostics > Remote Diagnostics**: **List Paths** and **VPN Test**.
-
 ## Key takeaways
 
 - Each Edge builds tunnels to one or more Gateways, and to the Hubs when Branch to Hub VPN is on; Hub tunnels are permanent.
 - Dynamic branch-to-branch tunnels are built on demand, after first traffic via a Gateway or Hub, and removed after 180 seconds of silence.
 - NAT devices can block incoming direct tunnels on UDP 2426; the Gateway or Hub path is the fall-back, and List Paths tells you what exists.
+
+## What would you look for in the VCO
+
+- **Configure > Profiles**, then the device settings: the **Cloud VPN** section, per segment, with the Branch to Hub and Branch to Branch options and the
+  Dynamic Branch to Branch setting.
+- **Monitor > Edges > (an Edge) > Paths**: the paths to peers. A direct tunnel to another Edge should appear among the peers while it exists.
+- **Diagnostics > Remote Diagnostics**: **List Paths** and **VPN Test**.

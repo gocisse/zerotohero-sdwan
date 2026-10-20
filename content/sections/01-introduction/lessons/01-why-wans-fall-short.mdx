@@ -96,7 +96,14 @@ management, control and visibility**, and that having many different management 
 to threats. Compliance rules such as PCI, HIPAA and GDPR are harder to keep up across many branches when each has different security
 products from different vendors.
 
-## What you would see in the VCO
+## Key takeaways
+
+- The traditional WAN was built to carry branch traffic to applications in a data center.
+- MPLS is typically high quality but limited in capacity, costly, and slow to deploy.
+- When applications moved to SaaS, backhauling through the data center added delay and cost.
+- Broadband is quick and plentiful but not assured, so networks end up with a mix, and a new question: which traffic uses which link?
+
+## What would you look for in the VCO
 
 You have not met the Orchestrator yet (lesson 5 is a tour), but you can already see where this lesson shows up. In the Orchestrator, an
 Edge's WAN links, for example a private circuit and a broadband line side by side, are listed together on the **Links** tab of that
@@ -107,10 +114,3 @@ Edge under **Monitor > Edges**, with measurements for each. Seeing two very diff
   statement that MPLS circuits are carrier-provisioned with contractual service levels, and the exact meaning of "DIA", are general
   industry knowledge that we have not tied to a specific source (see the reference sheet <code>wan-background</code>).
 </Callout>
-
-## Key takeaways
-
-- The traditional WAN was built to carry branch traffic to applications in a data center.
-- MPLS is typically high quality but limited in capacity, costly, and slow to deploy.
-- When applications moved to SaaS, backhauling through the data center added delay and cost.
-- Broadband is quick and plentiful but not assured, so networks end up with a mix, and a new question: which traffic uses which link?

@@ -348,3 +348,19 @@ No new pages were read. The routing engine cites existing rows of `routing-overv
 
 Every Section 6 lesson was read in full against the engine. Lesson sentences changed: lesson 2 and the glossary entry for the ICMP probe said a failed probe shows SLA_STATE_DOWN (the guide only lists the code; now hedged, and assumption 72 in the simulator); lesson 3 said a passive interface advertises the connected subnet and forms no neighbors (the guides read do not say; now hedged, assumption 73). Gaps the engine has against lesson statements, none contradicted: static routes redistributed into BGP or OSPF on the owning Edge, the Networks field and Uplink flag of BGP, OSPF route filters, BGP community, AS-path regular expressions and As-Path-Exclude, the internal and uplink Global Advertise Flags, a flag taking effect only for routes learned afterwards (the engine shows the steady state), BGP per segment with a Profile default (authored per Edge), and the Gateway as the route reflector (the engine derives remote routes from advertisement and Cloud VPN settings, so a Gateway outage makes routes unreachable instead of absent).
 
+## Step 14: flow tracer and labs (no new reading)
+
+No new pages were read. The tracer and the labs cite existing rows of `business-policy`, `firewall`, `dmpo-remediation`, `mtu-overhead`, `overlay-paths` and `routing-overview`; a test checks every cited row exists and is VERIFIED or OBSERVED and every not-modelled marker cites a VERIFY row. Two VERIFY rows were added: what happens to learned routes when the reflecting Gateway is unreachable (and which Gateway reflects), and return traffic from a destination outside the SD-WAN.
+
+### Open VERIFY items that need a real-VCO observation (step 14)
+
+1. The business-policy default when no rule matches; business rule evaluation order beyond "highest precedence".
+2. Firewall rule evaluation order, the default action and whether the firewall decides before or after business policy and routing.
+3. Whether remediation is active for a flow at a given moment, and the loss thresholds.
+4. Return traffic from outside the SD-WAN; the effective MTU of Non SD-WAN tunnels.
+5. How the Gateway reflects routes when it is unreachable, and between primary and secondary Gateways.
+
+### Step 14 claim audit (self-review of the labs)
+
+Every lab text was read against the lessons and fact sheets; see the step report for the list. Labs may not rest on any VERIFY row: the validator rejects an answer that depends on a not-modelled result.
+

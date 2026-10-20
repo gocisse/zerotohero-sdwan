@@ -17,7 +17,7 @@ topics: [dmpo-overview]
 ## The problem
 
 A branch has two or three WAN links and none of them is perfect. The Internet link is fast but its quality wanders. The MPLS link is steadier but costs more. A
-traditional router picks a path by looking at a routing table and mostly ignores how well the path is performing right now. So a voice call can sit on a link
+traditional router picks a path by looking at a <Term id="routing-table">routing table</Term> and mostly ignores how well the path is performing right now. So a voice call can sit on a link
 that is losing packets while a clean link next to it stays idle.
 
 DMPO is the part of VeloCloud SD-WAN that closes that gap. It **watches** every link, **chooses** a link for each application, and **repairs** problems it cannot avoid.
@@ -34,7 +34,7 @@ an Edge can optionally connect to Gateways for cloud services. The DMPO endpoint
 1. **Measure continuously.** Loss, latency and <Term id="jitter" /> are measured on every path, in each direction separately.
 2. **Know what each application needs.** A voice call and a file transfer tolerate different things, so each application has an SLA (see <Term id="sla" />).
 3. **Steer.** Send each application over the link that currently serves it best, following the <Term id="business-policy-rule">business policy rule</Term> that matches it.
-4. **Remediate on demand.** When steering cannot help, for example with one link or with every link degraded, switch on error correction for as long as the problem lasts.
+4. **Remediate on demand.** When <Term id="link-steering">steering</Term> cannot help, for example with one link or with every link degraded, switch on <Term id="on-demand-remediation">error correction</Term> for as long as the problem lasts.
 5. **Be quick.** Arista says DMPO detects an SLA failure or an outage within 300 to 500 ms.
 
 <Predict

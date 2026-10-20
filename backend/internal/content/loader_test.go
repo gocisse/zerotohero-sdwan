@@ -136,3 +136,46 @@ func TestTopologyFileNameMustMatchID(t *testing.T) {
 		t.Errorf("missing file-name error in %v", list)
 	}
 }
+
+// Broken labs are reported with the rest of the content errors, all at once, and never crash the loader.
+func TestBrokenLabFilesAreReportedTogether(t *testing.T) {
+	tiny, _ := os.ReadFile("testdata/valid/topologies/tiny.yaml")
+	files := map[string]string{
+		"course.yaml":          "title: T\ndescription: d\nsections: []\n",
+		"topologies/tiny.yaml": string(tiny),
+		"labs/syntax.yaml":     "id: syntax\nsurprise: 1\n",
+		"labs/bad.yaml": `id: bad
+title: Bad
+summary: s
+difficulty: 9
+estimated_minutes: 5
+topology: ghost
+goals: [no-such-lesson]
+screens: [{ label: x, path: map }]
+symptom: s
+tasks: []
+hints: []
+`,
+		"labs/wrong-name.yaml": "id: other\ntitle: T\nsummary: s\ndifficulty: 1\nestimated_minutes: 1\ntopology: tiny\ngoals: [x]\nsymptom: s\ntasks: []\nhints: []\n",
+	}
+	_, err := Load(fstestFS(files))
+	var list ErrorList
+	if !errors.As(err, &list) {
+		t.Fatalf("want ErrorList, got %v", err)
+	}
+	for _, want := range []struct{ file, msg string }{
+		{"labs/syntax.yaml", "surprise"},
+		{"labs/bad.yaml", "must be 1 to 3"},
+		{"labs/bad.yaml", `unknown lesson "no-such-lesson"`},
+		{"labs/bad.yaml", `unknown topology "ghost"`},
+		{"labs/wrong-name.yaml", "must equal the file name"},
+	} {
+		found := false
+		for _, e := range list {
+			found = found || (e.File == want.file && strings.Contains(e.Message, want.msg))
+		}
+		if !found {
+			t.Errorf("missing %s: %q in %v", want.file, want.msg, list)
+		}
+	}
+}

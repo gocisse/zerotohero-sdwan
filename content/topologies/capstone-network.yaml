@@ -1,0 +1,182 @@
+# TEACHING TOPOLOGY, not a real network. Every name, prefix and number is invented. It is the practice network of the capstone labs.
+#   - one Data center site with a Primary Hub and a Secondary Hub
+#   - three branch sites (North runs OSPF to its LAN router, South runs BGP, East has a static route), all on ONE Profile
+#   - every branch has two WAN links (Internet and MPLS); the Profile has a business rule per application; East carries an Edge override
+#   - Cloud VPN is on: Branch to Hub with both Hubs, Branch to Branch via the Hubs, dynamic tunnels allowed; one Non SD-WAN Destination via Gateway
+version: 1
+meta:
+  id: capstone-network
+  title: Capstone network (teaching topology)
+  summary: A data center with a Primary and a Secondary Hub, three branches on one Profile (OSPF, BGP and a static route), two WAN links each, Cloud VPN, one Non SD-WAN Destination via Gateway, a Profile business rule and an Edge override. The practice network of the capstone labs.
+  teaching: true
+  notes: Invented for practice. Where the guides leave a default open, the simulator shows an assumption badge.
+
+customer:
+  id: capstone-co
+  name: Capstone Co (invented)
+
+segments:
+  - { id: global, name: Global Segment, type: regular }
+
+gateways:
+  - { id: gw-1, region: cap-r1, roles: [data_plane, secure_vpn] }
+
+links:
+  - { id: hp-inet, type: public, medium: wired, up_mbps: 500, down_mbps: 500 }
+  - { id: hp-mpls, type: private, medium: wired, up_mbps: 200, down_mbps: 200 }
+  - { id: hs-inet, type: public, medium: wired, up_mbps: 500, down_mbps: 500 }
+  - { id: hs-mpls, type: private, medium: wired, up_mbps: 200, down_mbps: 200 }
+  - { id: n-inet, type: public, medium: wired, up_mbps: 100, down_mbps: 100 }
+  - { id: n-mpls, type: private, medium: wired, up_mbps: 50, down_mbps: 50 }
+  - { id: s-inet, type: public, medium: wired, up_mbps: 100, down_mbps: 100 }
+  - { id: s-mpls, type: private, medium: wired, up_mbps: 50, down_mbps: 50 }
+  - { id: e-inet, type: public, medium: wired, up_mbps: 100, down_mbps: 100 }
+  - { id: e-mpls, type: private, medium: wired, up_mbps: 50, down_mbps: 50 }
+
+non_sdwan_destinations:
+  - id: azure-vhub
+    name: Azure virtual hub (invented)
+    via: gateway
+    type: azure_virtual_hub
+    mode: active_hot_standby
+    tunnels: 2
+    gateway: gw-1
+
+profiles:
+  - id: branch
+    name: Branch Profile
+    segments: [global]
+    device:
+      routing.bfd: false
+    cloud_vpn:
+      segments: [global]
+      branch_to_hub: { enabled: true, hubs: [hub-p, hub-s] }
+      branch_to_branch: { enabled: true, via: hubs_for_vpn, dynamic: true }
+      nsd_via_gateway: [azure-vhub]
+    routing:
+      ospf:
+        enabled: true
+        areas: [{ id: "0" }]
+        redistribute:
+          overlay_prefixes: true
+          default_route: none
+    business_rules:
+      - id: branch-voice
+        name: Voice prefers the private wired group
+        segment: global
+        match: { application: voice }
+        action:
+          priority: high
+          network_service: multipath
+          steering: { mode: transport_group, group: private_wired, strictness: preferred }
+      - id: branch-video
+        name: Video on public wired, Available
+        segment: global
+        match: { application: video }
+        action:
+          priority: normal
+          network_service: multipath
+          steering: { mode: transport_group, group: public_wired, strictness: available }
+      - id: branch-bulk
+        name: Bulk over the Internet link, Mandatory
+        segment: global
+        match: { application: bulk }
+        action:
+          priority: low
+          network_service: multipath
+          steering: { mode: transport_group, group: public_wired, strictness: mandatory }
+  - id: hub
+    name: Hub Profile
+    segments: [global]
+
+sites:
+  - id: dc-site
+    name: Data center
+    region: cap-r1
+    edges:
+      - id: hub-p
+        name: Primary Hub
+        role: hub
+        model: vc-hub
+        profile: hub
+        interfaces:
+          - { id: ge1, kind: wan, link: hp-inet }
+          - { id: ge2, kind: wan, link: hp-mpls }
+      - id: hub-s
+        name: Secondary Hub
+        role: hub
+        model: vc-hub
+        profile: hub
+        interfaces:
+          - { id: ge1, kind: wan, link: hs-inet }
+          - { id: ge2, kind: wan, link: hs-mpls }
+
+  - id: north-site
+    name: North branch
+    region: cap-r1
+    edges:
+      - id: north-edge
+        name: North Edge
+        role: branch
+        profile: branch
+        logical_id: 1
+        interfaces:
+          - { id: ge1, kind: wan, link: n-inet }
+          - { id: ge2, kind: wan, link: n-mpls }
+          - { id: ge3, kind: routed, address: 10.20.255.1/30 }
+        routing:
+          ospf:
+            interfaces: [{ id: ge3, mode: active, area: "0" }]
+          lan_routes:
+            - { id: north-lan, prefix: 10.20.0.0/24, protocol: ospf, via: ge3, ospf_type: intra, metric: 10 }
+
+  - id: south-site
+    name: South branch
+    region: cap-r1
+    edges:
+      - id: south-edge
+        name: South Edge
+        role: branch
+        profile: branch
+        logical_id: 2
+        interfaces:
+          - { id: ge1, kind: wan, link: s-inet }
+          - { id: ge2, kind: wan, link: s-mpls }
+          - { id: ge3, kind: routed, address: 10.30.255.1/30 }
+        routing:
+          bgp:
+            local_asn: 65010
+            redistribute: { overlay_prefix: true }
+            neighbors:
+              - { id: lan-r1, ip: 10.30.255.2, asn: 65002 }
+          lan_routes:
+            - { id: south-lan, prefix: 10.30.0.0/24, protocol: bgp, via: lan-r1, bgp: { as_path: [65002] } }
+
+  - id: east-site
+    name: East branch
+    region: cap-r1
+    edges:
+      - id: east-edge
+        name: East Edge
+        role: branch
+        profile: branch
+        logical_id: 3
+        interfaces:
+          - { id: ge1, kind: wan, link: e-inet }
+          - { id: ge2, kind: wan, link: e-mpls }
+          - { id: ge3, kind: routed, address: 10.50.0.1/24 }
+        routing:
+          static_routes:
+            - { id: printers, subnet: 172.16.50.0/24, next_hop: 10.50.0.2, cost: 0, preferred: true, advertise: true, icmp_probe: true, description: Printer VLAN behind a LAN router }
+        overrides:
+          device:
+            routing.bfd: false
+          business_rules:
+            - id: east-video-inet
+              name: Video pinned to the Internet link (local choice)
+              segment: global
+              match: { application: video }
+              action:
+                priority: normal
+                network_service: multipath
+                steering: { mode: wan_link, link: e-inet, strictness: mandatory }

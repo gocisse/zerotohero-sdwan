@@ -31,7 +31,7 @@ The guide says OSPF can be enabled on a LAN (routed or switched) or WAN interfac
 <Diagram id="rt-lan-to-lan" />
 
 - **Learned from the LAN router:** routes arrive as intra-area (O), inter-area (O IA) or external (O E1, O E2). The Edge keeps the lowest cost among routes of the same type.
-- **Into the overlay:** routes learned through OSPF are automatically redistributed to the Gateway. But Overlay Flow Control's **Global Advertise Flags** keep **External OSPF routes** out of the overlay by default, so E1 and E2 routes need their flag turned on (lesson 7).
+- **Into the overlay:** routes learned through OSPF are automatically redistributed to the Gateway. But <Term id="overlay-flow-control">Overlay Flow Control</Term>'s **<Term id="global-advertise-flags">Global Advertise Flags</Term>** keep **External OSPF routes** out of the overlay by default, so E1 and E2 routes need their flag turned on (lesson 7).
 - **Out to the LAN router:** what the Edge injects into OSPF is set by the Profile's route settings: the **Overlay Prefixes** check box, the **BGP** option for BGP routes, and a default route with route type O1 or O2 (None by default; Advertise Conditional means "only if the Edge learns it").
 
 ## E1 versus E2
@@ -60,7 +60,7 @@ The OSPF page has a **Route Summarization** table with Subnet, No Advertise, Tag
 
 ## What you would see in the VCO
 
-- **Configure > Profiles > (Profile) > Device > Routing & NAT > OSPF** for areas, redistribution, route filters and summarization.
+- **Configure > Profiles > (Profile) > Device > Routing & NAT > OSPF** for areas, <Term id="redistribution">redistribution</Term>, route filters and summarization.
 - **Diagnostics:** **Show OSPF Neighbors** (expect Full; Down, Attempt or Init for long: check Area ID, Neighbor ID and Router ID; stuck in 2-way or ExStart: check MTU), **List OSPF Routes**, **List OSPF Redistributed Routes**, **Show OSPF Setting**.
 
 ## Key takeaways

@@ -62,6 +62,8 @@ A route can exist but be unreachable: the Reachable column and its reason (PR_UN
 
 [Try it in the simulator](/sim/routing-demo/reachability): ask "why can Branch B not reach 10.20.0.0/24" and follow the six checks above; the explainer names the first one that fails.
 
+[Try a lab](/sim/labs/branch-b-cannot-reach): Branch B cannot reach a prefix behind Branch A. Find the failing stage and fix it.
+
 ## Key takeaways
 
 - Follow the route's life: learned, advertised, filtered, redistributed, selected, reachable.

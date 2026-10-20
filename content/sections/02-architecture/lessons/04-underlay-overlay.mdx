@@ -24,7 +24,7 @@ Section 1 introduced the two words. Here we make them precise.
 
 <Callout variant="tip" title="Course vocabulary">
   "Underlay" is our word. Arista's guides describe the same layers in other terms, for example "WAN links", "transports" and "the SD-WAN
-  overlay", and they use "overlay" in names such as Overlay Flow Control. Use whichever term your own documentation uses; the layers are
+  overlay", and they use "overlay" in names such as <Term id="overlay-flow-control">Overlay Flow Control</Term>. Use whichever term your own documentation uses; the layers are
   the same.
 </Callout>
 
@@ -34,7 +34,7 @@ Section 1 introduced the two words. Here we make them precise.
 
 The overlay tunnels run on **UDP port 2426**: <Term id="vcmp" /> is registered with IANA on that port, and it is used for tunnel management and information
 exchange between two tunnel endpoints (Edge and Gateway, or Edge and Edge). Arista's guide says VCMP is encrypted with transport-mode
-<Term id="ipsec" />, and that VeloCloud forces NAT traversal on with the special port 2426, so its behaviour is the same whether or not a
+<Term id="ipsec" />, and that VeloCloud forces <Term id="nat-traversal">NAT traversal</Term> on with the special port 2426, so its behaviour is the same whether or not a
 NAT device is present on the path. The next two lessons use these facts.
 
 ## What lives in each layer
@@ -46,7 +46,7 @@ NAT device is present on the path. The next two lessons use these facts.
 | Measured by | the Edge, per path and per link | the same: DMPO measures loss, latency and jitter on every path |
 | Policy talks about | nothing: it only moves packets | applications, transport groups, WAN links, interfaces |
 
-Arista's Business Policy page describes **Transport Group** steering as an abstraction of the actual interfaces, so one policy can apply across
+Arista's Business Policy page describes **<Term id="transport-group">Transport Group</Term>** <Term id="link-steering">steering</Term> as an abstraction of the actual interfaces, so one policy can apply across
 different device types or locations. That abstraction is what makes transport independence practical.
 
 <Predict
@@ -82,7 +82,7 @@ What does it buy you? Look at the last three steps of the diagram.
 
 The overlay hides *most* of the underlay, not all of it. Three examples the guides make explicit:
 
-1. **MTU.** Tunnels add headers (lesson 7), so the underlay's packet size limit bounds the overlay's. Path MTU discovery even behaves
+1. **<Term id="mtu">MTU</Term>.** Tunnels add headers (lesson 7), so the underlay's packet size limit bounds the overlay's. <Term id="path-mtu-discovery">Path MTU discovery</Term> even behaves
    differently by underlay type: on public Internet links discovery runs toward the Gateways, and on private WAN links toward the other Edges.
 2. **NAT and firewalls.** A NAT device in front of an Edge can stop other Edges from building a direct tunnel to it (lesson 5), and firewalls
    have to allow the tunnel ports (lesson 6).
@@ -94,15 +94,15 @@ The overlay hides *most* of the underlay, not all of it. Three examples the guid
   place to check before assuming an SD-WAN fault.
 </Callout>
 
-## What you would see in the VCO
-
-- **Monitor > Edges > (an Edge) > Links** lists the WAN links with their measurements, including a transport-group view. These are the underlay circuits as the Edge sees them.
-- **Monitor > Edges > (an Edge) > Paths** lists the paths to the Edge's SD-WAN peers with quality scores. These are the overlay paths.
-- In the Edge's device settings, the **WAN overlay** option on an interface says whether that interface carries overlay tunnels.
-- In a business-policy rule, the **Action** tab's link steering offers **Transport Group**, **Interface** and **WAN Link**: three ways of naming the underlay in policy.
-
 ## Key takeaways
 
 - Underlay = the circuits; overlay = the tunnels (VCMP on UDP 2426, protected with IPsec) and routing built on them.
 - Policy and tunnels are designed to survive circuits being added, removed or swapped.
 - The underlay still shapes MTU, NAT behaviour, firewall needs and capacity.
+
+## What would you look for in the VCO
+
+- **Monitor > Edges > (an Edge) > Links** lists the WAN links with their measurements, including a transport-group view. These are the underlay circuits as the Edge sees them.
+- **Monitor > Edges > (an Edge) > Paths** lists the paths to the Edge's SD-WAN peers with quality scores. These are the overlay paths.
+- In the Edge's device settings, the **WAN overlay** option on an interface says whether that interface carries overlay tunnels.
+- In a business-policy rule, the **Action** tab's link steering offers **Transport Group**, **Interface** and **WAN Link**: three ways of naming the underlay in policy.

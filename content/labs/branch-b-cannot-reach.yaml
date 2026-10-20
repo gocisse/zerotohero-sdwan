@@ -1,0 +1,79 @@
+# LAB, not a real network. Everything below happens on the teaching topology routing-demo (invented names and numbers).
+id: branch-b-cannot-reach
+title: Branch B cannot reach 10.20.0.0/24
+summary: A prefix behind Branch A is not reachable from Branch B. Follow the prefix through the six checks of the routing diagnostic, find the stage that stops it, and fix it with a documented setting.
+difficulty: 2
+estimated_minutes: 15
+topology: routing-demo
+goals: [rt-diagnosis, rt-redistribution, rt-bgp]
+screens:
+  - { label: Reachability explainer, path: reachability }
+  - { label: Remote Diagnostics > Route Table Dump (mock), path: routes }
+fault:
+  patches:
+    - op: set
+      path: edges[b-edge]/routing/bgp/redistribute
+      value: { overlay_prefix: false }
+flow:
+  source: b-edge
+  destination: 10.20.0.0/24
+symptom: >-
+  Hosts at Branch B cannot reach 10.20.0.0/24, which sits behind Branch A (OSPF to its LAN router). Branch B runs BGP
+  with its own LAN router. Branch A's side looks healthy. Everything here uses explicitly configured settings, so no
+  assumption decides the answer.
+tasks:
+  - id: owner-route
+    type: inspect
+    prompt: What route type does Branch A hold for 10.20.0.0/24 in its own table?
+    probe: { kind: route_field, edge: a-edge, prefix: 10.20.0.0/24, field: route_type }
+    choices:
+      - { id: o, text: "OSPF intra-area (O)", value: O }
+      - { id: oia, text: "OSPF inter-area (O IA)", value: O IA }
+      - { id: oe2, text: "OSPF external type 2 (O E2)", value: O E2 }
+      - { id: ebgp, text: "eBGP", value: eBGP }
+    explanation: The LAN router offers the prefix as an intra-area OSPF route, so Branch A holds it as O (preference 1001).
+  - id: stage
+    type: diagnose
+    prompt: Which stage of the route's life stops 10.20.0.0/24 on its way to Branch B's hosts?
+    probe: { kind: reach_first_failing }
+    choices:
+      - { id: known, text: "The owning Edge never learned the prefix", value: known }
+      - { id: advertised, text: "The owning Edge does not advertise it into the overlay", value: advertised }
+      - { id: filtered, text: "A filter or the overlap rule holds it back", value: filtered }
+      - { id: redistributed, text: "Branch B does not hand it to its LAN routers", value: redistributed }
+      - { id: winner, text: "No route reaches Branch B, or another route wins", value: winner }
+      - { id: path, text: "The route exists but its path is not built", value: path }
+    explanation: >-
+      Branch A knows the prefix, advertises it and Branch B installs it, so the overlay part works. Branch B's BGP settings
+      do not redistribute overlay prefixes, so its LAN router never learns the route.
+  - id: fix-it
+    type: fix
+    prompt: Choose the change that makes the prefix reachable from Branch B, then check the result.
+    probe: { kind: reach_outcome }
+    equals: reachable
+    explanation: In Routing & NAT > BGP the Overlay Prefix check box redistributes the prefixes learned from the overlay to the BGP neighbors. With it on, Branch B's LAN router learns 10.20.0.0/24.
+hints:
+  - { task: stage, text: "The reachability explainer lists six stages in order. The first one marked Failed is the answer." }
+  - { task: stage, text: "Branch B has the route in its own table. Ask what its LAN router has." }
+  - { task: fix-it, text: "Lesson 4 lists the three different switches for advertising prefixes in BGP. Which one sends remote prefixes to the LAN?" }
+fixes:
+  - id: overlay-prefix
+    title: Tick Overlay Prefix in Branch B's BGP settings
+    description: Redistribute the prefixes learned from the overlay to Branch B's BGP neighbors.
+    patches:
+      - { op: set, path: "edges[b-edge]/routing/bgp/redistribute/overlay_prefix", value: true }
+  - id: connected
+    title: Tick Connected Routes in Branch B's BGP settings
+    description: Redistribute Branch B's own interface subnets to its BGP neighbors.
+    patches:
+      - { op: set, path: "edges[b-edge]/routing/bgp/redistribute/connected", value: true }
+  - id: external-flag
+    title: Enable the External OSPF Global Advertise Flag
+    description: Let OSPF external routes into the overlay.
+    patches:
+      - { op: set, path: "overlay_flow_control/advertise_flags/external_ospf", value: true }
+  - id: ospf-into-bgp
+    title: Tick OSPF in Branch B's BGP settings
+    description: Redistribute OSPF routes into BGP on Branch B.
+    patches:
+      - { op: set, path: "edges[b-edge]/routing/bgp/redistribute/ospf", value: true }

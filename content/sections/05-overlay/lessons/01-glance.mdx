@@ -19,7 +19,7 @@ topics: [overlay-ways]
 
 1. **Via a Gateway.** With <Term id="branch-to-branch-vpn" /> set to the **Cloud Gateways** option, each Edge tunnels to the closest Gateway and connections between Edges go through it.
 2. **Directly.** With <Term id="dynamic-branch-to-branch" />, a direct tunnel can be built on demand once the first packets have gone through a Gateway or a Hub.
-3. **Via a Hub.** A <Term id="hub" /> is an Edge that spokes keep permanent tunnels to. With the **Hubs for VPN** option, connections between branch Edges go through a Hub.
+3. **Via a Hub.** A <Term id="hub" /> is an Edge that spokes keep permanent tunnels to. With the **<Term id="hubs-for-vpn">Hubs for VPN</Term>** option, connections between branch Edges go through a Hub.
 4. **To a non SD-WAN destination.** For a site or service that does not run VeloCloud, an IPsec tunnel is built from a Gateway (<Term id="nsd-via-gateway" />) or an Edge (<Term id="nsd-via-edge" />).
 
 They are not mutually exclusive: a branch can have tunnels to Gateways, to Hubs and to a non SD-WAN destination at once, and a direct tunnel can appear on top.

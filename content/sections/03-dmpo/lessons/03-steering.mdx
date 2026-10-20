@@ -19,7 +19,7 @@ A <Term id="business-policy-rule" /> matches traffic and says how to treat it. I
 
 | Mode | What you name | Notes |
 |---|---|---|
-| **Auto** | nothing | The default for applications. DMPO picks the best links for the application type and turns on remediation when needed. |
+| **Auto** | nothing | The default for applications. DMPO picks the best links for the application type and turns on <Term id="on-demand-remediation">remediation</Term> when needed. |
 | **Transport Group** | a <Term id="transport-group" /> | e.g. Public Wired |
 | **Interface** | an interface | Also asks for strictness; allowed only at the Edge override level |
 | **WAN Link** | a specific link | Also asks for strictness; allowed only at the Edge override level |
@@ -77,6 +77,8 @@ After a brownout or outage clears, DMPO waits **one minute** before returning tr
   The exact SLA values behind "meets the SLA" are in image tables we could not read as text. The behaviour of Preferred when the chosen link is a **private** one in every combination was not spelled out;
   test it in a lab before relying on it.
 </Callout>
+
+[Try a lab](/sim/labs/video-wrong-link): video leaves a branch over the wrong link. Find the rule that decides, where it comes from, and fix it.
 
 ## Key takeaways
 

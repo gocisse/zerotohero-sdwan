@@ -88,7 +88,11 @@ func (v *validator) run() {
 	for _, r := range b.References {
 		validateReference(&v.errs, r)
 	}
+	for _, p := range CheckObservations(b.References, nil) {
+		v.errs.add(p.File, "%s", p.Message)
+	}
 	validateTopologies(&v.errs, b.Topologies)
+	validateLabs(&v.errs, b.Labs, b.Topologies, b.References, v.lessonPath, anyBrokenLesson)
 	v.componentRefs(anyBrokenDiagram, b.GlossaryBad)
 
 	if !b.CourseBroken {

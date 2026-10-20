@@ -125,7 +125,14 @@ Network engineers often split any system into three jobs. We will use that split
   and policy are worked out and shared.
 </Predict>
 
-## What you would see in the VCO
+## Key takeaways
+
+- Edge at the site, Gateway in the cloud, Orchestrator as the portal: three components, three jobs.
+- The underlay is the circuits; the overlay is the tunnels built on top, over UDP 2426 (VCMP).
+- DMPO measures, steers and protects; policy, defined centrally, tells it what each application needs.
+- Management, control and data planes are wording from Arista's on-premises guide, not menu names in the Orchestrator.
+
+## What would you look for in the VCO
 
 - **Monitor > Edges** lists your Edges with their status, links and the **Gateways** they use, so the three components appear on one
   screen.
@@ -134,10 +141,3 @@ Network engineers often split any system into three jobs. We will use that split
 - **Configure > Profiles**, then the device settings, is where the Cloud VPN options (Branch to Hub, Branch to Branch, Dynamic Branch to
   Branch) are switched on, per segment.
 - Business policy lives on an Edge's **Business Policy** tab (and for Profiles under **Configure > Profiles**).
-
-## Key takeaways
-
-- Edge at the site, Gateway in the cloud, Orchestrator as the portal: three components, three jobs.
-- The underlay is the circuits; the overlay is the tunnels built on top, over UDP 2426 (VCMP).
-- DMPO measures, steers and protects; policy, defined centrally, tells it what each application needs.
-- Management, control and data planes are wording from Arista's on-premises guide, not menu names in the Orchestrator.

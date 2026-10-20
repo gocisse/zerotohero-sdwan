@@ -1,32 +1,15 @@
 import { useEffect, useMemo, useState } from 'react'
-import { Link } from 'react-router-dom'
 import { postReachability, type ReachResult, type ReachStage } from '../api'
-import { useCourseState } from '../course/context'
 import ErrorPanel from '../components/ErrorPanel'
 import { AssumptionsPanel, RoutingConditions } from './RoutingControls'
 import { sourceText, STATUS_TEXT, switchValueText } from './routingText'
 import { useTopologyCtx } from './topologyContext'
-import { defaultQuery, lessonHref, originatedPrefixes } from './routingQuery'
-import { Bases, NotModelledNote } from './ui'
+import { defaultQuery, originatedPrefixes } from './routingQuery'
+import { LessonLink } from './LessonLink'
+import { Bases, BasisBadge, NotModelledNote } from './ui'
 
 const field =
   'mt-1 block w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-sm focus-visible:ring-2 focus-visible:ring-sky-500 focus-visible:outline-none dark:border-slate-700 dark:bg-slate-900'
-
-function useLessonTitle(ref: string): string {
-  const course = useCourseState()
-  if (course.status !== 'ready') return ref
-  for (const s of course.course.sections) for (const l of s.lessons) if (l.id === ref) return l.title
-  return ref
-}
-
-function LessonLink({ id, prefix = 'Read' }: { id: string; prefix?: string }) {
-  const title = useLessonTitle(id)
-  return (
-    <Link to={lessonHref(id)} className="font-medium underline" data-lesson-link={id}>
-      {prefix}: {title}
-    </Link>
-  )
-}
 
 const STATUS_STYLE: Record<string, string> = {
   ok: 'border-emerald-400 bg-emerald-50/60 dark:border-emerald-700 dark:bg-emerald-950/20',
@@ -254,6 +237,13 @@ export default function ReachabilityPage() {
               </ul>
             </div>
           )}
+          {r.not_modelled
+            .filter((n) => n.rule === 'nm-rt-gateway-reflector')
+            .map((n) => (
+              <p key={n.rule} className="mt-3 text-xs text-slate-600 dark:text-slate-300" data-gateway-note>
+                Not modelled: Gateway as route reflector. {n.reason} <BasisBadge basis={n.basis} />
+              </p>
+            ))}
           <ol className="mt-4 space-y-2" data-reach-stages>
             {r.stages.map((s) => (
               <StageCard key={s.id} s={s} first={s.id === r.first_failing} />

@@ -13,7 +13,7 @@ func TestShippedDemoTopologyHasNoIssues(t *testing.T) {
 
 func TestExistingTopologiesStillValidWithoutOverlayKeys(t *testing.T) {
 	for name, tp := range loadContentTopologies(t) {
-		if name == "hub-and-spoke-demo.yaml" {
+		if name == "hub-and-spoke-demo.yaml" || name == "capstone-network.yaml" {
 			continue
 		}
 		if tp.Clusters != nil || tp.NSDs != nil {

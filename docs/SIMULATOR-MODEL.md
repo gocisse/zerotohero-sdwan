@@ -566,3 +566,104 @@ Six stages in the order of the Section 6 diagnostic (assumption 83): known at th
 - **Visible assumptions:** 22, 23, 24, 69 to 84 (switchable: 22, 23, 69, 74).
 - **Not modelled (VERIFY rows):** cross-segment routing, E1 and E2 preference numbers, connected and static routes into OSPF, whether a routed route beats a remote Edge route, the transit metric, route age and the Logical ID direction, OSPF filters, the other Global Advertise Flags, Eligible VPN Exits, redistribution loops, what a passive OSPF interface does beyond the support statement, how the overlay changes BGP attributes.
 - **Not built:** the flow tracer and labs (step 14), Partner Gateway routes, Distributed Cost Calculation versus Orchestrator preferences (assumption 26), BGP community and AS-path exclude, per-neighbor default-route options, IPv6.
+
+## 19. Implemented in step 14: the flow tracer and labs (build plan phases 5 and 7)
+
+Code: `backend/internal/sim` (`trace.go`, `trace_stages.go`, `trace_assumptions.go`, `policy_eval.go`, `rules_trace.go`). API: `POST /api/topologies/{id}/trace`. UI: `/sim/:topology/trace`. Labs are described in section 20.
+
+### The trace (`TraceFlow`)
+
+One flow (source Edge, optional LAN host IP or interface, destination IP, prefix, `edge:<id>` or `nsd:<id>`, segment, application, protocol, port, DSCP, packet size) is followed through eight stages. Stage order is the simulator's presentation order (assumption 91); the real order of the policy, firewall and routing decisions is not documented. Every stage returns `input`, `decision`, `reason`, a basis, "not modelled" markers, the matching lesson and the mock screen to inspect.
+
+| # | stage | models | marks "not modelled" |
+|---|---|---|---|
+| 1 | Segment and source interface | the segment must be in the Edge's Profile (V); the interface that contains the source IP, or the named one; an interface with no segment list is in every Profile segment (V) | a flow with no source host is LAN traffic passing through the Edge (assumption 87) |
+| 2 | Business policy | every rule of the segment evaluated in precedence order, the first match wins, superseded Profile rules listed as skipped (V supersession); private-segment rewrite (V) | the evaluation order beyond "highest precedence" (assumptions 1, 3 with a switch); the default when no rule matches (continues as Multi-Path by assumption 2) |
+| 3 | Firewall | every rule evaluated independently; Edge override rules before Profile rules (V); Allow, Drop, Reject, Skip (V); Reject and Skip need Stateful Firewall (V); the Edge firewall applies to traffic passing through (V) | the order and the no-match action (assumptions 85 and 86, both switches); firewall versus business policy versus routing order |
+| 4 | Route lookup | `ComputeRoutes` and `Reachability`: longest prefix, order of operations, selected route, candidates and Lost Reasons | everything routing already marks (section 18) |
+| 5 | Path selection | `SelectPath` with the matched policy: direct tunnel, Hub, Gateway, Non SD-WAN, rejected options with reasons, link steering Mandatory, Preferred, Available | steering details already marked in section 17 |
+| 6 | Remediation | the documented conditions of FEC, jitter buffer (7 ms, 5 ms) and NACK, Premium Service (V); which are candidates for the flow (assumption 89) | whether any is active now, and the loss thresholds |
+| 7 | Overhead and MTU | 97 to 112 bytes for VPN traffic, 1500 maximum, fragmentation when too large (V) | Non SD-WAN tunnels |
+| 8 | Return path | the reverse path decision; with Stateful Firewall on, a differing kind of path is blocked (V statement, criterion assumption 88) | return traffic from outside the SD-WAN |
+
+Verdicts: delivered, blocked (stage N), unreachable (stage N), not modelled (stage N). Business policy cannot block on its own: a rule blocks only through Mandatory link steering to an unavailable link (V). The result also carries `depends_on`: every assumption switch whose flip changes the verdict.
+
+### Added assumptions (step 14)
+
+85. Firewall rules are evaluated first match wins in list order (Edge override rules before Profile rules; Skip moves to the next rule); the evaluation order is not documented, so last match is a selectable alternative.
+86. When no firewall rule decides, the flow is allowed; the default action is not documented and is a selectable assumption.
+87. A flow with no source IP and no source interface is treated as LAN traffic passing through the Edge, so policy and firewall apply.
+88. With Stateful Firewall on, a flow counts as asymmetric when the forward and reverse path decisions choose different kinds of option.
+89. Remediation candidates are classified from the flow: TCP is a NACK candidate; UDP real-time traffic (traffic class real_time) is an FEC and jitter buffer candidate.
+90. A business or firewall rule matches the flow's own fields: addresses and prefixes by containment, ports as a number, list or range, "internet" for a destination outside every prefix of the topology; a rule that needs a field the flow does not carry does not match.
+91. The trace presents segment, policy, firewall, route, path, remediation, MTU and return path in that order; the real order of the policy, firewall and routing decisions is not documented.
+
+### The business policy and routing joins (step 14)
+
+Stage 2 and `SelectPath` share one matcher (`policy_eval.go`): a rule matches the flow's application, source, destination (a keyword, address or prefix), protocol, port and DSCP (assumption 90). Stage 4 adds lesson 8's check 4 to the route lookup: an Edge that runs OSPF or BGP toward its LAN must hand the overlay route to its LAN routers, otherwise the flow never reaches the Edge (assumption 83). Business policy cannot block on its own: the only documented way a rule stops a flow is Mandatory link steering to a link that is down (stage 5).
+
+## 20. Labs (step 14)
+
+Files: `content/labs/<id>.yaml` (id equals the file name), strict YAML, validated at startup and by `make validate-content` together with every other content error.
+
+```yaml
+id, title, summary, difficulty (1-3), estimated_minutes, topology
+goals: [lesson ids]                      # the lessons the lab reinforces
+screens: [{label, path}]                 # mock screens to inspect, relative to /sim/<topology>/
+fault: {conditions: {...}, assumptions: {switch: value}, patches: [{op, path, value}]}
+symptom: text                            # must say so if the lab relies on assumptions
+flow: {...}                              # the flow in question (a FlowSpec)
+relies_on_assumptions: [numbers]
+tasks:
+  - {id, type: inspect|diagnose|predict, prompt, probe: {...}, choices: [{id, text, value}], explanation}
+  - {id, type: fix, prompt, probe: {...}, equals: value, explanation}
+hints: [{task?, text}]                   # revealed one at a time
+fixes: [{id, title, description, patches: [...]}]   # allowed fixes, wrong ones included
+```
+
+Patches use `set`, `remove` or `append` on a path such as `edges[spoke-1-edge]/overrides/business_rules[x]/action`; `[id]` picks the array element with that id and `edges[<id>]` finds an Edge in any site. They are applied to a copy; unknown fields and wrong types are errors. Probe kinds: `trace_verdict`, `trace_blocked_stage`, `trace_path_kind`, `trace_path_via`, `trace_steered_link`, `trace_matched_rule`, `trace_matched_owner`, `trace_mtu_min`, `trace_mtu_limiting`, `trace_mtu_fit`, `path_rejected_code`, `reach_first_failing`, `reach_outcome`, `route_field`, `tunnel_state`, `tunnel_reason`, `timeline_peer_hub`, `timeline_local_hub` (timeline probes start from a healthy network and apply their own events).
+
+Validation (all reported together): fields and ranges; lessons, topology and assumption numbers exist; the fault and every fix apply and leave a valid topology; every task has a probe; a choice task has at least two choices and EXACTLY ONE whose value equals what the engine computes (two correct root causes, or none, is an error); a fix task's check must fail in the faulty state and some allowed fix must make it pass; no answer may depend on a not-modelled result; every assumption an answer's evidence cites, and every switch whose flip would change the answer, must be listed under `relies_on_assumptions` and the symptom must mention assumptions.
+
+Progress: table `lab_progress` (status started, completed or skipped, attempts, hints used, last attempt, completion). Completed is never downgraded; orphaned lab ids are ignored; nothing is locked and labs are never required.
+
+### The six labs
+
+| lab | topology | reinforces | screens |
+|---|---|---|---|
+| no-direct-tunnel | hub-and-spoke-demo | ov-dynamic, ov-cloud-vpn | map, Monitor > Edges > Paths, path explainer, timeline |
+| hub-down | hub-and-spoke-demo | ov-hubs, ov-diagnosis | map, path explainer, timeline |
+| branch-b-cannot-reach | routing-demo | rt-diagnosis, rt-redistribution, rt-bgp | reachability explainer, Route Table Dump |
+| which-route-wins | routing-demo | rt-redistribution, rt-bgp, rt-ofc | Route Table Dump, reachability explainer |
+| video-wrong-link | hub-and-spoke-demo | cfg-business-policy, cfg-overrides, dmpo-steering | Edge Business Policy tab, path explainer |
+| mtu-ipsec (diagnose only: no documented fix) | hub-and-spoke-demo | arch-mtu-overhead | path explainer, Monitor > Edges > Links |
+
+### Modelable now versus blocked (after step 14)
+
+- **Modelable now and modelled:** everything in sections 16 to 19, followed end to end for one flow, plus guided practice on it.
+- **Blocked on VERIFY rows (returned as not modelled, never asked in a lab):** the business-policy default when no rule matches, firewall order and default, firewall versus policy versus routing order, local flows after a Hub returns, Orchestrator unreachable, Non SD-WAN MTU and return traffic, whether remediation is active, route age and the Logical ID direction, cross-segment routing, Gateway route reflection details.
+- **Not built:** Partner Gateway routes, DCC versus Orchestrator preferences, BGP community and AS-path exclude, IPv6, per-flow load balancing, a lab editor.
+
+
+## 21. Implemented in step 15: capstone, self-check, observation workflow
+
+No new engine behaviour and no new assumption number. What was added around the engine:
+
+- **Topology `capstone-network`** (`content/topologies/capstone-network.yaml`, teaching, invented): a Data center site with a Primary and a Secondary Hub, three branch sites on ONE Profile (North runs OSPF to its LAN router, South runs BGP, East has a static route and an Edge override), two WAN links per branch (Internet and MPLS), Cloud VPN (Branch to Hub with both Hubs, Branch to Branch via the Hubs, dynamic allowed), one Non SD-WAN Destination via Gateway, a Profile business rule per application and a device setting (BFD) that East overrides. It uses only keys earlier steps already accept.
+- **Three capstone labs** in the existing lab format (`content/labs/capstone-1-monday-morning.yaml`, `capstone-2-hub-incident.yaml`, `capstone-3-change-request.yaml`); the validator proves every fix passes its check and every choice task has exactly one correct answer, as for the other labs.
+- **Two read-only probe kinds** for labs, `effective_value` and `effective_source` (`Probe.Edge` and `Probe.Field` = device setting id): they read `EffectiveConfig` and add no behaviour.
+- **Lab `debrief`** (optional list of `{finding, where, unverified, note}`): where each finding would be found in the real VCO. `where` must be wording of a VERIFIED or OBSERVED fact-sheet row (the content validator checks); a location the guides do not confirm is written with `unverified: true` and a `note`, and is shown as "unverified path". The debrief names the root causes, so `GET /api/labs/{id}/debrief` serves it only once the lab is completed or skipped.
+- **Self-check** (`/sim/self-check`, `GET /api/self-check`, `POST /api/self-check/grade`, `POST /api/self-check/screens/{task}/check`): 12 questions drawn from the quiz bank (two per section, distinct topics where possible), graded with the quiz grading code, plus three "read this screen" tasks that are the tasks of `content/labs/self-check-screens.yaml` (a lab-format file that the lab endpoints never list or serve). The server stores nothing for any of these calls; the checklist and the last result live in the browser (localStorage).
+- **Goal coverage** on `/progress` (`frontend/src/progress/goals.ts`): four goals (read an Edge's configuration, how traffic flows, how tunnels form, how routes flow), each shown from lesson progress, best quiz scores, weak topics, labs and the last self-check. Informational; nothing reads it.
+- **Observation workflow:** `content/reference/observations/README.md` (template), `docs/HOW-TO-ADD-AN-OBSERVATION.md`, `make observations-report` (`docs/OBSERVATION-PRIORITIES.md`), the validators in `internal/content/observations.go`, `make course-map` (`docs/COURSE-MAP.md`).
+
+### Capstone claims that are not VERIFIED or OBSERVED, by assumption number
+
+Every answer in the three labs that rests on an assumption is listed in the lab's `relies_on_assumptions`, said in its symptom text, and shown as a badge when the task is checked.
+
+| lab | assumptions it rests on | what they are about |
+|---|---|---|
+| capstone-1-monday-morning | 1, 3, 22, 32, 62, 67, 81, 83, 86, 90 | rule order and Edge-over-Profile precedence (1, 3, 90); link steering on the first leg and current link states (62, 67); the redistribution defaults and the stage order of the reachability explainer, where the redistribution stage applies to an Edge running OSPF or BGP (22, 83); Gateway reflection and what a remote route keeps (32, 81); firewall default with no matching rule (86) |
+| capstone-2-hub-incident | 32, 46, 59, 61, 81 | tunnel paths are same-type link pairs and a tunnel stays up while one is up (46); Hub order decides (59); Hubs for VPN uses only Hubs (61); reflection (32, 81). The effect of a degraded link on traffic is deliberately not asked (remediation is not modelled) |
+| capstone-3-change-request | 33 | device setting values are opaque scalars |
+| self-check screen tasks | 1, 3, 32, 59, 61, 81, 90 | as above |

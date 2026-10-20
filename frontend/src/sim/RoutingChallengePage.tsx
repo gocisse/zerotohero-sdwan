@@ -4,6 +4,7 @@ import { postReachability, type ReachResult, type StageId } from '../api'
 import ErrorPanel from '../components/ErrorPanel'
 import { originatedPrefixes } from './routingQuery'
 import { STAGE_TITLE, switchValueText } from './routingText'
+import { withLab } from './labParams'
 import { useTopologyCtx } from './topologyContext'
 import { Bases } from './ui'
 
@@ -23,7 +24,7 @@ function shuffle<T>(list: T[]): T[] {
  * answer is the engine's first failing stage. Ungraded, nothing is stored, never blocks anything.
  */
 export default function RoutingChallengePage() {
-  const { detail, topologyId, conditions, assumptions } = useTopologyCtx()
+  const { detail, topologyId, conditions, assumptions, labSearch } = useTopologyCtx()
   const t = detail.topology
   const edges = useMemo(() => t.sites.flatMap((s) => s.edges), [t])
   const [pool, setPool] = useState<ReachResult[] | null>(null)
@@ -69,7 +70,7 @@ export default function RoutingChallengePage() {
         <p className="mt-4 text-sm text-slate-500" data-rc-empty>
           Under the current conditions and assumptions every prefix of this topology is reachable (or the topology has
           no routing data). Turn an assumption switch off, take a link down or bring a neighbor down on the{' '}
-          <Link to={`/sim/${topologyId}/routes`} className="underline">
+          <Link to={withLab(`/sim/${topologyId}/routes`, labSearch)} className="underline">
             Route Table Dump
           </Link>{' '}
           screen to get a question.
@@ -137,7 +138,7 @@ export default function RoutingChallengePage() {
                 </p>
               )}
               <p className="mt-2 text-xs">
-                <Link to={`/sim/${topologyId}/reachability`} className="underline">
+                <Link to={withLab(`/sim/${topologyId}/reachability`, labSearch)} className="underline">
                   Open the reachability explainer
                 </Link>
               </p>

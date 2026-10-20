@@ -19,7 +19,7 @@ Administrators use Profiles to define a template configuration and apply it to m
 
 ## What is in a Profile
 
-- Its **Device** tab: <Term id="segment">segments</Term> chosen with Change Profile Segments, and settings in categories such as Connectivity (VLANs, interfaces), Routing and NAT (for example OSPF areas), Telemetry (syslog), VPN Services and Edge Services.
+- Its **Device** tab: <Term id="segment">segments</Term> chosen with Change Profile Segments, and settings in categories such as Connectivity (VLANs, interfaces), Routing and NAT (for example <Term id="ospf">OSPF</Term> areas), Telemetry (syslog), VPN Services and Edge Services.
 - A **Business Policy** tab and a **Firewall** tab holding rules.
 - It is described as a composite of the configurations created in Segments and Network Services.
 
@@ -57,7 +57,7 @@ Arista says a Profile's interface settings are applied automatically to its Edge
 ## Key takeaways
 
 - A Profile is a template applied to many Edges, for scale and consistency.
-- It contains Device settings, segments, business policy and firewall rules.
+- It contains Device settings, segments, business policy and <Term id="firewall-policy">firewall rules</Term>.
 - A Profile in use cannot be deleted; Quick Start exists by default.
 - Interface settings flow to Edges automatically unless overridden; some changes restart the Edge service.
 

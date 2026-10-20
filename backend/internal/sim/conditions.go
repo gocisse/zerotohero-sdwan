@@ -31,31 +31,31 @@ const (
 // TrafficSpec says that Edge A has been sending to Edge B: the first packet and the latest packet, as seconds
 // before "now". It is how a stateless request tells the engine about a dynamic tunnel's history.
 type TrafficSpec struct {
-	A               string  `json:"a"`
-	B               string  `json:"b"`
-	FirstPacketAgoS float64 `json:"first_packet_ago_s"`
-	LastPacketAgoS  float64 `json:"last_packet_ago_s"`
+	A               string  `yaml:"a" json:"a"`
+	B               string  `yaml:"b" json:"b"`
+	FirstPacketAgoS float64 `yaml:"first_packet_ago_s" json:"first_packet_ago_s"`
+	LastPacketAgoS  float64 `yaml:"last_packet_ago_s" json:"last_packet_ago_s"`
 }
 
 // Conditions is an overlay on the authored topology: nothing in it ever modifies the topology. It arrives in the
 // request body, so the API stays stateless.
 type Conditions struct {
 	// LinksDown and LinksDegraded name WAN links (ids from the topology's links list).
-	LinksDown     []string `json:"links_down,omitempty"`
-	LinksDegraded []string `json:"links_degraded,omitempty"`
+	LinksDown     []string `yaml:"links_down" json:"links_down,omitempty"`
+	LinksDegraded []string `yaml:"links_degraded" json:"links_degraded,omitempty"`
 	// HubsUnreachable names Edges (typically Hubs) that peers cannot reach.
-	HubsUnreachable     []string `json:"hubs_unreachable,omitempty"`
-	GatewaysUnreachable []string `json:"gateways_unreachable,omitempty"`
-	NSDsUnreachable     []string `json:"nsds_unreachable,omitempty"`
+	HubsUnreachable     []string `yaml:"hubs_unreachable" json:"hubs_unreachable,omitempty"`
+	GatewaysUnreachable []string `yaml:"gateways_unreachable" json:"gateways_unreachable,omitempty"`
+	NSDsUnreachable     []string `yaml:"nsds_unreachable" json:"nsds_unreachable,omitempty"`
 	// OrchestratorUnreachable: what Edges do then is not documented, so tunnel states become "unknown".
-	OrchestratorUnreachable bool `json:"orchestrator_unreachable,omitempty"`
+	OrchestratorUnreachable bool `yaml:"orchestrator_unreachable" json:"orchestrator_unreachable,omitempty"`
 	// DynamicBuild forces the build decision stub: "auto" (default), "always" or "never" (assumption 65).
-	DynamicBuild string        `json:"dynamic_build,omitempty"`
-	Traffic      []TrafficSpec `json:"traffic,omitempty"`
+	DynamicBuild string        `yaml:"dynamic_build" json:"dynamic_build,omitempty"`
+	Traffic      []TrafficSpec `yaml:"traffic" json:"traffic,omitempty"`
 	// NeighborsDown names LAN neighbors that are not Full (OSPF) or Established (BGP), as "<edge>/<interface or
 	// neighbor id>" (step 13). ProbesDown names static routes whose ICMP probe fails, as "<edge>/<route id>".
-	NeighborsDown []string `json:"neighbors_down,omitempty"`
-	ProbesDown    []string `json:"probes_down,omitempty"`
+	NeighborsDown []string `yaml:"neighbors_down" json:"neighbors_down,omitempty"`
+	ProbesDown    []string `yaml:"probes_down" json:"probes_down,omitempty"`
 }
 
 func setOf(ids []string) map[string]bool {

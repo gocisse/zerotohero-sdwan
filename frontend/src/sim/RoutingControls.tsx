@@ -1,4 +1,4 @@
-import type { AssumptionSwitch, Conditions, RoutingAssumptions } from '../api'
+import type { AssumptionSwitch, Conditions, TraceAssumptions } from '../api'
 import { isEmptyConditions, linkSetting, withLink, type LinkSetting } from './conditions'
 import { switchValueText, withNeighbor, withProbe } from './routingText'
 import { useTopologyCtx } from './topologyContext'
@@ -11,7 +11,7 @@ const field =
  * Conditions for the routing screens: WAN links, LAN neighbors and static-route probes. A what-if tool: it is sent with
  * each request, nothing is stored and the topology never changes.
  */
-export function RoutingConditions() {
+export function RoutingConditions({ links = true }: { links?: boolean }) {
   const { detail, conditions, setConditions } = useTopologyCtx()
   const t = detail.topology
   const edges = t.sites.flatMap((s) => s.edges)
@@ -49,27 +49,29 @@ export function RoutingConditions() {
       <p className="mt-1 text-xs text-slate-600 dark:text-slate-300">
         What-if only: nothing is stored and the topology never changes.
       </p>
-      <fieldset className="mt-3 min-w-0">
-        <legend className="text-sm font-medium">WAN links</legend>
-        <div className="mt-1 grid grid-cols-1 gap-x-6 gap-y-1 sm:grid-cols-2">
-          {t.links.map((l) => (
-            <label key={l.id} className="flex items-center justify-between gap-2 text-sm">
-              <span className="min-w-0 flex-1">{l.id}</span>
-              <select
-                className={field}
-                value={linkSetting(conditions, l.id)}
-                onChange={(e) => set(withLink(conditions, l.id, e.target.value as LinkSetting))}
-                data-cond-link={l.id}
-                aria-label={`State of link ${l.id}`}
-              >
-                <option value="up">up</option>
-                <option value="degraded">degraded</option>
-                <option value="down">down</option>
-              </select>
-            </label>
-          ))}
-        </div>
-      </fieldset>
+      {links && (
+        <fieldset className="mt-3 min-w-0">
+          <legend className="text-sm font-medium">WAN links</legend>
+          <div className="mt-1 grid grid-cols-1 gap-x-6 gap-y-1 sm:grid-cols-2">
+            {t.links.map((l) => (
+              <label key={l.id} className="flex items-center justify-between gap-2 text-sm">
+                <span className="min-w-0 flex-1">{l.id}</span>
+                <select
+                  className={field}
+                  value={linkSetting(conditions, l.id)}
+                  onChange={(e) => set(withLink(conditions, l.id, e.target.value as LinkSetting))}
+                  data-cond-link={l.id}
+                  aria-label={`State of link ${l.id}`}
+                >
+                  <option value="up">up</option>
+                  <option value="degraded">degraded</option>
+                  <option value="down">down</option>
+                </select>
+              </label>
+            ))}
+          </div>
+        </fieldset>
+      )}
       {neighbors.length > 0 && (
         <fieldset className="mt-3 min-w-0">
           <legend className="text-sm font-medium">LAN neighbors down</legend>
@@ -118,8 +120,8 @@ export function RoutingConditions() {
  */
 export function AssumptionsPanel({ switches }: { switches: AssumptionSwitch[] }) {
   const { assumptions, setAssumptions } = useTopologyCtx()
-  const set = (key: keyof RoutingAssumptions, value: boolean | string) =>
-    setAssumptions({ ...assumptions, [key]: value })
+  const set = (key: string, value: boolean | string) =>
+    setAssumptions({ ...assumptions, [key]: value } as Partial<TraceAssumptions>)
   const anyChanged = switches.some((s) => s.changed)
   return (
     <section

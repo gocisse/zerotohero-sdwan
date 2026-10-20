@@ -23,11 +23,11 @@ const (
 
 // Event is something that happens at a time offset (seconds from the start of the timeline).
 type Event struct {
-	AtS    float64 `json:"at_s"`
-	Type   string  `json:"type"`
-	A      string  `json:"a,omitempty"` // traffic: the initiating Edge
-	B      string  `json:"b,omitempty"` // traffic: the peer
-	Target string  `json:"target,omitempty"`
+	AtS    float64 `yaml:"at_s" json:"at_s"`
+	Type   string  `yaml:"type" json:"type"`
+	A      string  `yaml:"a" json:"a,omitempty"` // traffic: the initiating Edge
+	B      string  `yaml:"b" json:"b,omitempty"` // traffic: the peer
+	Target string  `yaml:"target" json:"target,omitempty"`
 }
 
 // TimelineError is returned for events the topology cannot take.

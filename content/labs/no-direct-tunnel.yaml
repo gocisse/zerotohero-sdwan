@@ -1,0 +1,89 @@
+# LAB, not a real network. Everything below happens on the teaching topology hub-and-spoke-demo (invented names and numbers).
+id: no-direct-tunnel
+title: Why is there no direct tunnel between A and B?
+summary: Two branches have exchanged traffic for a minute, but their flows still go through the Gateway. Find out why, and which setting brings the direct tunnel back.
+difficulty: 1
+estimated_minutes: 12
+topology: hub-and-spoke-demo
+goals: [ov-dynamic, ov-cloud-vpn]
+screens:
+  - { label: Map (tunnels between the two branches), path: map }
+  - { label: Monitor > Edges > Paths of Mesh Edge 1, path: "monitor?edge=mesh-1-edge&tab=paths" }
+  - { label: Path explainer, path: paths }
+  - { label: Timeline (the lifecycle of a direct tunnel), path: timeline }
+fault:
+  conditions:
+    traffic:
+      - { a: mesh-1-edge, b: mesh-2-edge, first_packet_ago_s: 60, last_packet_ago_s: 2 }
+  patches:
+    - op: set
+      path: edges[mesh-2-edge]/overrides/cloud_vpn
+      value:
+        segments: [global]
+        branch_to_branch: { enabled: true, via: cloud_gateways, dynamic: false }
+flow:
+  source: mesh-1-edge
+  destination: "edge:mesh-2-edge"
+symptom: >-
+  Mesh Edge 1 and Mesh Edge 2 are both in a Profile with Cloud VPN and Branch to Branch VPN through the Cloud Gateways.
+  They have exchanged traffic for the last minute, yet Monitor > Edges > Paths shows no direct tunnel between them and
+  the flows go through the Gateway. This lab relies on assumption 54 (a direct tunnel needs Dynamic Branch to Branch on
+  for both Edges), assumption 9 (direct tunnels appear after the first flow) and assumption 61 (the standing path uses the
+  Cloud Gateway); the simulator shows each one as a badge. The fix also rests on assumption 43: the guides do not say whether
+  an Edge-level Cloud VPN override replaces a whole sub-section, and the simulator assumes it does.
+relies_on_assumptions: [9, 54, 61]
+tasks:
+  - id: current-path
+    type: inspect
+    prompt: Which path does a flow from Mesh Edge 1 to Mesh Edge 2 take right now?
+    probe: { kind: trace_path_kind }
+    choices:
+      - { id: direct, text: "A direct dynamic tunnel between the two Edges", value: direct-dynamic }
+      - { id: gateway, text: "The standing path through the Gateway", value: via-gateway }
+      - { id: hub, text: "A path through a Hub", value: via-hub }
+      - { id: nsd, text: "A tunnel to a Non SD-WAN destination", value: nsd-via-gateway }
+    explanation: With no direct tunnel, branch-to-branch traffic uses the standing path. Here Branch to Branch goes through the Cloud Gateways, so that is the Gateway path.
+  - id: root-cause
+    type: diagnose
+    prompt: Why is there no direct tunnel between the two Edges?
+    probe: { kind: tunnel_reason, tunnel: "dynamic:mesh-1-edge:mesh-2-edge" }
+    choices:
+      - { id: off, text: "Dynamic Branch to Branch is off for one of the two Edges", value: dynamic_disabled }
+      - { id: quiet, text: "No traffic has flowed between them yet", value: no_traffic_yet }
+      - { id: silence, text: "180 seconds of silence tore the tunnel down", value: torn_down_after_silence }
+      - { id: nat, text: "A NAT blocks incoming UDP 2426 at the peer", value: nat_blocks_direct }
+    explanation: >-
+      Traffic is flowing, so the tunnel is not missing for lack of traffic or after silence, and nothing in the topology
+      is behind a NAT. One Edge carries an Edge-level Cloud VPN override that switches Dynamic Branch to Branch off.
+  - id: fix-it
+    type: fix
+    prompt: Choose the change that brings the direct tunnel back, then check the result.
+    probe: { kind: trace_path_kind }
+    equals: direct-dynamic
+    explanation: >-
+      In the simulator the Edge's override replaces the Profile's Branch to Branch settings (assumption 43; the guides do not say
+      whether an override replaces a whole sub-section). Removing it lets the Edge inherit the Profile again, and Dynamic Branch
+      to Branch is on by default.
+hints:
+  - { task: current-path, text: Open the path explainer and run the flow from Mesh Edge 1 to Mesh Edge 2. The chosen option is marked. }
+  - { task: root-cause, text: "Look at the tunnel list on the map: a direct tunnel between the two Edges is listed with a reason code." }
+  - { task: root-cause, text: Compare the Cloud VPN settings the two Edges end up with. One of them is not like the Profile. }
+  - { task: fix-it, text: An Edge override replaces a whole sub-section of the Profile (assumption 43). Changing the Profile does not help an Edge that overrides it. }
+fixes:
+  - id: remove-override
+    title: Remove Mesh Edge 2's Cloud VPN override
+    description: Delete the Edge-level Cloud VPN settings so the Edge inherits the Profile again.
+    patches:
+      - { op: remove, path: "edges[mesh-2-edge]/overrides/cloud_vpn" }
+  - id: profile-dynamic
+    title: Turn Dynamic Branch to Branch on in the Mesh Profile
+    description: Set Dynamic Branch to Branch explicitly on in the Profile's Branch to Branch settings.
+    patches:
+      - { op: set, path: "profiles[mesh]/cloud_vpn/branch_to_branch/dynamic", value: true }
+  - id: add-hubs
+    title: Add a Hub to the Mesh Profile
+    description: Enable Branch to Hub in the Mesh Profile with Primary Hub as its Hub.
+    patches:
+      - op: set
+        path: "profiles[mesh]/cloud_vpn/branch_to_hub"
+        value: { enabled: true, hubs: [hub-p-edge] }

@@ -1,0 +1,57 @@
+# NOT a lab learners see: the three "read this screen" tasks of the self-check page (/sim/self-check). They are written in the
+# lab format so that the lab validator proves every answer is unique and comes from the engine, but the API never lists this
+# file with the labs, never stores an attempt, and the self-check is ungraded. Topology: capstone-network (invented).
+id: self-check-screens
+title: Self-check screens
+summary: Three questions answered by reading the simulator's mock screens.
+difficulty: 2
+estimated_minutes: 10
+topology: capstone-network
+goals: [cfg-business-policy, ov-hubs, rt-diagnosis]
+screens:
+  - { label: Configure > Edges > East Edge > Business Policy, path: "edges/east-edge?tab=business-policy" }
+  - { label: Path explainer, path: paths }
+  - { label: Remote Diagnostics > Route Table Dump (mock), path: routes }
+fault:
+  conditions:
+    hubs_unreachable: [hub-p]
+flow:
+  source: north-edge
+  destination: "edge:south-edge"
+symptom: >-
+  The Primary Hub is unreachable. These questions rest on assumption 1 and 3 (first match wins, Edge rules above Profile
+  rules), 90 (how a rule matches a flow), 59 and 61 (Hub order decides, and Hubs for VPN uses only Hubs), and 32 and 81
+  (how the Gateway reflects a route and what a remote route keeps). The simulator shows each as a badge.
+relies_on_assumptions: [1, 3, 32, 59, 61, 81, 90]
+tasks:
+  - id: business-policy
+    type: inspect
+    prompt: Open East Edge's Business Policy tab. Which rule decides what happens to its video traffic to the Primary Hub?
+    probe:
+      kind: trace_matched_rule
+      flow: { source: east-edge, destination: "edge:hub-p", application: video }
+    choices:
+      - { id: profile, text: "The Branch Profile's video rule", value: branch-video }
+      - { id: edge, text: "East Edge's own video rule", value: east-video-inet }
+      - { id: bulk, text: "The Branch Profile's bulk rule", value: branch-bulk }
+      - { id: none, text: "No rule matches", value: none }
+    explanation: East has an Edge-level rule for video under Edge Overrides, and an Edge rule supersedes a Profile rule with the same match (assumption 3), so it decides.
+  - id: paths
+    type: inspect
+    prompt: Open the path explainer for North to South. Which Hub carries the flow while the Primary Hub is unreachable?
+    probe: { kind: trace_path_via }
+    choices:
+      - { id: primary, text: "The Primary Hub", value: hub-p }
+      - { id: secondary, text: "The Secondary Hub", value: hub-s }
+      - { id: none, text: "Neither: there is no path", value: none }
+    explanation: The Spoke's flow moves to the Secondary Hub, the next Hub in the list, because the Primary Hub does not answer.
+  - id: route-table
+    type: inspect
+    prompt: Open North's route table and find 10.30.0.0/24, the prefix behind South. What route type does the best route have?
+    probe: { kind: route_field, edge: north-edge, prefix: 10.30.0.0/24, field: route_type }
+    choices:
+      - { id: ebgp, text: "eBGP", value: eBGP }
+      - { id: o, text: "OSPF intra-area (O)", value: O }
+      - { id: oe2, text: "OSPF external type 2 (O E2)", value: O E2 }
+      - { id: connected, text: "Connected (C)", value: C }
+    explanation: South learned the prefix from its LAN router over BGP and advertises it into the overlay, so North holds the remote route with the BGP route type.

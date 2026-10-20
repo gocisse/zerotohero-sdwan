@@ -13,3 +13,4 @@
 | The documented precedence between route types (connected, static, overlay, NSD, BGP, OSPF) was not found in the pages read; it belongs to routing (step 10). [needs observation] | none | 7.0 | VERIFY |
 | Whether a flow prefers a direct dynamic tunnel over the Hub or Gateway path once the tunnel exists, and how a flow is moved: not stated. [needs observation] | none | 7.0 | VERIFY |
 | What happens to in-flight flows when a direct tunnel is torn down after 180 seconds: not stated. | none | 7.0 | VERIFY |
+| Return traffic from a destination outside the SD-WAN (the Internet or a Non SD-WAN site), and whether the return path through the overlay is the reverse of the forward path, are not stated. [needs observation] | none | 7.0 | VERIFY |

@@ -64,6 +64,14 @@ export interface Progress {
   lessons_total: number
   lessons: { lesson_id: string; section_id: string; status: LessonStatus }[]
   sections: SectionProgress[]
+  /** Informational: no lab is ever required. */
+  labs: {
+    total: number
+    started: number
+    completed: number
+    skipped: number
+    items: { lab_id: string; title: string; status: string; attempts: number; hints_used: number }[]
+  }
 }
 
 export interface TopicMastery {

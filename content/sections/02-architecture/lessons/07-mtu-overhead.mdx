@@ -124,17 +124,17 @@ These symptoms are general networking behaviour (the VeloCloud guides do not lis
   were not covered by the pages we read. The numbers above come from the Administration Guide's overhead tables.
 </Callout>
 
-## What you would see in the VCO
-
-- **Monitor > Edges > (an Edge) > Links** and **Paths**: look for the per-link and per-path details, and compare them across links when one tunnel behaves
-  differently from another. (The exact MTU field and its location were not confirmed, so look for it in your own release.)
-- **Remote Diagnostics**: tests such as List Paths and the WAN Link Bandwidth Test help you compare circuits. Check in your release whether a ping-style test lets
-  you choose the packet size; if it does, repeat a large-packet test across paths.
-- A link whose MTU is below 1300 bytes needs to be **configured by hand**; (we did not confirm where that setting lives; look in the Edge's interface and link settings).
-
 ## Key takeaways
 
 - Overhead: 59 bytes for Internet Multipath traffic (IP 20 + UDP 8 + VCMP 31), 97 to 112 bytes for IPsec VPN traffic.
 - Effective MTU = path MTU - overhead: 1441 for Internet Multipath on 1500, 1388 to 1403 for VPN.
 - Discovery uses RFC 1191 then RFC 4821 (not below 1300); max supported IP MTU is 1500; no jumbo frames; IP fragmentation per RFC 791.
 - The classic symptom is "small works, large stalls".
+
+## What would you look for in the VCO
+
+- **Monitor > Edges > (an Edge) > Links** and **Paths**: look for the per-link and per-path details, and compare them across links when one tunnel behaves
+  differently from another. (The exact MTU field and its location were not confirmed, so look for it in your own release.)
+- **Remote Diagnostics**: tests such as List Paths and the WAN Link Bandwidth Test help you compare circuits. Check in your release whether a ping-style test lets
+  you choose the packet size; if it does, repeat a large-packet test across paths.
+- A link whose MTU is below 1300 bytes needs to be **configured by hand**; (we did not confirm where that setting lives; look in the Edge's interface and link settings).
