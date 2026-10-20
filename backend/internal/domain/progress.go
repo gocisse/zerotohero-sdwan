@@ -46,6 +46,7 @@ type LessonProgress struct {
 	LessonID    string
 	Status      string
 	CompletedAt *time.Time
+	UpdatedAt   time.Time
 }
 
 // SectionState is the per-section state beyond lesson progress.
@@ -86,4 +87,21 @@ type LabProgress struct {
 	HintsUsed     int
 	LastAttemptAt *time.Time
 	CompletedAt   *time.Time
+}
+
+// Activity event kinds, derived from stored timestamps (see store.ActivityEvents for what each one can and cannot show).
+const (
+	ActLessonVisited   = "lesson_visited"
+	ActLessonCompleted = "lesson_completed"
+	ActQuizAttempt     = "quiz_attempt"
+	ActReviewAnswer    = "review_answer"
+	ActLabAttempt      = "lab_attempt"
+	ActLabCompleted    = "lab_completed"
+)
+
+// ActivityEvent is one timestamped thing the learner did. Ref is the lesson, section, question or lab id.
+type ActivityEvent struct {
+	Kind string
+	Ref  string
+	At   time.Time
 }

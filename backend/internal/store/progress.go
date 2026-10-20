@@ -218,7 +218,7 @@ func (s *Store) SetLessonProgress(ctx context.Context, lessonID, sectionID, stat
 
 // LessonProgressAll returns every stored lesson status keyed by lesson id.
 func (s *Store) LessonProgressAll(ctx context.Context) (map[string]domain.LessonProgress, error) {
-	rows, err := s.pool.Query(ctx, `SELECT lesson_id, status, completed_at FROM lesson_progress`)
+	rows, err := s.pool.Query(ctx, `SELECT lesson_id, status, completed_at, updated_at FROM lesson_progress`)
 	if err != nil {
 		return nil, err
 	}
@@ -226,7 +226,7 @@ func (s *Store) LessonProgressAll(ctx context.Context) (map[string]domain.Lesson
 	out := map[string]domain.LessonProgress{}
 	for rows.Next() {
 		var lp domain.LessonProgress
-		if err := rows.Scan(&lp.LessonID, &lp.Status, &lp.CompletedAt); err != nil {
+		if err := rows.Scan(&lp.LessonID, &lp.Status, &lp.CompletedAt, &lp.UpdatedAt); err != nil {
 			return nil, err
 		}
 		out[lp.LessonID] = lp
@@ -286,6 +286,33 @@ func (s *Store) AnswerHistory(ctx context.Context) ([]domain.AnswerEvent, error)
 	for rows.Next() {
 		var e domain.AnswerEvent
 		if err := rows.Scan(&e.QuestionID, &e.Topic, &e.Partial, &e.At); err != nil {
+			return nil, err
+		}
+		out = append(out, e)
+	}
+	return out, rows.Err()
+}
+
+// ActivityEvents lists what the learner did since the given time, oldest first. It only reports what the tables record:
+// a lesson keeps one row, so it shows once, as completed (at completion) or as visited (at its last update), never once
+// per visit; a lab keeps its latest attempt and its completion, not every attempt.
+func (s *Store) ActivityEvents(ctx context.Context, since time.Time) ([]domain.ActivityEvent, error) {
+	rows, err := s.pool.Query(ctx, `
+		SELECT 'lesson_completed', lesson_id, completed_at FROM lesson_progress WHERE status = 'completed' AND completed_at >= $1
+		UNION ALL SELECT 'lesson_visited', lesson_id, updated_at FROM lesson_progress WHERE status = 'visited' AND updated_at >= $1
+		UNION ALL SELECT 'quiz_attempt', section_id, created_at FROM quiz_attempts WHERE created_at >= $1
+		UNION ALL SELECT 'review_answer', question_id, answered_at FROM review_answers WHERE answered_at >= $1
+		UNION ALL SELECT 'lab_attempt', lab_id, last_attempt_at FROM lab_progress WHERE last_attempt_at >= $1
+		UNION ALL SELECT 'lab_completed', lab_id, completed_at FROM lab_progress WHERE completed_at >= $1
+		ORDER BY 3`, since)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var out []domain.ActivityEvent
+	for rows.Next() {
+		var e domain.ActivityEvent
+		if err := rows.Scan(&e.Kind, &e.Ref, &e.At); err != nil {
 			return nil, err
 		}
 		out = append(out, e)

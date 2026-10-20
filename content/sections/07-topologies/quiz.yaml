@@ -1,0 +1,397 @@
+# Section 7 quiz. Correct answers use only VERIFIED rows in content/reference/{edge-models,edge-ha,site-topologies,bronze-silver-gold,vco-edge-models-ui}.md.
+# Bronze, Silver and Gold are vendor terms (bronze-silver-gold.md); no answer rests on a course label ("option") or on a VERIFY row.
+
+- id: top-q-families
+  topic: topo-edge-models
+  difficulty: 1
+  type: single_choice
+  prompt: "Which Edge hardware families do the Arista datasheets list as available for sale?"
+  options:
+    - id: right
+      text: "The 7x0, 4100 and 5100 series"
+    - id: old
+      text: "The 510, 610 and 840 series"
+      explanation: "Those are earlier generations; the datasheets point to a lifecycle list for end-of-sale models."
+    - id: virt
+      text: "Virtual Edges only"
+      explanation: "The datasheets also list physical appliances."
+    - id: gw
+      text: "The 7x0 series and Gateway appliances"
+      explanation: "Gateways are a separate component, not an Edge hardware family."
+  correct: right
+  explanation: "Both datasheets say the Edge appliance models available for sale include the 7x0, 4100 and 5100 series; Virtual Edges are separate."
+  lesson_ref: top-edge-models
+
+- id: top-q-release
+  topic: topo-edge-models
+  difficulty: 1
+  type: true_false
+  prompt: "**True or false:** The performance figures in the Edge datasheets are valid whatever software release the Edge runs."
+  correct: false
+  explanation: "The datasheets state that Edges must be on software code R7.0.0 to achieve the listed performance, and the figures were measured under stated conditions."
+  lesson_ref: top-edge-models
+
+- id: top-q-tunnel-row
+  topic: topo-edge-models
+  difficulty: 2
+  type: single_choice
+  prompt: "Scenario: a data center Edge will be the Hub that several hundred branches connect to. Which datasheet row states how many tunnels a model supports?"
+  options:
+    - id: tun
+      text: "Max tunnel scale"
+    - id: mbtf
+      text: "MTBF"
+      explanation: "MTBF is a reliability figure, not a tunnel limit."
+    - id: bw
+      text: "Bandwidth tiers"
+      explanation: "Tiers are the licensed bandwidth levels."
+    - id: ssid
+      text: "Max simultaneous SSIDs"
+      explanation: "That is a Wi-Fi figure for the 710-W and 710-5G."
+  correct: tun
+  explanation: "The performance and scale table lists Max Tunnel Scale per model (for example 50 on the 710 and 20K on the 5100)."
+  lesson_ref: top-edge-models
+
+- id: top-q-4100-ports
+  topic: topo-edge-models
+  difficulty: 2
+  type: multi_choice
+  prompt: "Which port types does the datasheet connectivity table list for the Edge 4100? (Select all that apply.)"
+  options:
+    - id: rj45
+      text: "1G RJ-45"
+    - id: sfpp
+      text: "1G/10G SFP+"
+    - id: sfp28
+      text: "25G SFP28"
+      explanation: "The 4100 row reads No; SFP28 ports are on the 5100."
+    - id: wifi
+      text: "Integrated Wi-Fi"
+      explanation: "The 4100 has no integrated Wi-Fi; the 710-W has."
+  correct: [rj45, sfpp]
+  explanation: "The 4100 lists 1G RJ-45 and 1G/10G SFP+ ports. The 25G SFP28 and 40G QSFP ports are on the 5100, and integrated Wi-Fi on the 710-W."
+  lesson_ref: top-edge-models
+
+- id: top-q-ha-models
+  topic: topo-edge-models
+  difficulty: 2
+  type: single_choice
+  prompt: "Scenario: a site plans an Edge HA pair made of one Edge 720 and one Edge 740 because that is what is in stock. What does the HA documentation say?"
+  options:
+    - id: same
+      text: "HA is supported only between identical Edge platform models"
+    - id: any
+      text: "Any two hardware Edges can form a pair"
+      explanation: "The HA guide requires identical platform models (only Wi-Fi and non-Wi-Fi variants of one model can be mixed, from 5.4.0)."
+    - id: orch
+      text: "The Orchestrator picks the larger model as Active"
+      explanation: "The Active Edge is chosen by interface counts, not by model."
+    - id: gw
+      text: "The Gateway converts the smaller Edge"
+      explanation: "The Gateway has no such role."
+  correct: same
+  explanation: "The HA pages say HA is supported only between identical Edge platform models; the exception is a Wi-Fi and non-Wi-Fi variant of the same model."
+  lesson_ref: top-edge-models
+
+- id: top-q-names
+  topic: topo-overview
+  difficulty: 1
+  type: single_choice
+  prompt: "Where do the names Bronze, Silver and Gold come from?"
+  options:
+    - id: guide
+      text: "They are named branch topologies in the vendor's Administration Guide (a Branch Site Topologies section)"
+    - id: vco
+      text: "They are menu items in the Orchestrator"
+      explanation: "No VCO screen label with these names was found in the pages read."
+    - id: carrier
+      text: "They are carrier service levels for MPLS"
+      explanation: "They describe branch designs, not carrier products."
+    - id: edition
+      text: "They are the software editions"
+      explanation: "The editions are Standard, Enterprise and Premium."
+  correct: guide
+  explanation: "The 7.0 Overview says the service defines two or more branch topologies designated as Bronze, Silver and Gold; the older VMware guide has the same sentence."
+  lesson_ref: top-overview
+
+- id: top-q-offpath
+  topic: topo-overview
+  difficulty: 2
+  type: single_choice
+  prompt: "Scenario: an Edge is deployed off-path next to an L3 switch (Hybrid Site-1). How does traffic get to the Edge?"
+  options:
+    - id: redirect
+      text: "The L3 switch redirects traffic to the Edge, for example with a static route"
+    - id: gw
+      text: "The Gateway pulls traffic from the LAN"
+      explanation: "The Gateway is not on the branch LAN."
+    - id: dhcp
+      text: "The Orchestrator rewrites the hosts' addresses"
+      explanation: "The Orchestrator manages configuration; it does not forward traffic."
+    - id: none
+      text: "It does not; an off-path Edge sees no LAN traffic"
+      explanation: "The point of the design is that traffic is first diverted to the Edge."
+  correct: redirect
+  explanation: "In the worked example the Edge is deployed off-path and the L3 switch redirects traffic to it, using a static route to the LAN behind the switch."
+  lesson_ref: top-overview
+
+- id: top-q-bronze-scenario
+  topic: topo-bronze
+  difficulty: 1
+  type: single_choice
+  prompt: "Scenario: a 40-user office has one Internet link, no MPLS and no L3 switch behind the Edge. Which vendor topology description fits, and what does the description itself not include?"
+  options:
+    - id: bronze
+      text: "Bronze; it includes no MPLS connection, so a private transport is missing by definition"
+    - id: silver
+      text: "Silver; it only lacks a second Internet link"
+      explanation: "Silver requires an MPLS connection."
+    - id: gold
+      text: "Gold; it only lacks the L3 switches"
+      explanation: "Gold is a large branch with active/active L3 switches and an MPLS CE."
+    - id: none
+      text: "None; Bronze needs exactly two links"
+      explanation: "Bronze is one or two WAN links."
+  correct: bronze
+  explanation: "Bronze is a small site with one or two WAN links to the public Internet, no MPLS and no L3 switch on the LAN side of the Edge."
+  lesson_ref: top-bronze
+
+- id: top-q-bronze-parts
+  topic: topo-bronze
+  difficulty: 1
+  type: multi_choice
+  prompt: "Which belong to the vendor's description of the Bronze topology? (Select all that apply.)"
+  options:
+    - id: links
+      text: "One or two WAN links to the public Internet"
+    - id: nompls
+      text: "No MPLS connection"
+    - id: nol3
+      text: "No L3 switch on the LAN side of the Edge"
+    - id: l3
+      text: "Active/active L3 switches running OSPF or BGP"
+      explanation: "That is the Gold topology."
+    - id: hsrp
+      text: "MPLS and Internet routers deployed with HSRP or VRRP"
+      explanation: "That is the second Silver variant."
+  correct: [links, nompls, nol3]
+  explanation: "Bronze: one or two Internet links, no MPLS, no L3 switch on the LAN side."
+  lesson_ref: top-bronze
+
+- id: top-q-dhcp-gw
+  topic: topo-bronze
+  difficulty: 2
+  type: single_choice
+  prompt: "Scenario: a small branch uses the Edge's DHCP server on a routed LAN interface. What default gateway do the clients receive?"
+  options:
+    - id: edgeip
+      text: "The Edge's own virtual IP address"
+    - id: gw
+      text: "The Gateway's address"
+      explanation: "The Gateway is in the cloud and is not a LAN gateway."
+    - id: orch
+      text: "The Orchestrator's address"
+      explanation: "The Orchestrator manages the Edge; it is not a LAN gateway."
+    - id: isp
+      text: "The ISP router's address, always"
+      explanation: "The documentation says the Edge hands out its own virtual IP address."
+  correct: edgeip
+  explanation: "A routed interface can run a DHCP server on the Edge, and the Edge then hands out its virtual IP address as the clients' default gateway."
+  lesson_ref: top-bronze
+
+- id: top-q-silver1-edge
+  topic: topo-silver-1
+  difficulty: 1
+  type: single_choice
+  prompt: "In the vendor's first Silver variant, where does the Edge go?"
+  options:
+    - id: between
+      text: "Between the L3 switch and the Internet, replacing the existing firewall or router"
+    - id: l2
+      text: "In place of the L2 switch"
+      explanation: "That is the second Silver variant."
+    - id: behind
+      text: "Behind the MPLS provider's network"
+      explanation: "The MPLS link is terminated on a CE router, not on the Edge."
+    - id: gw
+      text: "Inside the Gateway"
+      explanation: "The Edge is a branch device."
+  correct: between
+  explanation: "The first variant has a single L3 switch, Internet links and an MPLS link on a CE reached through the L3 switch; the Edge goes between the L3 switch and the Internet."
+  lesson_ref: top-silver-1
+
+- id: top-q-silver1-ce
+  topic: topo-silver-1
+  difficulty: 2
+  type: single_choice
+  prompt: "Scenario: in Silver variant 1, where is the MPLS link terminated, and how is it reached?"
+  options:
+    - id: ce
+      text: "On a CE router that is reached through the L3 switch"
+    - id: edge
+      text: "On the Edge's WAN port, directly"
+      explanation: "The description puts the MPLS termination on a CE."
+    - id: gw
+      text: "On a Gateway"
+      explanation: "A Gateway is a cloud component."
+    - id: users
+      text: "On each user's computer"
+      explanation: "Users sit behind the L3 switch."
+  correct: ce
+  explanation: "The MPLS link is terminated on a CE and is accessible through the L3 switch."
+  lesson_ref: top-silver-1
+
+- id: top-q-silver2-edge
+  topic: topo-silver-2
+  difficulty: 1
+  type: single_choice
+  prompt: "In the vendor's second Silver variant (MPLS and Internet routers with HSRP or VRRP and an L2 switch on the LAN side), which device does the Edge replace?"
+  options:
+    - id: l2
+      text: "The L2 switch"
+    - id: routers
+      text: "Both routers"
+      explanation: "The routers stay; the Edge replaces the L2 switch."
+    - id: ce
+      text: "The MPLS carrier's router"
+      explanation: "The carrier's network is not replaced."
+    - id: gw
+      text: "The Gateway"
+      explanation: "The Gateway is a cloud component."
+  correct: l2
+  explanation: "In the second variant the SD-WAN Edge replaces the L2 switch."
+  lesson_ref: top-silver-2
+
+- id: top-q-ha-statements
+  topic: topo-silver-2
+  difficulty: 3
+  type: multi_choice
+  prompt: "Scenario: a site uses an Edge HA pair with both L2 and L3 switches. Which statements are documented? (Select all that apply.)"
+  options:
+    - id: hsrp
+      text: "HSRP or VRRP is required on the L3 switch pair"
+    - id: stp
+      text: "The LAN-side switches must be STP capable and configured with STP"
+    - id: same
+      text: "Both Edges must be the same platform model"
+    - id: edgehsrp
+      text: "The Edge runs HSRP on behalf of the switches"
+      explanation: "HSRP or VRRP runs on the switch pair; the Edge's own VRRP option is a different feature."
+    - id: l2link
+      text: "Arista recommends an L2 switch on the HA link between the two Edges"
+      explanation: "The guide says it does not recommend a layer 2 switch for the HA link."
+  correct: [hsrp, stp, same]
+  explanation: "The HA guide requires HSRP or VRRP on the L3 switch pair (Deployment Type 2), requires STP-capable LAN-side switches, and supports HA only between identical platform models. It does not recommend an L2 switch on the HA link."
+  lesson_ref: top-silver-2
+
+- id: top-q-ha-order
+  topic: topo-silver-2
+  difficulty: 2
+  type: ordering
+  prompt: "Put what the documentation says happens when the Active Edge of an HA pair becomes unresponsive in order."
+  options:
+    - id: dead
+      text: "The Active Edge crashes, reboots or becomes unresponsive"
+    - id: nohb
+      text: "The Standby stops receiving heartbeat messages"
+    - id: take
+      text: "The Standby assumes the Active role and takes over traffic"
+    - id: event
+      text: "The Orchestrator raises the High Availability Going Active event"
+  correct: [dead, nohb, take, event]
+  explanation: "The Standby no longer receives heartbeats when the Active is unresponsive, takes over with minimal impact, and the Orchestrator generates the High Availability Going Active event."
+  lesson_ref: top-silver-2
+
+- id: top-q-ha-orch
+  topic: topo-silver-2
+  difficulty: 2
+  type: true_false
+  prompt: "**True or false:** In an Edge HA pair the Orchestrator talks to the Active Edge and its configuration is mirrored to the Standby over the failover link."
+  correct: true
+  explanation: "The HA pages say the Orchestrator communicates only with the Active Edge and mirrors configuration to the Standby over the failover link."
+  lesson_ref: top-silver-2
+
+- id: top-q-gold-key
+  topic: topo-gold
+  difficulty: 2
+  type: single_choice
+  prompt: "What does the vendor name as the key differentiator of the Gold topology?"
+  options:
+    - id: viprouted
+      text: "A single WAN link is accessible via two routed interfaces, supported by a virtual IP address inside the Edge"
+    - id: three
+      text: "Three Internet links are required"
+      explanation: "The description says one or more public Internet links."
+    - id: nol3
+      text: "There is no L3 switch"
+      explanation: "That describes Bronze."
+    - id: stp
+      text: "The Edge must run STP"
+      explanation: "STP appears in the HA guide for L2 switches, not as the Gold differentiator."
+  correct: viprouted
+  explanation: "The virtual IP address provisioned inside the Edge can be advertised over OSPF, BGP, or statically routed to the interfaces."
+  lesson_ref: top-gold
+
+- id: top-q-gold-parts
+  topic: topo-gold
+  difficulty: 1
+  type: multi_choice
+  prompt: "Which belong to the vendor's description of the Gold topology? (Select all that apply.)"
+  options:
+    - id: l3
+      text: "Active/active L3 switches that communicate routes using OSPF or BGP"
+    - id: ce
+      text: "An MPLS link terminated on a CE router that also talks OSPF or BGP"
+    - id: inet
+      text: "One or more public Internet links"
+    - id: nompls
+      text: "No MPLS connection"
+      explanation: "That is Bronze."
+    - id: l2
+      text: "The Edge replaces the L2 switch"
+      explanation: "That is the second Silver variant."
+  correct: [l3, ce, inet]
+  explanation: "Gold: active/active L3 switches using OSPF or BGP, one or more public Internet links, and an MPLS link on a CE router that also uses OSPF or BGP."
+  lesson_ref: top-gold
+
+- id: top-q-hasel
+  topic: topo-choosing
+  difficulty: 3
+  type: single_choice
+  prompt: "Scenario: an Edge HA pair is planned with L2 and L3 switches (the HA guide's Deployment Type 2). Which extra requirement does the guide state for the L3 switch pair?"
+  options:
+    - id: hsrp
+      text: "HSRP or VRRP must be configured on the L3 switch pair"
+    - id: vcmp
+      text: "The switches must terminate VCMP tunnels"
+      explanation: "VCMP is the Edge and Gateway tunnel protocol, not a switch requirement."
+    - id: ospf
+      text: "The switches must run OSPF with the Gateway"
+      explanation: "The guide does not require that."
+    - id: single
+      text: "Only one L3 switch may be used"
+      explanation: "The requirement is about the switch pair."
+  correct: hsrp
+  explanation: "For Deployment Type 2 the guide says HSRP or VRRP is required on the L3 switch pair; the Edge's static route points to the virtual IP as next hop."
+  lesson_ref: top-choosing
+
+- id: top-q-dual-internet
+  topic: topo-choosing
+  difficulty: 2
+  type: single_choice
+  prompt: "Scenario: a site has one direct Internet link and one broadband link, both on DHCP, and one link sits behind a NAT router. Which entry of the 7.0 Site Configurations table describes it?"
+  options:
+    - id: public
+      text: "Public WAN link(s) only site (a dual-Internet site)"
+    - id: private
+      text: "Private WAN link(s) only site"
+      explanation: "That is the classic MPLS site."
+    - id: hub1
+      text: "Hub 1, a two-arm data center Hub"
+      explanation: "A Hub is a data center or regional site."
+    - id: hybrid2
+      text: "Hybrid Site-2, an in-path Edge behind a CE router"
+      explanation: "Hybrid sites have an MPLS link as well."
+  correct: public
+  explanation: "The table lists a Public WAN link(s) only site as a dual-Internet site where one of the links is behind a NAT router."
+  lesson_ref: top-choosing

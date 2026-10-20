@@ -39,13 +39,13 @@ Details worth knowing: NetFlow allows 2 collectors per segment and 8 per Profile
 </Predict>
 
 <Callout variant="warning" title="What we could not confirm">
-  How these services are enabled on an Edge, and exactly which settings the Operator controls, were read only from the Network Services page. We did not read each service's own Edge-level page.
+  Which settings the Operator controls was read only from the Network Services page. Section 8 later read the Profile and Edge device-settings pages for NetFlow, DNS, RADIUS, TACACS, VNFs and clusters; the other services (Private Network Names, API Credentials) have no Edge-level page that we read.
 </Callout>
 
 ## What you would see in the VCO
 
 - **Configure > Network Services**: a list with each service expandable.
-- Edge-level: some services (TACACS, documented as **Configure > Edges > Device Settings > Edge Services**) are also assigned on the Edge; we did not read the others' Edge pages.
+- Edge-level: several services are also set on the Edge (for example TACACS under **Configure > Edges > Device Settings > Edge Services**); Section 8 walks through where each one is assigned.
 
 ## Key takeaways
 

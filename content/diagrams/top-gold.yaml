@@ -1,0 +1,78 @@
+# Section 7, lesson 6: Gold. Facts: reference/bronze-silver-gold.md. The placement of the Edge and the paths are illustrative.
+id: top-gold
+title: Gold site topology (illustrative placement)
+alt: >-
+  Branch users connect to two active/active L3 switches that exchange routes. Both switches connect to an Edge, which has an
+  Internet link to a Gateway, and to an MPLS CE router, which has an MPLS link to a data center. A virtual IP address inside the
+  Edge lets a single WAN link be reached over two routed interfaces. If one L3 switch fails, traffic uses the other.
+width: 900
+height: 540
+
+nodes:
+  - { id: users, label: Branch users, kind: host, x: 70, y: 270 }
+  - { id: l3a, label: L3 switch A, kind: l3switch, x: 270, y: 130 }
+  - { id: l3b, label: L3 switch B, kind: l3switch, x: 270, y: 410 }
+  - { id: edge, label: Edge, kind: vce, x: 510, y: 130, sublabel: virtual IP }
+  - { id: ce, label: CE router, kind: router, x: 510, y: 410 }
+  - { id: net, label: Internet, kind: internet, x: 700, y: 130 }
+  - { id: mpls, label: MPLS, kind: mpls, x: 700, y: 410 }
+  - { id: gw, label: Gateway, kind: vcg, x: 850, y: 130 }
+  - { id: dc, label: Data center, kind: datacenter, x: 850, y: 410 }
+
+links:
+  - { id: u-a, from: users, to: l3a, style: lan }
+  - { id: u-b, from: users, to: l3b, style: lan }
+  - { id: a-b, from: l3a, to: l3b, style: control, label: OSPF or BGP }
+  - { id: a-e, from: l3a, to: edge, style: lan }
+  - { id: b-e, from: l3b, to: edge, style: lan }
+  - { id: a-ce, from: l3a, to: ce, style: lan }
+  - { id: b-ce, from: l3b, to: ce, style: lan }
+  - { id: wan, from: edge, to: net, style: underlay-internet }
+  - { id: ce-mpls, from: ce, to: mpls, style: underlay-mpls }
+  - { id: net-gw, from: net, to: gw, style: underlay-internet }
+  - { id: mpls-dc, from: mpls, to: dc, style: underlay-mpls }
+
+steps:
+  - title: A large branch
+    narration: >-
+      The Gold topology is a typical large branch: **active/active L3 switches** that communicate routes using **OSPF or BGP**,
+      one or more public Internet links, and an MPLS link terminated on a CE router that is reached through the L3 switches.
+    highlight: [l3a, l3b, a-b, edge, ce]
+    show: [net, mpls, gw, dc, net-gw, mpls-dc]
+
+  - title: The CE speaks a routing protocol too
+    narration: >-
+      The CE router also runs OSPF or BGP, so routes flow between the switches, the CE and the Edge. Which prefix is learned from
+      whom is the subject of Section 6.
+    highlight: [ce, a-ce, b-ce, a-b]
+    callouts:
+      - { target: ce, text: "Also OSPF or BGP." }
+
+  - title: One WAN link, two routed interfaces
+    narration: >-
+      The vendor names this as the key differentiator: **a single WAN link is accessible via two routed interfaces**. To support
+      it, a **virtual IP address** is provisioned inside the Edge and can be advertised over OSPF, BGP or statically routed to the
+      interfaces.
+    highlight: [edge, a-e, b-e]
+    callouts:
+      - { target: edge, text: "Virtual IP inside the Edge." }
+
+  - title: A flow through either switch (illustrative)
+    narration: >-
+      Traffic for the overlay can reach the Edge through either L3 switch. How the switches share it, equal-cost or primary and
+      backup, is not stated in the text we read.
+    highlight: [users, edge, net, gw]
+    packets:
+      - { path: [users, u-a, l3a, a-e, edge, wan, net, net-gw, gw], label: via switch A, color_style: overlay-tunnel }
+      - { path: [users, u-b, l3b, b-e, edge, wan, net, net-gw, gw], label: via switch B, color_style: overlay-tunnel }
+
+  - title: One L3 switch fails (design practice)
+    narration: >-
+      With active/active switches, traffic can use the other one. This is our reasoning about the design, not a documented
+      failover. The single Edge is still a single point of failure; an Edge HA pair is its answer.
+    hide: [u-a, a-e, a-b, a-ce]
+    highlight: [users, u-b, l3b, b-e, edge]
+    packets:
+      - { path: [users, u-b, l3b, b-e, edge, wan, net, net-gw, gw], label: via switch B, color_style: overlay-tunnel }
+    callouts:
+      - { target: l3a, text: "Switch A down." }

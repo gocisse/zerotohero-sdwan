@@ -1,0 +1,87 @@
+---
+id: prof-segments
+title: Segments, configuration
+summary: "Creating a segment under Configure > Segments, its documented fields, adding it to a Profile, mapping VLANs and interfaces to it, comparing segments, and what the VCO shows."
+estimated_minutes: 10
+topics: [pcfg-segments]
+prerequisites: [cfg-segments, svc-where]
+---
+
+**By the end of this lesson you will be able to:**
+
+- create a <Term id="segment">segment</Term> with the documented fields and say what each Type means;
+- add a segment to a Profile and say how a VLAN and an interface are tied to it;
+- say what the Global Segment is and where segments are limited;
+- compare the Global Segment with another segment using the screens the documentation describes.
+
+## Create a segment
+
+Segments are defined once for the Enterprise and then added to Profiles. The documented steps are **Configure > Segments**, **Add**, fill in the form, **Save Changes**. To delete one, select it and choose **Delete**; a segment that a Profile uses cannot be deleted. The documentation does not describe how to edit or rename a segment.
+
+<Diagram id="prof-segment-flow" />
+
+## Add it to a Profile, then to VLANs and interfaces
+
+1. **Add it to the Profile.** Configure > Profiles > the Profile > **Device** tab > **Segment** menu > **Change Profile Segments**, tick the segments under All Segments, **Update Segments**, **Save Changes**. A lock icon marks a segment that is in use and cannot be removed.
+2. **Tie a VLAN to it.** In the Profile's Device tab, Connectivity > VLAN > **+ Add VLAN**: the VLAN dialog has a **Segment** field. A VLAN that is assigned to an interface cannot be deleted.
+3. **Tie an interface to it.** An interface setting has a **Segments** field; by default it applies to all segments.
+4. After assignment, every Profile segment appears in the Segment menu, and a segment assigned to a VLAN or interface shows its VLAN ID and associated Edge models.
+
+## The Global Segment and comparing segments
+
+Every Enterprise has a <Term id="global-segment">Global Segment</Term>; for it the <Term id="segment-type">Type</Term> can be Regular or Private. Pages with a Segment drop-down (business policy, for example) show the Global Segment [Regular] first. **Comparing** is not a screen of its own in the pages we read. Our method (labelled as such): pick the segment in the Device tab's **Segment** menu, read its VLANs and interface settings, then pick the other and read the same sections; use **Sort by segment aware** to separate the Segment Aware settings (they apply to several segments) from the Segment Agnostic ones (they apply only to the selected segment).
+
+## Settings reference
+
+| Field | What it does | Allowed values and default |
+|---|---|---|
+| Segment Name | names the segment | up to 256 characters; no default stated |
+| Description | descriptive text | up to 256 characters |
+| Type | the segment category | Regular, Private or CDE; the Global Segment can be only Regular or Private |
+| <Term id="service-vlan">Service VLAN</Term> | the service VLAN identifier used to map the segment to a security VNF | format and range not stated |
+| Delegate to Partner | lets the Partner change settings in the segment, including interface assignment | selected by default |
+| Delegate to Customer | lets the Customer change settings in the segment, including interface assignment | selected by default |
+| Change Profile Segments | adds segments to a Profile (Segment menu, Device tab) | segments in use show a lock icon and cannot be removed |
+| Segment | assigns a VLAN to a segment (VLAN dialog) | a segment of the Profile |
+| Segments | the segment an interface setting applies to | all segments by default |
+| Sort by segment aware | groups Device tab settings into Segment Aware and Segment Agnostic | the default is Sort by category |
+
+**Type values.** **<Term id="private-segment">Private</Term>** is "used for traffic flows that require limited visibility in order to address end user privacy requirements": no user flow statistics are uploaded to the Orchestrator (with exceptions) and business policies set to Internet Multipath become Direct. **CDE** is for PCI traffic that uses the PCI-certified service. **Limits:** the default maximum number of segments for an Enterprise is 16 and the system maximum can be raised (128 is the figure given); an Edge can have up to 32 VLANs across 16 segments; per Edge model, the datasheets give 32 segments for the Edge 710 and 128 for the 720, 740, 4100 and 5100, and the Standard edition allows 4 data segments.
+
+<Callout variant="warning" title="What we could not confirm">
+  How to edit or rename a segment, the format of the Service VLAN field, the text shown when a delete is refused, whether the Configure > Segments list has an in-use column, and whether traffic between segments is blocked by default are not in the pages we read. The page names guest traffic, voice media and PCI traffic as use cases; corp, IoT and OT are common examples but are not named there. The 6.4 segments page was not read.
+</Callout>
+
+<Predict
+  prompt="A segment is used by a Profile and you try to delete it under Configure > Segments. What does the documentation say?"
+  choices={["Users cannot delete a segment used by a Profile", "It is deleted and the Profile loses it", "It is deleted after the Edges restart", "Only the Operator can delete it"]}
+  answer={0}
+>
+  The guide says users cannot delete a segment that a Profile uses; the Profile's Change Profile Segments dialog marks it with a lock icon.
+</Predict>
+
+## What you would see in the VCO
+
+- **Configure > Segments**: the list with **Add** and **Delete**.
+- **Configure > Profiles > (Profile) > Device**: the **Segment** menu with Change Profile Segments, and Sort by segment aware.
+- **Connectivity > VLAN** and **Connectivity > Interfaces**: the Segment and Segments fields.
+
+<Callout variant="tip" title="Check this in your own VCO">
+  - **[observation candidate]** Open: Configure > Segments, Add. Expect: Segment Name, Description, Type (Regular, Private, CDE), Service VLAN, Delegate to Partner and Delegate to Customer, with both Delegate boxes selected. Docs may differ: your role may hide some fields.
+  - **[observation candidate]** Open: a Profile's Device tab, Segment menu, Change Profile Segments. Expect: All Segments listed, with a lock icon on those the Profile already uses. Docs may differ: the lock symbol may look different.
+  - **[observation candidate]** Open: Configure > Segments, a segment a Profile uses, Delete. Expect: the delete is refused. Docs may differ: the wording of the refusal is not documented; do this only on a lab segment.
+  - **[observation candidate]** Open: a Profile's Connectivity > VLAN dialog. Expect: a Segment field next to VLAN Name and VLAN ID. Docs may differ: the field order.
+</Callout>
+
+## Key takeaways
+
+- A segment is created once under Configure > Segments and then added to a Profile with Change Profile Segments.
+- A VLAN has a Segment field and an interface setting has a Segments field; a used segment cannot be deleted.
+- Type is Regular, Private or CDE; the Global Segment is Regular or Private.
+- There is no documented compare screen: switch the Segment menu and read the same sections.
+
+## What would you look for in the VCO
+
+- Which segments does the Profile include, and which are locked?
+- Which VLANs and interfaces use each segment?
+- Is the segment Regular, Private or CDE?

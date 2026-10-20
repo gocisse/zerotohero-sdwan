@@ -1,0 +1,50 @@
+# Section 9, lesson 5: a firewall rule being applied. Illustrative: the order of evaluation and the no-match action are not documented. Facts: reference/config/config-firewall-rules.md.
+id: prof-fw-rule-eval
+title: A firewall rule at the Edge (illustrative)
+alt: >-
+  ICMP traffic from a guest VLAN reaches the Edge, matches a Drop rule and is silently discarded. Traffic that matches no rule
+  is not covered by anything the documentation states. An Edge rule takes priority over an inherited Profile rule.
+width: 900
+height: 540
+
+nodes:
+  - { id: guest, label: "Guest VLAN host", kind: host, x: 100, y: 270 }
+  - { id: fw, label: "Edge firewall", kind: firewall, x: 400, y: 270, sublabel: "Rule From Profile + Edge rules" }
+  - { id: lan, label: "Destination", kind: generic, x: 760, y: 270 }
+
+links:
+  - { id: g-f, from: guest, to: fw, style: lan }
+  - { id: f-l, from: fw, to: lan, style: lan }
+
+steps:
+  - title: Rules on the Edge
+    narration: >-
+      The Edge firewall holds the rules inherited from the Profile (shown under **Rule From Profile**) and the Edge's own rules.
+      Edge rules take priority over inherited ones.
+    highlight: [fw]
+    show: [fw, guest, g-f]
+    callouts:
+      - { target: fw, text: "Edge rules take priority." }
+
+  - title: A packet matches a Drop rule
+    narration: >-
+      An ICMP packet from the guest VLAN matches a rule with Source VLAN and Protocol ICMP. The action **Drop** discards it silently with
+      no notice to the source.
+    highlight: [guest, g-f, fw]
+    packets:
+      - { path: [guest, g-f, fw], label: "ICMP, dropped", color_style: lan }
+
+  - title: Reject needs Stateful Firewall
+    narration: >-
+      **Reject** discards and sends the source a reset, and **Skip** moves to the next rule. Both are available only when Stateful Firewall
+      is activated, which is off by default for an Enterprise.
+    highlight: [fw]
+
+  - title: What the documentation does not say
+    narration: >-
+      The order in which rules are evaluated, the action when no rule matches, and whether the firewall decides before or after business
+      policy are not stated, so this diagram stops here.
+    show: [lan, f-l]
+    highlight: [fw, f-l, lan]
+    callouts:
+      - { target: f-l, text: "No-match action: not documented." }

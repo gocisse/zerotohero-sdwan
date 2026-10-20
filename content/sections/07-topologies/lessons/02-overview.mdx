@@ -1,0 +1,88 @@
+---
+id: top-overview
+title: Branch site topologies
+summary: "The building blocks of a branch, the questions a designer asks, and the vendor's Bronze, Silver and Gold branch designs with the other names the guides use."
+estimated_minutes: 9
+topics: [topo-overview]
+prerequisites: [top-edge-models]
+---
+
+**By the end of this lesson you will be able to:**
+
+- list the building blocks of a branch site and where the Edge sits among them;
+- ask the design questions that separate one branch topology from another;
+- say what Bronze, Silver and Gold are, and in which documents they appear;
+- tell the documented site names (Hybrid Site-1, Hybrid Site-2 and others) from the Bronze, Silver and Gold labels.
+
+## Building blocks
+
+A branch is a LAN, one or more **transports** (circuits such as an Internet link or an <Term id="mpls">MPLS</Term> service), an <Term id="vce">Edge</Term>, and sometimes switches, a <Term id="ce-router">CE router</Term> and a firewall. The vendor describes the Edge as designed to be deployed as a gateway router between the LAN and the WAN, and its interfaces can instead be set as switched ports for small offices. Where the Edge sits among the other devices is what the topologies differ in.
+
+## The designer's questions
+
+(design practice) These are our questions, not a vendor checklist:
+
+1. **How many transports, and which kinds?** One Internet link, two, or Internet plus MPLS?
+2. **Who is the default gateway for the LAN?** The Edge, a <Term id="hsrp">HSRP</Term> or <Term id="vrrp">VRRP</Term> router pair, or an L3 switch?
+3. **Where does the Edge sit relative to the existing router or switch?** In the path of the traffic, or off to the side?
+4. **Is one Edge enough?** A single Edge is a single point of failure.
+5. **How does the LAN learn routes?** Static routes, or OSPF or BGP with L3 switches?
+
+## The vendor's three branch topologies
+
+The Administration Guide has a section called Branch Site Topologies. The 7.0 Overview says the Arista VeloCloud service "defines two or more different branch topologies designated as Bronze, Silver, and Gold", and the older VMware guide uses the same sentence. They are documented vendor terms, not only a training convention.
+
+| Label | Vendor description (short) | Lesson |
+|---|---|---|
+| <Term id="bronze-topology">Bronze</Term> | one or two Internet links, no MPLS, no L3 switch on the LAN side | 3 |
+| <Term id="silver-topology">Silver</Term>, variant 1 | an L3 switch, Internet links and an MPLS link on a CE reached through the L3 switch; the Edge goes between the L3 switch and the Internet | 4 |
+| Silver, variant 2 | MPLS and Internet routers using HSRP or VRRP, an L2 switch on the LAN side; the Edge replaces the L2 switch | 5 |
+| <Term id="gold-topology">Gold</Term> | a large branch: active/active L3 switches running OSPF or BGP, Internet links and an MPLS CE also running OSPF or BGP | 6 |
+
+The course calls the two Silver variants **Silver option 1** and **Silver option 2**; "option" is our label for the guide's "variant".
+
+<Callout variant="warning" title="Two lists, one set of words">
+  The same older guide has a second table in its Site Configurations chapter, and it uses the words differently: **Silver 1** is an Edge deployed **off-path** (traffic is first diverted to it), **Silver 2** is an Edge deployed **in-path as the default gateway**, and **Bronze 1** is a dual-Internet site with one link behind a NAT router. The current 7.0 and 5.2 versions of that table call these Hybrid Site-1, Hybrid Site-2 and Public WAN link(s) only site, and do not use Bronze, Silver or Gold at all. From the text alone we cannot tell whether "Silver 1" in the two places names the same design. Treat the Branch Site Topologies section as the definition of the labels and the table as a list of worked examples.
+</Callout>
+
+## Other documented site names
+
+| Name (7.0 Site Configurations) | What it is |
+|---|---|
+| Hub 1 / Hub 2 | a data center or regional Hub with the Edge in a two-arm or a one-arm topology (one interface carrying several WAN links) |
+| Private WAN link(s) only | classic MPLS sites |
+| Hybrid Site-1 | the Edge off-path; an L3 switch redirects traffic to it |
+| Hybrid Site-2 | the Edge in-path as the default gateway; a single point of failure that may need HA |
+| Public WAN link(s) only | a dual-Internet site, one link possibly behind a NAT router |
+
+<Predict
+  prompt="You read a design review that says 'this is a Silver site'. What is the safest next step?"
+  choices={["Ask which of the two Silver variants, and where the Edge sits", "Assume it has an Edge pair", "Assume it has no MPLS", "Assume the Orchestrator is on premises"]}
+  answer={0}
+>
+  Silver covers two different designs, and the guides use "Silver" in two lists. Ask which variant, where the Edge sits (between L3 switch and Internet, or replacing the L2 switch), and whether it is an HA pair.
+</Predict>
+
+## What you would see in the VCO
+
+- Nothing in the VCO is labelled Bronze, Silver or Gold in the pages we read. A topology shows up as settings: which interfaces have a WAN overlay, which are LAN, the routing settings, and the **High Availability** section of the Edge's **Device** tab.
+- **Configure > Edges** lists Edges; an Edge with an HA pair is shown under **Monitor > Edges** with an **HA Standby** tab.
+
+<Callout variant="tip" title="Check this in your own VCO or site">
+  - **[observation candidate]** Open: Configure > Edges, then a few Edges, Device tab, Interface Settings. Expect: you can classify each site from its WAN overlay interfaces (Internet only, Internet plus a private link). Docs may differ: the labels Bronze, Silver and Gold do not appear in the pages we read as screen labels.
+  - **[observation candidate]** Open: your own network diagram or site survey. Expect: each site matches exactly one of the vendor descriptions (or none). Docs may differ: real sites mix the designs, and the guides do not say what to call a mix.
+  - **[observation candidate]** Open: Configure > Edges, the Device tab, High Availability section on a site you know has one Edge. Expect: the choice reads None. Docs may differ: it could read Cluster or VRRP with 3rd party router.
+</Callout>
+
+## Key takeaways
+
+- A branch is LAN, transports, an Edge and optional switches, routers and firewalls; topologies differ in where the Edge sits.
+- Bronze, Silver and Gold are vendor terms in a Branch Site Topologies section; Silver has two variants.
+- The Site Configurations table uses other names (Hybrid Site-1 and 2, Public WAN only) and, in the older guide, reuses Silver and Bronze for worked examples.
+- A label is a starting description; always ask where the Edge sits.
+
+## What would you look for in the VCO
+
+- Which interfaces carry a WAN overlay, and which transports do they reach?
+- Is the Edge the LAN's default gateway, or is something else?
+- Is the site one Edge or an HA pair?

@@ -70,6 +70,39 @@ What an Edge learns from the LAN, what it advertises into the overlay, what othe
 - **Labs that reinforce it:** branch-b-cannot-reach, capstone-1-monday-morning, which-route-wins
 - **Simulator screens:** Routes; Reachability explainer; Routing challenge; Flow tracer (route stage)
 
+## Branch site topologies and Edge models (`topologies`)
+
+Reading an Edge datasheet, the vendor's Bronze, Silver and Gold branch designs, how an Edge pair adds availability, and how to choose a design for a site.
+
+- **Supports:** foundation for all four goals (no single goal)
+- **Lessons (7):** top-edge-models (10 min), top-overview (9 min), top-bronze (8 min), top-silver-1 (10 min), top-silver-2 (12 min), top-gold (11 min), top-choosing (12 min)
+- **Quiz (20 questions), topics:** topo-bronze (3), topo-choosing (2), topo-edge-models (5), topo-gold (2), topo-overview (2), topo-silver-1 (2), topo-silver-2 (4)
+- **Diagrams (6):** top-bronze, top-datasheet-reading, top-decision, top-gold, top-silver-1, top-silver-2
+- **Labs that reinforce it:** -
+- **Simulator screens:** 
+
+## Network services: configuration walkthroughs (`network-services-config`)
+
+Where network services live, then the settings of each one as the documentation names them (NSD via Gateway and via Edge, Clusters and Hubs, API Credentials, NetFlow, DNS, Private Network Names, Prefix Delegation Tags, Authentication and VNF), how to assign them, and how to review a Profile.
+
+- **Supports:** foundation for all four goals (no single goal)
+- **Lessons (8):** svc-where (9 min), svc-nsd-gateway (12 min), svc-nsd-edge (11 min), svc-clusters-hubs (11 min), svc-credentials-netflow (11 min), svc-name-address (11 min), svc-auth-vnf (12 min), svc-review (10 min)
+- **Quiz (20 questions), topics:** svcfg-auth-vnf (2), svcfg-clusters-hubs (2), svcfg-credentials-netflow (2), svcfg-name-address (2), svcfg-nsd-edge (3), svcfg-nsd-gateway (4), svcfg-review (2), svcfg-where (3)
+- **Diagrams (6):** svc-cluster, svc-netflow-path, svc-nsd-edge, svc-nsd-gateway, svc-prefix-delegation, svc-workflow
+- **Labs that reinforce it:** -
+- **Simulator screens:** 
+
+## Segments, Profiles and policy: configuration walkthroughs (`profile-policy-config`)
+
+Creating a segment and adding it to a Profile, creating and changing a Profile, the Profile's Device settings by their documented headings, building business policy and firewall rules field by field, matching applications, and comparing configurations to see where a setting comes from.
+
+- **Supports:** foundation for all four goals (no single goal)
+- **Lessons (7):** prof-segments (10 min), prof-profiles (10 min), prof-device (12 min), prof-bp-rules (12 min), prof-fw-rules (11 min), prof-app-match (9 min), prof-compare (10 min)
+- **Quiz (20 questions), topics:** pcfg-app-match (2), pcfg-bp-rules (4), pcfg-compare (2), pcfg-device (3), pcfg-fw-rules (3), pcfg-profiles (3), pcfg-segments (3)
+- **Diagrams (5):** prof-bp-rule-build, prof-compare-walk, prof-fw-rule-eval, prof-profile-edge, prof-segment-flow
+- **Labs that reinforce it:** -
+- **Simulator screens:** 
+
 ## Goals and their coverage
 
 | goal | sections | lessons | quiz questions | diagrams | labs | simulator screens |
@@ -80,6 +113,89 @@ What an Edge learns from the LAN, what it advertises into the overlay, what othe
 | How routes flow | routing | 8 | 20 | 7 | branch-b-cannot-reach, which-route-wins, capstone-1-monday-morning | Routes (Route Table Dump layout); Reachability explainer; Routing challenge; Flow tracer (route stage) |
 
 Sections that support more than one goal are counted in each (architecture and configuration), so the totals overlap. The capstone labs and the self-check (`/sim/self-check`) span all four goals.
+
+## Study guide mapping
+
+The learner's six-section study guide (navigation labels only) and what the course offers for each topic, from `content/study-guide.yaml`. Coverage: **full** = a lesson teaches the topic; **partial** = a lesson teaches part of it, or only the concept and where it lives in the VCO; **none** = nothing in the course teaches it. The dashboard counts progress over covered topics only.
+
+Topics: 41 full, 9 partial, 0 none.
+
+### G1: Arista VeloCloud SD-WAN
+
+| topic | kind | coverage | lessons | labs |
+|---|---|---|---|---|
+| Why Traditional WAN Architectures Are No Longer Enough | concept | full | intro-why-wans-fall-short | - |
+| Business Challenges That Drive the Need for SD-WAN | concept | full | intro-problems-sdwan-solves | - |
+| How VeloCloud SD-WAN Solves the Problem | concept | full | intro-how-velocloud-solves | - |
+| Journey of VeloCloud SD-WAN | concept | full | intro-history-and-naming | - |
+
+### G2: Arista VeloCloud SD-WAN Architecture
+
+| topic | kind | coverage | lessons | labs |
+|---|---|---|---|---|
+| VeloCloud Edge (VCE) | concept | full | arch-edge | - |
+| VeloCloud Orchestrator (VCO) | concept | full | arch-orchestrator, intro-vco-orientation | - |
+| VeloCloud Gateway (VCG) | concept | full | arch-gateway | - |
+| Underlay and Overlay | concept | full | arch-underlay-overlay | - |
+| Tunnel Architecture | concept | full | arch-tunnels, ov-cloud-vpn, ov-dynamic | no-direct-tunnel |
+| Ports and Protocols | concept | full | arch-ports-firewall | - |
+| Dynamic Multipath Optimization (DMPO) Part 1 | concept | full | dmpo-overview, dmpo-monitoring | - |
+| Dynamic Multipath Optimization (DMPO) Part 2 | concept | full | dmpo-outage-brownout, dmpo-remediation, dmpo-together | - |
+| Dynamic Multipath Optimization (DMPO) Part 3: Link Steering | concept | full | dmpo-steering, dmpo-vco-diagnosis | video-wrong-link |
+| VCMP, Tunnel Overhead and MTU | concept | full | arch-mtu-overhead | mtu-ipsec |
+
+### G3: Arista VeloCloud SD-WAN Profile, Policy & Segmentation
+
+| topic | kind | coverage | lessons | labs |
+|---|---|---|---|---|
+| Segmentation Part 1 | concept | full | cfg-segments | - |
+| Segmentation Part 2 | config | full | prof-segments, cfg-segments | - |
+| Profile Part 1 | concept | full | cfg-profiles, prof-profiles | - |
+| Profile Part 2 | config | full | prof-profiles, prof-device, cfg-profiles, cfg-model, cfg-overrides | capstone-3-change-request |
+| Profile Part 3 | config | partial | prof-profiles, prof-device, prof-compare, cfg-profiles, cfg-diagnosis, ov-cloud-vpn, ov-hubs, cfg-firewall | capstone-1-monday-morning |
+| Profile Part 4 | config | partial | prof-bp-rules, prof-fw-rules, prof-compare, cfg-business-policy, cfg-apps-qos, cfg-firewall, cfg-profiles, cfg-overrides | capstone-3-change-request |
+| Policy Part 1 | concept | full | cfg-business-policy, cfg-firewall, cfg-apps-qos, prof-bp-rules, prof-fw-rules | video-wrong-link |
+| Policy Part 2 | config | full | prof-bp-rules, prof-fw-rules, prof-app-match, cfg-business-policy, cfg-firewall, cfg-diagnosis | - |
+
+### G4: Arista VeloCloud Network Services
+
+| topic | kind | coverage | lessons | labs |
+|---|---|---|---|---|
+| Network Services (overview) | concept | full | ov-services, svc-where, svc-review | - |
+| Non SD-WAN Destinations | concept | full | ov-nsd | - |
+| Non SD-WAN Destinations via Gateway | concept | full | ov-nsd, arch-gateway | - |
+| Non SD-WAN Destinations via Gateway: Config | config | partial | svc-nsd-gateway, ov-nsd | - |
+| Non SD-WAN Destinations via Edge | concept | full | ov-nsd | - |
+| Non SD-WAN Destinations via Edge: Config | config | full | svc-nsd-edge, ov-nsd | - |
+| API Credentials | concept | full | svc-credentials-netflow, ov-services | - |
+| API Credentials: Config | config | full | svc-credentials-netflow, ov-services | - |
+| Clusters and Hubs | concept | full | ov-hubs | hub-down, capstone-2-hub-incident |
+| Clusters and Hubs: Config | config | full | svc-clusters-hubs, ov-hubs | hub-down |
+| NetFlow | concept | full | svc-credentials-netflow, ov-services | - |
+| NetFlow: Config | config | full | svc-credentials-netflow, ov-services | - |
+| DNS Services | concept | full | svc-name-address, ov-services | - |
+| DNS Services: Config | config | full | svc-name-address, ov-services | - |
+| Private Network Names | concept | partial | ov-services | - |
+| Private Network Names: Config | config | partial | svc-name-address, ov-services | - |
+| Prefix Delegation Tags | concept | full | svc-name-address, ov-services | - |
+| Prefix Delegation Tags: Config | config | full | svc-name-address, ov-services | - |
+| Authentication Services | concept | full | svc-auth-vnf, ov-services | - |
+| Authentication Services: Config | config | full | svc-auth-vnf, ov-services | - |
+| VNF | concept | full | svc-auth-vnf, ov-services | - |
+| VNF: Config | config | partial | svc-auth-vnf, ov-services | - |
+
+### G5: Arista VeloCloud SD-WAN Topologies
+
+| topic | kind | coverage | lessons | labs |
+|---|---|---|---|---|
+| Edge Models | topology | partial | top-edge-models | - |
+| Branch Site Topologies | topology | full | top-overview, top-choosing | - |
+| Bronze Site Topology | topology | full | top-bronze | - |
+| Silver Site Topology Option 1 | topology | full | top-silver-1 | - |
+| Silver Site Topology Option 2 | topology | partial | top-silver-2 | - |
+| Gold Site Topology | topology | partial | top-gold | - |
+
+Lessons deliberately outside the guide: ov-glance, ov-diagnosis, rt-big-picture, rt-static, rt-ospf, rt-bgp, rt-redistribution, rt-filters, rt-ofc, rt-diagnosis.
 
 ## Weak coverage and what would fix it (not built)
 

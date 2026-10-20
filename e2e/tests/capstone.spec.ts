@@ -91,8 +91,10 @@ test.describe('self-check', () => {
     expect(new Set(api.questions.map((q) => q.section_id)).size).toBeGreaterThanOrEqual(5)
     expect(new Set(api.questions.map((q) => q.id)).size).toBe(12)
     expect(api.screens).toHaveLength(3)
-    const text = JSON.stringify(api)
-    for (const k of ['"explanation"', '"correct"', '"value"', '"probe"', '"equals"']) expect(text).not.toContain(k)
+    // Questions are drawn at random and an option may legitimately have the id "probe" or "value", so the lab-format keys are
+    // only searched for in the screen tasks; "explanation" and "correct" must appear nowhere.
+    for (const k of ['"explanation"', '"correct"']) expect(JSON.stringify(api)).not.toContain(k)
+    for (const k of ['"value"', '"probe"', '"equals"']) expect(JSON.stringify(api.screens)).not.toContain(k)
 
     await page.goto('/sim/self-check')
     await expect(page.locator('[data-sim-banner]')).toBeVisible()

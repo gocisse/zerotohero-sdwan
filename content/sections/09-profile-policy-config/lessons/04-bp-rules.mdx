@@ -1,0 +1,104 @@
+---
+id: prof-bp-rules
+title: Business policy rules, configuration
+summary: "The business policy rule editor field by field (Match and Action tabs), a worked example built only from documented fields, where a rule is created and how Profile rules appear on an Edge."
+estimated_minutes: 12
+topics: [pcfg-bp-rules]
+prerequisites: [cfg-business-policy, prof-profiles]
+---
+
+**By the end of this lesson you will be able to:**
+
+- open the rule editor on a Profile or an Edge and create a rule in the documented order;
+- read each Match and Action field, its allowed values and its documented defaults;
+- build a rule that matches an application and sets a link-steering action from documented fields;
+- say how Profile rules appear on an Edge and what is not documented about rule order.
+
+## Where and in what order
+
+A <Term id="business-policy-rule">business policy rule</Term> is created on a Profile (**Configure > Profiles > (Profile) > Business Policy**, or the **Biz. Pol** View link) or on an Edge (**Configure > Edges > (Edge) > Business Policy**). The documented steps: **+ ADD** (the Add Rule window), a **Rule Name** and an IP version, the **Match** tab, the **Action** tab, **Create**. The rule appears in the Business Policy Rules section. Rules on a Profile are pushed to all its Edges; on an Edge the **Rules From Profile** section shows them, and **Edge Overrides** shows new and modified Edge rules. An Edge cannot change an inherited rule: it creates an identical rule with new parameters, which supersedes the Profile rule. Rules are listed in order of highest precedence and traffic is matched to the rule with the highest precedence.
+
+<Diagram id="prof-bp-rule-build" />
+
+## Settings reference
+
+### Match tab
+
+| Field | What it does | Allowed values and default |
+|---|---|---|
+| Rule Name | names the rule | entered in the Add Rule window |
+| IP version | the address family of the rule | IPv4 and IPv6 (the default), IPv4 or IPv6 |
+| Source | which traffic by origin | Any (default), <Term id="object-group">Object Group</Term> or Define (VLAN, Interface, IP Address, Ports, Operating System) |
+| Destination | which traffic by target | Any (default), Object Group or Define (Any, Internet, Edge, Non SD-WAN Destination via Gateway or via Edge, Domain Name, Protocol, Ports) |
+| Domain Name | matches a destination by name | the whole name or part of it |
+| Protocol | matches a transport protocol | GRE, ICMP, TCP or UDP; ICMP not in Mixed mode |
+| Application | matches an application | Any (default) or Define, with an optional DSCP value to match |
+| <Term id="pre-nat">Activate Pre-NAT</Term> | also matches pre-NAT addresses of the LAN-side source | IPv4 and Mixed object groups only |
+
+### Action tab
+
+| Field | What it does | Allowed values and default |
+|---|---|---|
+| Priority | resource allocation for matching traffic | High, Normal or Low |
+| Network Service | how traffic leaves | Direct, Multi-Path or Internet Backhaul (only when the destination is Internet) |
+| Link Steering | how links are chosen | Auto (the default), Transport Group, Interface or WAN Link; the last two at the Edge only |
+| <Term id="error-correct-before-steering">Error Correct Before Steering</Term> | keeps the link and corrects errors until loss reaches a value | shown with Preferred; reveals Loss% |
+| Enable Rate Limit | limits inbound and outbound rates | per flow; the limit values are not given |
+| Enable NAT | policy-based NAT | not available in the IPv4 and IPv6 mode |
+| Inner Packet DSCP Tag | DSCP on the inner packet | a drop-down; the values are not listed |
+| Outer Packet DSCP Tag | DSCP on the outer packet of overlay traffic | a drop-down; the values are not listed |
+| Service Class | how DMPO treats the traffic | Real-time, Transactional or Bulk; custom applications only |
+| Turn off Conditional Backhaul | excludes traffic from Conditional Backhaul | checkbox; applies when Conditional Backhaul is on in the Profile |
+
+## A worked example (documented fields only)
+
+Goal: send a video conferencing application over the public wired links, preferred, with high priority. The field values are illustrative; the fields and the allowed values are the documented ones.
+
+1. **Rule Name:** a name you choose. **IP version:** left at IPv4 and IPv6.
+2. **Match tab:** Source Any, Destination Any, **Application = Define**, then choose the application.
+3. **Action tab:** **Priority = High**; **Network Service = Multi-Path**; **Link Steering = Transport Group**, group **Public Wired**, strictness **Preferred**.
+4. **Create.** The rule appears under Business Policy Rules; on an Edge of the Profile it appears under Rules From Profile.
+
+<Callout variant="info" title="Application rules and the first packets">
+  Application-based rules depend on the DPI engine: early packets of a flow may match a less specific rule until the application is identified, and identified destinations are cached for 10 minutes of inactivity. Lesson 6 covers this.
+</Callout>
+
+[Try it in the simulator](/sim/branch-override-demo/edges/store-2-edge?tab=business-policy): the mock Business Policy tab shows rules with an application match and a priority, network service and steering action, and which come from the Profile. It models neither the Add Rule window nor the other fields above.
+
+<Callout variant="warning" title="What we could not confirm">
+  Which rule wins when two match beyond "highest precedence", the action when no rule matches, any limit on the number of rules, the allowed DSCP values, the default Priority and Service Class, and the list of Operating Systems are not in the pages we read. The Add Rule window is called Create Business Policy Rule on the earlier page.
+</Callout>
+
+<Predict
+  prompt="The Profile has a rule for an application and Branch X needs different steering for it. What does the documentation say to do?"
+  choices={["Create an identical rule at the Edge with new parameters; the Edge rule supersedes the Profile rule", "Edit the Profile rule on the Edge", "Delete the rule from the Profile", "Turn on Conditional Backhaul"]}
+  answer={0}
+>
+  Rules created at the Profile level cannot be updated at the Edge; the Edge creates the same rule with new parameters and it supersedes the Profile rule.
+</Predict>
+
+## What you would see in the VCO
+
+- **Configure > Profiles > (Profile) > Business Policy**: Business Policy Rules, + ADD, a Segment drop-down and Sort options.
+- **Configure > Edges > (Edge) > Business Policy**: **Rules From Profile** and **Edge Overrides**, and the Override checkbox.
+
+<Callout variant="tip" title="Check this in your own VCO">
+  - **[observation candidate]** Open: a Profile's Business Policy tab, + ADD. Expect: an Add Rule window with Rule Name, an IP version and Match and Action tabs. Docs may differ: the title may read Create Business Policy Rule.
+  - **[observation candidate]** Open: the Match tab. Expect: Source, Destination and Application, each with Any as the default. Docs may differ: Define sub-options vary with the IP version.
+  - **[observation candidate]** Open: the Action tab. Expect: Priority, Network Service, Link Steering (Auto), Service Class and DSCP tags. Docs may differ: some actions are unavailable depending on your Match choices.
+  - **[observation candidate]** Open: an Edge's Business Policy tab. Expect: Rules From Profile and Edge Overrides sections. Docs may differ: the Override checkbox wording.
+  - **[observation candidate]** Open: the same Edge after you create a rule with the same name at the Edge (lab only). Expect: the Edge rule listed under Edge Overrides. Docs may differ: the order of rules is not documented.
+</Callout>
+
+## Key takeaways
+
+- A rule is created with + ADD: name and IP version, Match, Action, Create.
+- Match fields default to Any; Link Steering defaults to Auto.
+- Profile rules appear on the Edge under Rules From Profile; an Edge supersedes one by creating an identical rule.
+- Rule order is "highest precedence" only; the rest is not documented.
+
+## What would you look for in the VCO
+
+- Which rule matches the application, and is it under Rules From Profile or Edge Overrides?
+- What are its Priority, Network Service and Link Steering?
+- Which segment was selected?

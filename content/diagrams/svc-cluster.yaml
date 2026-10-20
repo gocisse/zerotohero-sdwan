@@ -1,0 +1,59 @@
+# Section 8, lesson 4: Clusters and Hubs. Facts: reference/config/config-clusters-hubs.md. No scores or counts are shown except the documented threshold of 70.
+id: svc-cluster
+title: A Hub cluster and Auto ReBalance
+alt: >-
+  Three Spoke Edges build permanent tunnels to a cluster of two Hub Edges that other Edges treat as one Hub. When a Hub's
+  Cluster Score is above 70 and Auto ReBalance is on, a Spoke is moved to the other Hub.
+width: 900
+height: 540
+
+nodes:
+  - { id: hub1, label: Hub 1, kind: vce, x: 380, y: 110 }
+  - { id: hub2, label: Hub 2, kind: vce, x: 580, y: 110 }
+  - { id: s1, label: Spoke 1, kind: vce, x: 150, y: 400 }
+  - { id: s2, label: Spoke 2, kind: vce, x: 450, y: 440 }
+  - { id: s3, label: Spoke 3, kind: vce, x: 750, y: 400 }
+
+groups:
+  - { id: cluster, label: "Cluster (seen as one Hub)", nodes: [hub1, hub2] }
+
+links:
+  - { id: s1-h1, from: s1, to: hub1, style: overlay-tunnel }
+  - { id: s2-h1, from: s2, to: hub1, style: overlay-tunnel }
+  - { id: s3-h2, from: s3, to: hub2, style: overlay-tunnel }
+  - { id: s2-h2, from: s2, to: hub2, style: overlay-tunnel }
+
+steps:
+  - title: Create the cluster
+    narration: >-
+      **Configure > Network Services > SD-WAN Destinations > Clusters and Hubs > New**: Name, optional Description, Auto ReBalance (off by
+      default) and **Edges in Cluster**. Members should be the same model and capacity and each needs LAN-side dynamic routing with its own ASN.
+    highlight: [hub1, hub2]
+    show: [hub1, hub2]
+
+  - title: Designate it as a Hub in a Profile
+    narration: >-
+      In the cluster's Profile, Cloud VPN > **Enable Branch to Hubs** > **Edit Hubs**: choose the cluster from Available Edges and
+      Clusters and **Update Hubs**. Spokes then build permanent tunnels to it.
+    show: [s1, s2, s3, s1-h1, s2-h1, s3-h2]
+    highlight: [s1, s2, s3, s1-h1, s2-h1, s3-h2]
+
+  - title: Spokes reach the cluster
+    narration: >-
+      Other Edges treat the cluster as a single Hub. The Gateway assigns each Edge to a member using the Edge's logical ID modulo the
+      number of Hubs.
+    highlight: [s1, s1-h1, hub1]
+    packets:
+      - { path: [s1, s1-h1, hub1], label: via cluster, color_style: overlay-tunnel }
+
+  - title: Auto ReBalance moves a Spoke
+    narration: >-
+      Each Hub reports a Cluster Score from 1 to 100. With Auto ReBalance on, if a Hub is above 70 a Spoke is moved, one per minute, with
+      6 to 10 seconds of tunnel downtime. Nothing is rebalanced if all Hubs are above 70.
+    show: [s2-h2]
+    hide: [s2-h1]
+    highlight: [s2, s2-h2, hub2]
+    packets:
+      - { path: [s2, s2-h2, hub2], label: moved Spoke, color_style: overlay-tunnel }
+    callouts:
+      - { target: hub1, text: "Score above 70." }

@@ -9,6 +9,8 @@ import (
 
 func TestEverySheetIsMapped(t *testing.T) {
 	files, _ := filepath.Glob("../../../content/reference/*.md")
+	cfg, _ := filepath.Glob("../../../content/reference/config/*.md")
+	files = append(files, cfg...)
 	for _, f := range files {
 		name := strings.TrimSuffix(filepath.Base(f), ".md")
 		if name == "README" {
@@ -38,7 +40,7 @@ func TestReportBuildsAndRanksBlockingItemsFirst(t *testing.T) {
 		}
 	}
 	md := r.Markdown()
-	for _, want := range []string{"## Top 25", "## All assumptions", "## All VERIFY rows"} {
+	for _, want := range []string{"## Candidates from topology lessons", "| top-gold |", "## Candidates from network services config lessons", "| svc-nsd-gateway |", "## Candidates from profile and policy config lessons", "| prof-bp-rules |", "## Top 25", "## All assumptions", "## All VERIFY rows"} {
 		if !strings.Contains(md, want) {
 			t.Errorf("report lacks %q", want)
 		}

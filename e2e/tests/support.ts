@@ -29,6 +29,13 @@ export interface Diagram {
 }
 export interface GlossaryTerm { id: string; term: string; aliases: string[]; short: string }
 
+/** Opens the "Details" area of the dashboard (the step 1 to 15 sections live there). */
+export async function openProgressDetails(page: Page) {
+  const d = page.locator('[data-progress-details]')
+  await expect(d).toBeVisible()
+  if ((await d.getAttribute('open')) === null) await d.locator('summary').click()
+}
+
 export const answerKey = (s: string | string[]) => (Array.isArray(s) ? s : [s])
 
 // ---- data discovery ----

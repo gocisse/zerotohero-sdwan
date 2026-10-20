@@ -88,14 +88,16 @@ type Question struct {
 
 // Course is the validated, in-memory course.
 type Course struct {
-	Meta       CourseMeta
-	Sections   []*Section // ordered as in course.yaml
-	Glossary   []GlossaryTerm
-	lessons    map[string]*Lesson
-	sections   map[string]*Section
-	diagrams   map[string]*Diagram
-	topologies []*Topology
-	labs       []*Lab
+	Meta          CourseMeta
+	Sections      []*Section // ordered as in course.yaml
+	Glossary      []GlossaryTerm
+	lessons       map[string]*Lesson
+	sections      map[string]*Section
+	diagrams      map[string]*Diagram
+	topologies    []*Topology
+	labs          []*Lab
+	guide         *StudyGuide
+	guideWarnings ErrorList
 }
 
 // Section is a validated section with its lessons in order.

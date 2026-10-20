@@ -229,6 +229,7 @@ test.describe('glossary page', () => {
     await page.goto('/')
     await page.getByRole('link', { name: 'Glossary', exact: true }).click()
     await expect(page.getByRole('heading', { name: 'Glossary' })).toBeVisible()
+    await page.getByRole('button', { name: 'A-Z' }).click()
     const sorted = [...terms].sort((a, b) => a.term.localeCompare(b.term, undefined, { sensitivity: 'base' })).map((t) => t.id)
     const ids = await page.locator('[data-glossary-term]').evaluateAll((els) => els.map((e) => (e as HTMLElement).dataset.glossaryTerm!))
     expect(ids).toEqual(sorted)
@@ -259,6 +260,7 @@ test.describe('glossary page', () => {
     expect(page.url().endsWith(`#term-${rel.id}`)).toBeTruthy()
     const withRef = (terms as unknown as { id: string; lesson_ref?: string }[]).find((t) => t.lesson_ref)!
     await page.goto('/glossary')
+    await page.getByRole('button', { name: 'A-Z' }).click()
     await page.locator(`[data-glossary-term="${withRef.id}"]`).getByRole('link', { name: 'Where this is taught →' }).click()
     await expect(page.locator('h1')).toBeVisible()
     expect(page.url()).toContain('/course/')

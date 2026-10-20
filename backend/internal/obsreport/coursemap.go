@@ -162,6 +162,7 @@ func CourseMapMarkdown(contentDir string) (string, error) {
 		fmt.Fprintf(&b, "| %s | %s | %d | %d | %d | %s | %s |\n", g.Title, strings.Join(g.Sections, ", "), cv.lessons, cv.questions, cv.diagrams, strings.Join(g.Labs, ", "), strings.Join(g.Screens, "; "))
 	}
 	b.WriteString("\nSections that support more than one goal are counted in each (architecture and configuration), so the totals overlap. The capstone labs and the self-check (`/sim/self-check`) span all four goals.\n\n")
+	writeStudyGuide(&b, c)
 	b.WriteString("## Weak coverage and what would fix it (not built)\n\n")
 	b.WriteString("A goal is weak where the course can describe something but the learner cannot practise it honestly, usually because a fact is VERIFY. The cure is mostly an observation (see `docs/HOW-TO-ADD-AN-OBSERVATION.md` and `docs/OBSERVATION-PRIORITIES.md`), then a lab.\n\n")
 	for _, g := range Goals {
@@ -175,6 +176,35 @@ func CourseMapMarkdown(contentDir string) (string, error) {
 	b.WriteString("- **Order of sections:** DMPO (section 3) uses business-policy rules and link steering before Configuration (section 4) teaches them; the DMPO steering lesson defines what it needs and the lessons carry `Term` popovers, but a learner who skips ahead to Configuration first loses nothing. Section 4's firewall and QoS lessons mention OSPF before section 6; they are previews with popovers.\n")
 	b.WriteString("- **Observation-limited:** most of the weakness above disappears when VERIFY rows become OBSERVED; `docs/OBSERVATION-PRIORITIES.md` ranks them.\n")
 	return b.String(), nil
+}
+
+// writeStudyGuide adds the study guide mapping (content/study-guide.yaml): per topic its coverage, lessons and labs, and the
+// counts of topics by coverage level. Nothing here is hand-written.
+func writeStudyGuide(b *strings.Builder, c *content.Course) {
+	g := c.StudyGuide()
+	if g == nil {
+		return
+	}
+	b.WriteString("## Study guide mapping\n\n")
+	b.WriteString("The learner's six-section study guide (navigation labels only) and what the course offers for each topic, from `content/study-guide.yaml`. Coverage: **full** = a lesson teaches the topic; **partial** = a lesson teaches part of it, or only the concept and where it lives in the VCO; **none** = nothing in the course teaches it. The dashboard counts progress over covered topics only.\n\n")
+	counts := map[string]int{}
+	for _, s := range g.Sections {
+		for _, t := range s.Topics {
+			counts[t.Coverage]++
+		}
+	}
+	fmt.Fprintf(b, "Topics: %d full, %d partial, %d none.\n\n", counts[content.CoverageFull], counts[content.CoveragePartial], counts[content.CoverageNone])
+	for _, s := range g.Sections {
+		fmt.Fprintf(b, "### %s: %s\n\n| topic | kind | coverage | lessons | labs |\n|---|---|---|---|---|\n", s.ID, s.Title)
+		for _, t := range s.Topics {
+			fmt.Fprintf(b, "| %s | %s | %s | %s | %s |\n", t.Title, t.Kind, t.Coverage, orDash(strings.Join(t.Lessons, ", ")), orDash(strings.Join(t.Labs, ", ")))
+		}
+		b.WriteString("\n")
+	}
+	fmt.Fprintf(b, "Lessons deliberately outside the guide: %s.\n\n", orDash(strings.Join(g.UnmappedLessons, ", ")))
+	for _, w := range c.GuideWarnings() {
+		fmt.Fprintf(b, "- Warning: %s\n", w.Message)
+	}
 }
 
 func orDash(s string) string {

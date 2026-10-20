@@ -1,0 +1,85 @@
+---
+id: svc-clusters-hubs
+title: Clusters and Hubs, configuration
+summary: "Creating a cluster, designating Hubs and clusters in a Profile, assigning Edges to a cluster, the Auto ReBalance setting, the documented limits and what to verify."
+estimated_minutes: 11
+topics: [svcfg-clusters-hubs]
+prerequisites: [svc-where, ov-hubs]
+---
+
+**By the end of this lesson you will be able to:**
+
+- create an Edge cluster and designate Hubs or a cluster in a Profile, in the documented order;
+- read the cluster settings, including <Term id="auto-rebalance">Auto ReBalance</Term> and its documented default, and the <Term id="cluster-score">Cluster Score</Term> it uses;
+- say which limits and prerequisites apply, and what Hub or Cluster Interconnect adds;
+- name the events and diagnostics the documentation lists afterwards.
+
+## The documented order
+
+Section 5 explained what a <Term id="hub-cluster">cluster</Term> is. The configuration steps are:
+
+1. **Configure > Network Services > SD-WAN Destinations > Clusters and Hubs.** Under Edge Clusters select **New** ("New Cluster" appears only when the table is empty).
+2. Enter the **Name**, optionally a **Description** and **Auto ReBalance**, then select the **Edges in Cluster** and Save Changes.
+3. **Create a Profile** for the cluster. In its Device tab, under VPN Services, turn Cloud VPN on and select **Enable Branch to Hubs** (under Branch to Hub Site, Permanent VPN), then **Edit Hubs**.
+4. In the Hubs Designation section choose Edges or clusters from **Available Edges & Clusters** as Hubs or Backhaul Hubs, and select **Update Hubs**.
+5. **Assign Profiles to Edges** at Configure > Edges. Cluster membership of an Edge is also set at the Edge: Device tab > High Availability > Select Type > **Cluster**, then pick an existing cluster or + New Cluster.
+
+<Diagram id="svc-cluster" />
+
+## Settings reference
+
+| Field | What it does | Allowed values and default |
+|---|---|---|
+| Name | names the cluster | required |
+| Description | free text | optional |
+| Auto ReBalance | lets spokes be moved off an over-capacity Hub | off by default; when on, if any Hub exceeds a Cluster Score of 70, Spokes move at one per minute until scores fall below 70 |
+| Edges in Cluster | the member Edges | selection; "Show only selected" filters the list |
+| Enable Branch to Hubs | turns on permanent tunnels to the Hubs | Profile checkbox; Edit Hubs and Update Hubs set the Hubs |
+| Enable Conditional BackHaul | activates Conditional Backhaul | default not stated |
+
+Each rebalanced Spoke has 6 to 10 seconds of tunnel downtime, and nothing is rebalanced if all Hubs exceed 70. **Limits and prerequisites** from the guide: cluster members should be the same model and capacity; each member needs LAN-side dynamic routing (for example eBGP) with a unique ASN; Hubs in a cluster do not tunnel to each other; Edges assigned to a cluster cannot also be individual Hubs; Gateways drop a Hub after 7 seconds without packets; rebalancing is limited to once per 120 seconds.
+
+### Hub or Cluster Interconnect
+
+A separate Profile option, <Term id="hub-cluster-interconnect">**Enable for Hub or Cluster Interconnect**</Term>, builds tunnels between Hub clusters so Spokes can communicate. It needs the Orchestrator, Gateways and Hubs at 5.4.0.0 or later (6.4 and 7.0), Cloud VPN on the cluster Profile, Branch to Branch VPN (Transit and Dynamic) disabled in the interconnect Hub Profiles, and BGP with the LAN router forwarding extended communities. The hop limit is 4. Enabling or disabling it restarts all Edges associated with the Profile, so use a maintenance window.
+
+<Callout variant="warning" title="Fields we could not confirm">
+  Where the Cluster Score is shown, how long a Spoke takes to treat a Hub as down, and the menu path that turns on Hub or Cluster Interconnect inside the Profile page were not in the pages we read. The Edge-as-Hub port requirements are also unconfirmed (Section 5).
+</Callout>
+
+<Predict
+  prompt="A new cluster is created and its Auto ReBalance box is left alone. What does the documentation say about the default?"
+  choices={["Auto ReBalance is off by default", "Auto ReBalance is on by default", "It depends on the Edge model", "It turns on when a Hub reaches 50 percent"]}
+  answer={0}
+>
+  Both guides describe Auto ReBalance as off by default (the 6.4 text reads "Auto Rebalance is deactivated by default").
+</Predict>
+
+## What you would see in the VCO
+
+- **Configure > Network Services > SD-WAN Destinations > Clusters and Hubs**: Edge Clusters and a list of Cloud VPN Hubs.
+- **Configure > Profiles > (Profile) > Device > VPN Services > Cloud VPN**: Enable Branch to Hubs, Edit Hubs.
+- **Configure > Edges > (Edge) > Device > High Availability**: the Cluster type.
+- **Monitor > Events**: HUB_CLUSTER_REBALANCE and, with interconnect, CLUSTER_IC_PEER_UP, CLUSTER_IC_PEER_DOWN, CLUSTER_IC_TUNNEL_UP, CLUSTER_IC_TUNNEL_DOWN, CLUSTER_IC_ENABLED and CLUSTER_IC_DISABLED.
+- **Diagnostics > Remote Diagnostics**: Rebalance Hub Cluster.
+
+<Callout variant="tip" title="Check this in your own VCO">
+  - **[observation candidate]** Open: Configure > Network Services > SD-WAN Destinations > Clusters and Hubs, New Cluster. Expect: Name, Description, Auto ReBalance (unchecked) and Edges in Cluster. Docs may differ: the exact field order.
+  - **[observation candidate]** Open: a Profile's VPN Services, Edit Hubs. Expect: Available Edges and Clusters, with Edges already in a cluster not offered as individual Hubs. Docs may differ: the wording of the note.
+  - **[observation candidate]** Open: Configure > Edges, an Edge, Device tab, High Availability, Select Type. Expect: a Cluster choice listing the clusters. Docs may differ: the Edge pair choice is a different option.
+  - **[observation candidate]** Open: Monitor > Events, filter for HUB_CLUSTER_REBALANCE after a rebalance in a lab. Expect: a Warning level event. Docs may differ: the level and the wording.
+  - **[observation candidate]** Open: Remote Diagnostics on a Hub, Rebalance Hub Cluster. Expect: two options, redistribute across all Hubs or exclude the current Hub. Docs may differ: it interrupts traffic briefly, so use a lab.
+</Callout>
+
+## Key takeaways
+
+- A cluster is created under Network Services, then designated as a Hub in a Profile through Edit Hubs.
+- Auto ReBalance is a per-cluster option that is off by default; the threshold is a Cluster Score of 70.
+- Members should match in model and capacity and each needs LAN-side dynamic routing with its own ASN.
+- Hub or Cluster Interconnect is a separate Profile option with release and routing prerequisites.
+
+## What would you look for in the VCO
+
+- Which Edges are in the cluster, and are they the same model?
+- Which Profile designates the cluster as a Hub, and in what order?
+- Is Auto ReBalance on, and did a rebalance event appear?

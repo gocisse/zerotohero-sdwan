@@ -3,6 +3,7 @@ import Layout from './components/Layout'
 import CourseProvider from './course/CourseProvider'
 import GlossaryProvider from './glossary/GlossaryProvider'
 import ProgressProvider from './progress/ProgressProvider'
+import StudyGuideProvider from './studyguide/StudyGuideProvider'
 import GlossaryPage from './pages/GlossaryPage'
 import Home from './pages/Home'
 import ProgressPage from './pages/ProgressPage'
@@ -37,40 +38,42 @@ export default function App() {
       <CourseProvider>
         <GlossaryProvider>
           <ProgressProvider>
-            <Routes>
-              <Route element={<Layout />}>
-                <Route index element={<Home />} />
-                <Route path="course" element={<Navigate to="/" replace />} />
-                <Route path="course/:sectionId" element={<SectionPage />} />
-                <Route path="course/:sectionId/quiz" element={<QuizPage />} />
-                <Route path="course/:sectionId/:lessonId" element={<LessonPage />} />
-                <Route path="progress" element={<ProgressPage />} />
-                <Route path="glossary" element={<GlossaryPage />} />
-                <Route path="review" element={<ReviewPage />} />
-                <Route path="sim" element={<SimLayout />}>
-                  <Route index element={<TopologyPicker />} />
-                  <Route path="labs" element={<LabsPage />} />
-                  <Route path="self-check" element={<SelfCheckPage />} />
-                  <Route path="labs/:labId" element={<LabRunnerPage />} />
-                  <Route path=":topologyId" element={<TopologyLayout />}>
-                    <Route index element={<EdgesPage />} />
-                    <Route path="edges/:edgeId" element={<EdgePage />} />
-                    <Route path="what-if" element={<WhatIfPage />} />
-                    <Route path="challenge" element={<ChallengePage />} />
-                    <Route path="map" element={<MapPage />} />
-                    <Route path="monitor" element={<MonitorPage />} />
-                    <Route path="paths" element={<PathExplainerPage />} />
-                    <Route path="timeline" element={<TimelinePage />} />
-                    <Route path="overlay-challenge" element={<OverlayChallengePage />} />
-                    <Route path="routes" element={<RoutesPage />} />
-                    <Route path="reachability" element={<ReachabilityPage />} />
-                    <Route path="routing-challenge" element={<RoutingChallengePage />} />
-                    <Route path="trace" element={<TracePage />} />
+            <StudyGuideProvider>
+              <Routes>
+                <Route element={<Layout />}>
+                  <Route index element={<Home />} />
+                  <Route path="course" element={<Navigate to="/" replace />} />
+                  <Route path="course/:sectionId" element={<SectionPage />} />
+                  <Route path="course/:sectionId/quiz" element={<QuizPage />} />
+                  <Route path="course/:sectionId/:lessonId" element={<LessonPage />} />
+                  <Route path="progress" element={<ProgressPage />} />
+                  <Route path="glossary" element={<GlossaryPage />} />
+                  <Route path="review" element={<ReviewPage />} />
+                  <Route path="sim" element={<SimLayout />}>
+                    <Route index element={<TopologyPicker />} />
+                    <Route path="labs" element={<LabsPage />} />
+                    <Route path="self-check" element={<SelfCheckPage />} />
+                    <Route path="labs/:labId" element={<LabRunnerPage />} />
+                    <Route path=":topologyId" element={<TopologyLayout />}>
+                      <Route index element={<EdgesPage />} />
+                      <Route path="edges/:edgeId" element={<EdgePage />} />
+                      <Route path="what-if" element={<WhatIfPage />} />
+                      <Route path="challenge" element={<ChallengePage />} />
+                      <Route path="map" element={<MapPage />} />
+                      <Route path="monitor" element={<MonitorPage />} />
+                      <Route path="paths" element={<PathExplainerPage />} />
+                      <Route path="timeline" element={<TimelinePage />} />
+                      <Route path="overlay-challenge" element={<OverlayChallengePage />} />
+                      <Route path="routes" element={<RoutesPage />} />
+                      <Route path="reachability" element={<ReachabilityPage />} />
+                      <Route path="routing-challenge" element={<RoutingChallengePage />} />
+                      <Route path="trace" element={<TracePage />} />
+                    </Route>
                   </Route>
+                  <Route path="*" element={<NotFound />} />
                 </Route>
-                <Route path="*" element={<NotFound />} />
-              </Route>
-            </Routes>
+              </Routes>
+            </StudyGuideProvider>
           </ProgressProvider>
         </GlossaryProvider>
       </CourseProvider>

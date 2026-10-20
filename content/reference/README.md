@@ -48,6 +48,7 @@ Facts were gathered on **2026-10-19** against the **7.0** documentation set on a
 | `dmpo.md` | monitoring, steering modes, on-demand remediation |
 | `branding-history.md` | VeloCloud, VMware, Broadcom, Arista |
 | `vco-ui-map.md` | where concepts live in the Orchestrator UI |
+| `edge-models.md`, `site-topologies.md`, `bronze-silver-gold.md`, `edge-ha.md`, `vco-edge-models-ui.md` | step 17: Edge models and sizing, branch site topologies, the Bronze/Silver/Gold terms, Edge HA, where the model, interfaces and HA appear in the VCO |
 | `routing-overview.md`, `static-routes.md`, `ospf.md`, `bgp.md`, `route-redistribution-and-precedence.md`, `overlay-flow-control.md`, `vco-routing-ui.md` | step 10: routing (VCRP, route table, static, OSPF, BGP, redistribution and preference, Overlay Flow Control, VCO screens) |
 
 ## Checks of the numbers from the course outline
@@ -363,4 +364,165 @@ No new pages were read. The tracer and the labs cite existing rows of `business-
 ### Step 14 claim audit (self-review of the labs)
 
 Every lab text was read against the lessons and fact sheets; see the step report for the list. Labs may not rest on any VERIFY row: the validator rejects an answer that depends on a not-modelled result.
+
+## Step 17: Edge models and branch topologies verification pass
+
+New sheets: `edge-models`, `site-topologies`, `bronze-silver-gold`, `edge-ha`, `vco-edge-models-ui`. No `reference-sources/` folder exists, so nothing was read from a local PDF in that folder; the PDFs below were downloaded by us and their text extracted.
+
+Reading: **read directly (3 PDFs, text extracted by us)**: the Arista Edge 7x0 datasheet (12 pages, "Oct 16th 2026", 04-0063-07), the Edge 4100/5100 datasheet (9 pages, 04-0062-06) and the VMware SD-WAN 3.4 Administration Guide (483 pages, Broadcom legacy archive, 2020; pages 14 to 18, 29 to 33, 266 to 267, 332 to 334). **Through WebFetch with verbatim quotes requested (12 reads on 8 pages)**: 7.0 and 6.4 "Configure High Availability on an Edge", 7.0 "Configure Device Settings for Edges" (three windows, 0 to 200000 of 321366 characters), 7.0 Overview (three reads, 0 to 153454 characters), 7.0 and 5.2 Site Configurations, the Edge 1RU quick start front panel. **Failed**: the 7.0 "Configure VRRP Settings" page (HTTP 403, not circumvented); the old VMware HTML pages redirect to Broadcom's home page. **Search summaries used only to find pages**: 8, plus retailer listings (CDW) for the Edge 840, recorded as VERIFY.
+
+| item | status now | evidence |
+|---|---|---|
+| Are Bronze, Silver and Gold vendor terms? | **Yes, documented vendor terms** | 3.4 guide read directly (pages 29 to 33) and 7.0 Overview (summarised). The 7.0 Site Configurations page does not use them. See `bronze-silver-gold.md`. |
+| Course outline: a large-branch model with eight interfaces | **Confirmed for the 720 and 740, corrected as a descriptor** | Both list 6 x 2.5G RJ-45 and 2 x SFP+; the 4100 and 5100, which Arista positions for large branches, list 18 and 16. The outline names no model. |
+| Segment and flow limits | **Published per model** | 128 segments (720, 740, 4100, 5100, 840 and the 620 to 3810 group), 32 (710); concurrent flows 225K to 7.5 million. |
+| VNF support per model | **Partly documented** | A firewall-VNF throughput table for eight older models (summarised); no per-model matrix for the 7x0, 4100 or 5100. VERIFY. |
+| HSRP and VRRP for Edge deployments | **Documented in three places** | Required on the L3 switch pair in HA Deployment Type 2; named on the routers of Silver variant 2; an Edge-run "VRRP with 3rd party router" option (3.4 guidelines read directly; the 7.0 guidelines page was unreadable). |
+
+### Open VERIFY items for topologies (step 17)
+
+1. VNF support on the current Edges (710, 720, 740, 4100, 5100): the 7.0 Edge device settings page (step 18) lists only the 520v, 840, 620, 640 and 680.
+2. Interfaces and limits of earlier Edge models (840 and others) from an official datasheet.
+3. What the Edge does about HSRP or VRRP between the routers in Silver variant 2, whether the variant uses an HA pair, and what happens when a router, CE or switch fails.
+4. Whether the 3.4 Edge-run VRRP guidelines hold in 6.4 and 7.0 (the 7.0 page returned 403).
+5. Where the Gold virtual IP is configured, and where the Edge sits relative to the CE and the L3 switches.
+6. Whether the older guide's two Silver lists (Branch Site Topologies and Site Configurations) name the same design; whether the 6.4 Overview has the Bronze, Silver and Gold section.
+7. Where the VCO shows the Edge model, the interface list, and the HA pair's Standby; whether the Orchestrator warns about an HA pair of different models. These need a real-VCO observation: the lessons list them as `[observation candidate]`.
+
+## Section 7 claim audit (self-review, step 17)
+
+Sentences making a technical claim without a VERIFIED or OBSERVED row, per lesson. All are tagged in the text as (design practice) or general networking knowledge, or sit in a table row with the status "design practice" or "not documented". None is a quiz correct answer. After the audit three sentences were rewritten (the Bronze firewall wording, the Silver 1 "documented" lead-in, an inferred Gold interface claim).
+
+| lesson | count | sentences and resolution |
+|---|---|---|
+| 1 Edge models | 3 | (a) compare throughput with real traffic and keep headroom; (b) a Hub is sized by tunnels; (c) the six-step shortlist method. All tagged design practice. |
+| 2 Overview | 2 | (a) the designer's five questions; (b) the "ask which variant" advice in the Predict. |
+| 3 Bronze | 5 | (a) the LAN's gateway is "naturally" the Edge; (b) low equipment count; (c) one link means nothing to fail over to; (d) a single Edge is a single point of failure; (e) when Bronze fits. |
+| 4 Silver 1 | 6 | (a) the two traffic flows (illustration); (b) the L3 switch is the users' gateway; (c) the CE and the Edge are two exits; (d) duplicate advertisement; (e) an L3 switch failure; (f) an Edge failure. |
+| 5 Silver 2 | 3 | (a) an HSRP or VRRP router failing is handled by its standby router (general protocol behaviour); (b) HSRP or VRRP "runs on the switches, not the Edge" is an inference from the documented requirement on the L3 switch pair; (c) the placement of an HA pair in the variant (the lesson says the text does not show one). |
+| 6 Gold | 4 | (a) failure of one active/active switch; (b) a routing session drop (general); (c) a Gold branch is not a Hub (Arista positions models, it does not define the branch); (d) sharing across switches (stated as not known). |
+| 7 Choosing | 6 | the framework, the table's "Add" column, and the three scenarios' choices. The settings lists carry (documented) or are marked as not confirmed. |
+| **Total** | **29** | |
+
+Consistency check across Sections 1 to 7 and the glossary: "HA" appears in Section 5 (a Hub cluster provides Active/Active high availability) and in Section 7 (an Edge pair is Active/Standby); these are different mechanisms and the glossary now says so. "Gateway" means the VeloCloud Gateway in Sections 1 to 6 and Section 7 also uses "default gateway"; the two glossary terms say they are different. A Hub is "an Edge designated in the Profile, typically in a data center" in Section 5 and Section 7 keeps that wording. "Transport", "link" and "WAN overlay" are used as in Sections 2 and 5. No contradiction was found.
+
+## Step 18: network services settings verification pass
+
+New folder `config/` with ten sheets (the loader accepts it and applies the claims-table rule; sheet names keep their own file name, for example `config-dns`). No `reference-sources/` folder exists, so no local PDF was used for these; the one local PDF row reused is the 7.0 Troubleshooting Guide (MTR paths).
+
+Reading: **through WebFetch with verbatim quotes requested (19 reads on 5 pages)**: 7.0 Network Services (three windows, 0 to 269017), 6.4 Configuring Network Services (three windows, 0 to 266968), 7.0 Profile device settings (three windows, 0 to 270251), 7.0 Edge device settings (windows 200000 to 321366), 7.0 dynamic routing page (100000 onward). **Failed (HTTP 403, not circumvented)**: the 6.4 `configure-network-services` address (the `configuring-network-services` address worked). The tool marks some lines as its own paraphrase; rows say so. Nothing was read directly from a PDF this step.
+
+### Third-party claims from the course outline
+
+| claim | result | source and evidence |
+|---|---|---|
+| RADIUS: server address, ports 1812 and 1813, shared secret, assignment under the Profile authentication settings | **Partly corrected** | Server Address, Shared Secret and Profile assignment (Device tab > Edge Services > Authentication) confirmed; Authentication Port default 1812 confirmed; 1813 is not named, the Accounting Port is optional with no default (7.0 and 6.4) |
+| DNS: public versus private, a "DNS mask" or fastest-response behaviour, IPv4 and IPv6 options | **Confirmed except "DNS mask"** | DNS Type Private or Public; fastest response (dnsmasq asks all servers); IPv4 Server, optional IPv6 Server; no "DNS mask" in the pages read |
+| Prefix delegation tags: a pair of WAN and LAN tags, DHCP prefix delegation, /64 | **Partly corrected** | One tag shared by a WAN interface (unique per WAN) and its LAN interfaces, not a pair; DHCPv6 prefix delegation; LAN prefix length auto-populates as 64 |
+| NetFlow: collectors and filters with match criteria and actions, applied per Profile | **Confirmed, with corrections** | collectors (name, IP, port), filters (match source IP, destination IP or application; Allow or Deny); applied per Profile and per segment, with an Edge Override and Source Interface |
+| Clusters: one logical unit, promotion to Hub, auto-rebalance managed by the Orchestrator | **Partly corrected** | a logical cluster seen as one Hub (confirmed); designated as a Hub in a Profile with Edit Hubs (no "promotion" step); Auto ReBalance is a per-cluster checkbox, off by default, moving Spokes when a Hub's score is above 70 (the Gateway moves them) |
+| Private network names: tunnels only between interfaces with the same name | **Unconfirmed** | one Name field, assigned to private WAN overlays; only Conditional Backhaul says Branch and Hub use the same name |
+| API credentials: tenant ID, client ID and secret for Azure and Zscaler | **Confirmed for Azure, corrected for Zscaler** | Zscaler uses Subscription Name, Zscaler Cloud, Partner Admin Username and Password, API Key and Domain |
+| NSD via Gateway: AWS VPN gateway tunnels, site subnets, BGP; via Edge: IPsec IKEv2 router-based, subnets | **Confirmed** | AWS is one of eleven Gateway types; BGP over IPsec is eBGP only; the Edge variant lists IKEv1 and IKEv2 route-based and Azure Virtual WAN, with Site Subnets |
+| VNF: firewall VNF (Fortinet), manager IP, credentials, image version, keys; documented per Edge model | **Confirmed** | Fortinet, Check Point and Palo Alto types with management address, credentials or keys, image version; the 7.0 Edge page lists the supported models (520v, 840, 620, 640, 680) |
+
+### Fields documented versus unreadable, per service
+
+| sheet | field rows (a row can name several fields) | rows still VERIFY (unreadable or unstated) |
+|---|---|---|
+| config-nsd-gateway | 44 | 3: per-type tables beyond AWS and IKEv2 (Check Point, Cisco ASA, Cisco ISR, Palo Alto, SonicWall, IKEv1, Generic Firewall), default Tunnel Mode and Enable Tunnel(s), the Cisco ASA table inconsistency |
+| config-nsd-edge | 20 | 2: status or events, how Edge Add Tunnel fields relate to the service fields |
+| config-api-credentials | 6 | 2: status or role information |
+| config-clusters-hubs | 6 | 1: Cluster Score location, Spoke down time, interconnect menu path |
+| config-netflow | 8 | 2: status or events, Allow All and Deny interaction |
+| config-dns | 5 | 2: status, limits on servers |
+| config-private-network-names | 1 | 3: the general tunnel rule, the assignment screen, status |
+| config-prefix-delegation | 3 | 1: status or events |
+| config-authentication | 7 | 1: status or events |
+| config-vnf | 9 | 1: current-hardware support, licences, deploy time |
+
+### Open VERIFY items for network services (step 18)
+
+1. Field tables of the NSD via Gateway types other than AWS VPN Gateway and Generic IKEv2, and the Cisco ASA tunnel-mode inconsistency.
+2. The screen where a Private Network Name is assigned and what it does to tunnels.
+3. Status screens or events for NSD via Edge, NetFlow, DNS, RADIUS, TACACS, prefix delegation and Private Network Names.
+4. Where the Cluster Score is shown, and the Profile menu path that turns on Hub or Cluster Interconnect.
+5. VNF support on the 710, 720, 740, 4100 and 5100 and VNF licences for Check Point and Fortinet.
+6. 6.4 Profile and Edge menu steps (only the 6.4 Network Services page was read).
+
+## Section 8 claim audit (self-review, step 18)
+
+Sentences making a technical claim without a VERIFIED row, per lesson; all are labelled "our method" or sit in a table row marked as not documented; none is a quiz correct answer. Every field name in a lesson table exists in a VERIFIED row (automated).
+
+| lesson | count | sentences and resolution |
+|---|---|---|
+| 1 Where | 2 | create, assign, verify is our method; the verification order |
+| 2 NSD via Gateway | 1 | "route-based" and "policy-based" restate the documented type labels |
+| 3 NSD via Edge | 1 | IKE and IPsec described in general terms (glossary marks IKE as general knowledge) |
+| 4 Clusters | 0 | |
+| 5 Credentials and NetFlow | 0 | the Predict distractor "2055" is a wrong option, not a claim |
+| 6 Name and address | 1 | the Private Network Name effect on tunnels is stated as not documented |
+| 7 Auth and VNF | 1 | the deploy order create, deploy, insert is read from the prerequisites of the Edge page |
+| 8 Review | 4 | the reading order, the check order, "an Override ignores the Profile value" (Section 4), "a saved service does not prove traffic uses it" |
+| **Total** | **10** | |
+
+Consistency across Sections 1 to 8 and the glossary: "network service" has two meanings (the Network Services area and the business policy action), now explained in Section 8 lesson 1 and the glossary term; "Non SD-WAN Destination via Gateway" (service), "Edge to Non SD-WAN via Gateway" (Profile checkbox) and "NSD via Gateway" (shorthand) are used as documented; Hub, cluster and Cluster Score agree with Sections 5 and 7; the Section 5 services lesson said Edge-level assignment was documented for TACACS only, which is now reworded to point to Section 8; "tunnel" means the VCMP tunnel Edge to Gateway or the IPsec tunnel to a destination, with different diagram styles. No contradiction remains.
+
+## Step 19: segments, Profiles and policy rules settings verification pass
+
+New sheets in `config/`: `config-segments`, `config-profiles`, `config-business-policy-rules`, `config-firewall-rules`, `config-application-match` (same claims-table rule; field rows start `Field "<name>" (applied: ...)`). No `reference-sources/` folder exists; no PDF was read this step except the earlier local Orchestrator Guide row (segment limits, page 36) and the two datasheets read in step 17.
+
+Reading, all through WebFetch with verbatim quotes requested (14 reads on 9 pages): 7.0 Configure Segments (whole article); 7.0 Configure Profiles (whole article); 7.0 Profile device settings (three windows, 0 to 270251, the whole page); 7.0 Configure Business Policy (whole article by the summary's account); 7.0 Firewall Overview (0 to 100000 of 137822; the last 37822 characters, from the Enhanced Firewall Services section on, were **not read**); 7.0 Configure Custom Applications (whole article); 6.4 Configuring Business Policy and 6.4 Firewall (0 to 100000 of 137657). **Failed**: 6.4 `configure-segments` (HTTP 404), 6.4 `configure-network-services` earlier, and the 7.0 application maps page (HTTP 403, not circumvented). The 6.4 Profile pages and the 6.4 custom applications page were not read.
+
+### Third-party claims from the course outline
+
+| claim | result | source and evidence |
+|---|---|---|
+| Segments: corp, guest, IoT and OT as examples | **Unconfirmed** | the segments page names guest traffic, voice media and PCI traffic; corp, IoT and OT are not named |
+| A default Global segment | **Confirmed** | the Global Segment exists; its type is Regular or Private |
+| "Create a test segment and map a VLAN" | **Confirmed as steps** | Configure > Segments > Add > Save Changes, then the VLAN dialog's Segment field; "test" is only a name |
+| Apply a segment to the Quick Start and a test Profile | **Confirmed as a procedure** | Segment > Change Profile Segments for any Profile; the Quick Start contents are not documented |
+| Profiles: create, duplicate, modify | **Confirmed** | New Profile, Duplicate or Copy Profile, Modify or the Overview tab EDIT |
+| Wi-Fi, authentication, DNS and VLANs inside a Profile | **Confirmed** | Wi-Fi Radio and WLAN SSIDs, Edge Services > Authentication, Routing and NAT > DNS, Connectivity > VLAN |
+| Routing, NAT, VPN and firewall settings customised per Profile | **Confirmed** | Routing and NAT (including LAN-Side NAT Rules), VPN Services, Profile Firewall tab and Common Criteria Firewall |
+| Business policy rules with IPv4 match, domain names, protocols and an application rule | **Confirmed** | CIDR, mask or wildcard address match; Domain Name matches all or part of a name; Protocol GRE, ICMP, TCP, UDP; Application Define |
+| Base and firewall policies assignable to Edges via Profiles | **Confirmed, "base policy" not a term** | Profile rules are pushed to Edges for both business policy and firewall |
+| "QoS traffic classes" | **Confirmed as priority plus service class** | the Action tab has Priority and Service Class, not a field called traffic class |
+| A "Netflix.com application rule" | **Partly confirmed** | a rule can match an application or a destination domain name; whether Netflix is in the application list is not stated |
+
+### Fields documented versus unreadable, per sheet
+
+| sheet | field rows (a row can name several fields) | rows still VERIFY |
+|---|---|---|
+| config-segments | 10 | 5: edit and rename, delete error text, Service VLAN format, segment-to-segment traffic, 6.4 segments page |
+| config-profiles | 28 | 3: the OSPF override conflict, Profile change propagation, Copy Profile fields and Quick Start contents |
+| config-business-policy-rules | 16 | 2: rule order beyond precedence and the no-match action, DSCP values and defaults |
+| config-firewall-rules | 13 | 2: evaluation order and the no-match action, the unread page tail |
+| config-application-match | 6 | 1: the Application Maps and Applications screens and domain fields of a custom application |
+
+### Open VERIFY items for configuration walkthroughs (step 19)
+
+1. Segment edit and rename, the Service VLAN format, the delete error text, any in-use column, inter-segment traffic.
+2. The Copy Profile dialog fields, the Quick Start Profile contents, and what a Profile change does to Edges (push timing, restarts).
+3. The OSPF override conflict between the Profile page and the Edge page (unresolved).
+4. Rule evaluation order, the no-match action and the firewall versus business policy order, for both rule types.
+5. The Application Maps and Applications screens (HTTP 403), and domain-name fields inside a custom application.
+6. The unread tail of the 7.0 firewall page, and the 6.4 Profile and segments pages.
+
+## Section 9 claim audit (self-review, step 19)
+
+Sentences making a technical claim without a VERIFIED row, per lesson; each is labelled "our method", illustrative or marked not documented; none is a quiz correct answer. Every field name in a lesson table exists in a VERIFIED row (automated, now over 15 lessons).
+
+| lesson | count | sentences and resolution |
+|---|---|---|
+| 1 Segments | 1 | the comparison method (switch the Segment menu and read the same sections) is labelled our method |
+| 2 Profiles | 1 | the illustrative diagram step where a Profile change reaches an Edge without an override; the overriding Edge's behaviour is stated as not documented |
+| 3 Device | 1 | "Other Connectivity and Telemetry" mixes sections; the Override table says "not stated" where the pages are silent |
+| 4 Business policy | 2 | the worked example (field values are illustrative, fields documented); "Auto is the default steering" restates the documented default |
+| 5 Firewall | 2 | the worked example; the diagram's single verdict is illustrative and ends with the no-match action as not documented |
+| 6 Application matching | 1 | when to use a domain name instead of an application is stated as not decided by the documentation |
+| 7 Comparing | 6 | the seven-step walk and its table order (our method, labelled); the simulator link description |
+| **Total** | **14** | |
+
+Consistency across Sections 1 to 9 and the glossary: "override" means the Edge Override checkbox for Device settings and a superseding identical rule for business policy and firewall rules, as in Section 4; "business policy" and "firewall" keep their separate roles and the unknown order is stated in both; "application" means a DPI-identified application (default or custom) and is separate from a destination domain name; "Edge-level" settings are the Override checkboxes, Source Interface and Edge-only items (loopbacks, LAN interfaces and SSID of a VLAN); the Section 5 and Section 8 statements about segments and Cloud VPN agree. The OSPF override conflict (Profile page versus Edge page) is reported in Sections 4 and 9 and remains unresolved, not hidden. No contradiction was found.
 

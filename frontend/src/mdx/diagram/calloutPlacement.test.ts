@@ -1,6 +1,15 @@
 import assert from 'node:assert/strict'
 import { test } from 'node:test'
-import { bubbleSize, labelRect, overlaps, placeCallout, type Rect } from './calloutPlacement.ts'
+import {
+  bubbleSize,
+  labelRect,
+  overlaps,
+  placeCallout,
+  placeLinkLabel,
+  pxPerUnit,
+  type Rect,
+} from './calloutPlacement.ts'
+import { linkGeometry } from './geometry.ts'
 
 const canvas: Rect = { x: -30, y: 0, width: 960, height: 460 }
 const size = { width: 200, height: 48 }
@@ -71,4 +80,56 @@ test('when nothing is free the least overlapping spot wins, not the first candid
     prefer: 'above',
   })
   assert.equal(typeof p.cx, 'number')
+})
+
+test('pixels per unit use the padded viewBox width, and a bubble placed against the left edge stays inside the box', () => {
+  // A 900 unit diagram with 30 units of side padding is a 960 unit viewBox: 560 px wide means 560 / 960 px per unit.
+  assert.equal(pxPerUnit(560, 960), 560 / 960)
+  assert.equal(pxPerUnit(0, 960), 1)
+  const unit = pxPerUnit(560, 960)
+  const size = bubbleSize('The initiating Edge checks whether a direct tunnel is possible.', unit)
+  const canvas: Rect = { x: -30, y: 0, width: 960, height: 520 }
+  const p = placeCallout({ anchor: { x: 10, y: 140 }, size, obstacles: [], canvas, prefer: 'above' })
+  // Left edge of the bubble in pixels from the left edge of the SVG, which sits at viewBox x = -30.
+  const leftPx = (p.cx - size.width / 2 - canvas.x) * unit
+  assert.ok(leftPx >= -0.5, `bubble hangs ${leftPx}px outside the box`)
+})
+
+test('linkGeometry.at runs from one end to the other, straight and curved', () => {
+  const a = { x: 0, y: 0 }
+  const b = { x: 100, y: 40 }
+  const straight = linkGeometry(a, b)
+  assert.deepEqual(straight.at(0), a)
+  assert.deepEqual(straight.at(1), b)
+  assert.deepEqual(straight.at(0.5), straight.mid)
+  const curved = linkGeometry(a, b, 30)
+  assert.deepEqual(curved.at(0), a)
+  assert.deepEqual(curved.at(1), b)
+  assert.ok(Math.abs(curved.at(0.5).x - curved.mid.x) < 1e-9 && Math.abs(curved.at(0.5).y - curved.mid.y) < 1e-9)
+})
+
+test('a link label stays at the middle when nothing is in the way', () => {
+  const geo = linkGeometry({ x: 100, y: 100 }, { x: 500, y: 100 })
+  assert.deepEqual(placeLinkLabel(geo.at, 'assign', 13, []), geo.mid)
+})
+
+test('a link label slides along its link off a node label that sits at the middle (the svc-workflow case)', () => {
+  // A long node label ends right where the middle of the link is.
+  const geo = linkGeometry({ x: 150, y: 270 }, { x: 450, y: 410 })
+  const nodeLabel: Rect = { x: 40, y: 255, width: 200, height: 30 }
+  const text = 'or at Edge'
+  const mid = labelRect(geo.mid.x, geo.mid.y - 8, text, 13)
+  const p = placeLinkLabel(geo.at, text, 13, [nodeLabel, { x: 180, y: 230, width: 130, height: 70 }])
+  const placed = labelRect(p.x, p.y - 8, text, 13)
+  assert.equal(overlaps(placed, nodeLabel), false)
+  assert.equal(overlaps(placed, { x: 180, y: 230, width: 130, height: 70 }), false)
+  // The middle position would have been free here; the test checks the slide only when it was blocked.
+  assert.ok(overlaps(mid, nodeLabel) || p.x === geo.mid.x)
+})
+
+test('a link label that is blocked everywhere takes the least bad position instead of failing', () => {
+  const geo = linkGeometry({ x: 0, y: 0 }, { x: 400, y: 0 })
+  const wall: Rect = { x: -100, y: -100, width: 1000, height: 200 }
+  const p = placeLinkLabel(geo.at, 'label', 13, [wall])
+  assert.equal(typeof p.x, 'number')
 })

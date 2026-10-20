@@ -1,0 +1,39 @@
+# Branch site topologies and where the Edge sits
+
+Gathered 2026-10-20 for step 17. **Read directly**: VMware SD-WAN 3.4 Administration Guide (PDF, Broadcom legacy archive), pages 17, 29 to 33, 266 to 267 and 332 to 333; the Arista Edge datasheets. **Summarised via WebFetch** (verbatim quotes requested): Arista 7.0 "Site Configurations Overview", 5.2 "Site Configurations", 7.0 Overview, 7.0 and 6.4 "Configure High Availability on an Edge", 7.0 "Configure Device Settings for Edges". The 6.4 Site Configurations page was read in step 9 (see `cloud-vpn.md`); it was not re-read. Bronze, Silver and Gold are covered in `bronze-silver-gold.md`; HA in `edge-ha.md`.
+
+## The Edge's role and placement
+
+| claim | source URL | doc version | status |
+|---|---|---|---|
+| Edges "are designed to be deployed as gateway routers between the LAN and the WAN"; interfaces can instead be configured as switched ports for small offices, and for most deployments all routed interfaces are recommended. (read directly) | https://techdocs.broadcom.com/content/dam/broadcom/techdocs/us/en/dita/sde/velocloud-sase/velocloud-legacy-pdfs/user-guides-legacy/VMware-SD-WAN-Administration-Guide_3.4.pdf | VMware SD-WAN 3.4, p.17 to 18 | VERIFIED |
+| Enhanced Firewall Service is built into the Edges "eliminating the need for legacy firewalls at branch locations". (read directly) | https://www.arista.com/assets/data/pdf/Datasheets/VeloCloud-SD-WAN-Edge-7x0-Series.pdf | 7x0 datasheet p.1 | VERIFIED |
+| The 7.0 Site Configurations table lists: Hub 1 (data center or regional Hub, Edge in two-arm topology), Hub 2 (one-arm topology: the same interface carries multiple WAN links), Private WAN link(s) only (classic MPLS sites), Hybrid Site-1, Hybrid Site-2 and Public WAN link(s) only (dual-Internet site, one link behind a NAT router). (summarised via WebFetch) | https://www.arista.com/en/admin-guide-vc-7-0/sd-wan-7-0-site-configurations-overview | 7.0 and 5.2, summarised via WebFetch | VERIFIED |
+| Hybrid Site-1: "the Edge is deployed off-path"; the Edge creates an overlay across both MPLS and Internet paths and traffic is first diverted to the Edge; in the worked example the L3 switch redirects traffic to it, using a static route. | https://www.arista.com/en/admin-guide-vc-7-0/sd-wan-7-0-site-configurations-overview | 7.0 and 5.2, summarised via WebFetch | VERIFIED |
+| Hybrid Site-2: "the Edge is deployed in-path as the default gateway"; it "makes the Edge a single point of failure and may require HA"; the example site has the Edge behind a CE router and being the default router for the LAN. | https://www.arista.com/en/admin-guide-vc-7-0/sd-wan-7-0-site-configurations-overview | 7.0 and 5.2, summarised via WebFetch | VERIFIED |
+| In the 3.4 guide the same table calls the off-path design "Silver 1", the in-path default-gateway design "Silver 2" and the dual-Internet site "Bronze 1". (read directly) | https://techdocs.broadcom.com/content/dam/broadcom/techdocs/us/en/dita/sde/velocloud-sase/velocloud-legacy-pdfs/user-guides-legacy/VMware-SD-WAN-Administration-Guide_3.4.pdf | VMware SD-WAN 3.4, p.333 | VERIFIED |
+| Public WAN only site example: a dual Internet site with one direct Internet access (DIA) link and one broadband link; both WAN interfaces use DHCP; the page describes no VRRP, HSRP or HA for it. | https://www.arista.com/en/admin-guide-vc-7-0/sd-wan-7-0-site-configurations-overview | 7.0, summarised via WebFetch | VERIFIED |
+| A routed interface can run a DHCP server on the Edge, and the Edge then hands out its virtual IP address as the clients' default gateway. | https://www.arista.com/en/admin-guide-vc-7-0/sd-wan-7-0-configure-device-settings-for-edges | 7.0, see edge-details.md | VERIFIED |
+| In the worked 7.0 examples routing toward the LAN is by static route; OSPF and BGP are configured on a separate page and are not part of these site-configuration examples. (see ospf.md and bgp.md for the routing pages) | https://www.arista.com/en/admin-guide-vc-7-0/sd-wan-7-0-site-configurations-overview | 7.0, summarised via WebFetch | VERIFIED |
+
+## Transports, MPLS and the CE router
+
+| claim | source URL | doc version | status |
+|---|---|---|---|
+| In Silver variant 1 the MPLS link is terminated on a CE and is reached through the L3 switch; the Edge sits between the L3 switch and the Internet. (read directly) | https://techdocs.broadcom.com/content/dam/broadcom/techdocs/us/en/dita/sde/velocloud-sase/velocloud-legacy-pdfs/user-guides-legacy/VMware-SD-WAN-Administration-Guide_3.4.pdf | VMware SD-WAN 3.4, p.29 | VERIFIED |
+| In the 3.4 on-premises example the MPLS network runs BGP and peers with all the CE routers; at the Hubs and Silver 1 sites the L3 switch runs OSPF or BGP with the CE router (and the firewall at hubs). (read directly) | https://techdocs.broadcom.com/content/dam/broadcom/techdocs/us/en/dita/sde/velocloud-sase/velocloud-legacy-pdfs/user-guides-legacy/VMware-SD-WAN-Administration-Guide_3.4.pdf | VMware SD-WAN 3.4, p.32 | VERIFIED |
+| A WAN overlay is enabled per interface; a private (MPLS) WAN link can be defined as a user-defined WAN overlay on a routed interface. | https://www.arista.com/en/admin-guide-vc-7-0/sd-wan-7-0-configure-device-settings-for-edges | 7.0, see edge-details.md | VERIFIED |
+| The Edge datasheet lists supported WAN overlay as "Public/private/hybrid transport, cloud and on-premises". (read directly) | https://www.arista.com/assets/data/pdf/Datasheets/VeloCloud-SD-WAN-Edge-7x0-Series.pdf | 7x0 datasheet p.3 | VERIFIED |
+| How many transports an Edge supports per model. The datasheets give interface counts but no WAN-link maximum was read. | none | 7.0 | VERIFY |
+
+## Redundancy options
+
+| claim | source URL | doc version | status |
+|---|---|---|---|
+| Edge HA (an Active and a Standby Edge of the same model) is the Edge's own answer to the single point of failure; see `edge-ha.md` for what is synchronised and what triggers failover. | https://www.arista.com/admin-guide-vc-7-0/sd-wan-7-0-configure-high-availability-on-an-edge | 7.0 and 6.4, summarised via WebFetch | VERIFIED |
+| With Standard HA and L2 plus L3 switches (Deployment Type 2) HSRP or VRRP "is required on the L3 switch pair". It is a switch feature, not an Edge setting. | https://www.arista.com/admin-guide-vc-6-4/sd-wan-6-4-configure-high-availability-on-an-edge | 7.0 and 6.4, summarised via WebFetch | VERIFIED |
+| Silver variant 2 places the Edge where the L2 switch was, in front of redundant MPLS and Internet routers that run HSRP or VRRP. The text read does not say how the Edge interacts with that redundancy protocol. | https://www.arista.com/en/admin-guide-vc-7-0/sd-wan-7-0-overview | 3.4 and 7.0 | VERIFIED |
+| The Edge can itself run VRRP with a third-party router ("VRRP with 3rd party router" under High Availability on the Device tab) to give next-hop redundancy; the 3.4 guidelines are in `edge-ha.md`. | https://www.arista.com/admin-guide-vc-7-0/sd-wan-7-0-configure-device-settings-for-edges | 7.0, summarised via WebFetch | VERIFIED |
+| Are the gateway redundancy options in the course outline (HSRP and VRRP) documented for Edge deployments? **Yes, in three places**: HSRP/VRRP on the L3 switch pair in HA Deployment Type 2; HSRP/VRRP on the existing routers in Silver variant 2; and an Edge-run "VRRP with 3rd party router" option. The outline's wording "Edge applies policy with gateway redundancy through HSRP/VRRP" is a mix of the three. | https://www.arista.com/admin-guide-vc-6-4/sd-wan-6-4-configure-high-availability-on-an-edge | 7.0 and 6.4 | VERIFIED |
+| Whether the Edge-run VRRP guidelines of 3.4 hold in 7.0, and whether Silver variant 2 in 7.0 still says "from a different router vendor". | none | 7.0 | VERIFY |
+| What exactly an Edge does when a downstream L3 switch, a CE router or an upstream router fails, beyond the Edge's own HA triggers. | none | 7.0 | VERIFY |

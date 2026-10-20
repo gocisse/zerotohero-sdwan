@@ -1,0 +1,98 @@
+---
+id: top-silver-2
+title: Silver option 2, Edge between devices with gateway redundancy
+summary: "The vendor's second Silver variant with HSRP or VRRP routers and an L2 switch, and which kind of redundancy is provided by what: the routers, the Edge HA pair, or the Edge's own VRRP."
+estimated_minutes: 12
+topics: [topo-silver-2]
+prerequisites: [top-silver-1]
+---
+
+**By the end of this lesson you will be able to:**
+
+- describe the second Silver variant and where the Edge replaces a device;
+- separate three kinds of redundancy: router redundancy (<Term id="hsrp">HSRP</Term> or <Term id="vrrp">VRRP</Term>), an <Term id="edge-ha">Edge HA pair</Term>, and the Edge's own VRRP option;
+- walk through what is documented about an Edge HA failover;
+- say what the Edge does and does not do for each failure.
+
+## What the vendor says
+
+The second Silver variant has **MPLS and Internet routers deployed with HSRP or VRRP**, with an **L2 switch on the LAN side**. The Edge **replaces the L2 switch**. (Older text names only HSRP; the 7.0 text names HSRP or VRRP.)
+
+<Diagram id="top-silver-2" />
+
+The vendor's text read does not show a pair of Edges in this variant and does not say how the Edge interacts with the HSRP or VRRP between the two routers.
+
+## Three kinds of redundancy
+
+| Kind | What provides it | What the documentation says |
+|---|---|---|
+| Router redundancy | the two routers, with HSRP or VRRP between them | the variant names them; the protocol is the routers' own (general networking, not Edge behaviour) |
+| Edge redundancy | an <Term id="active-standby">Active/Standby</Term> Edge HA pair | documented in detail below |
+| Edge VRRP | the Edge as VRRP primary with a third-party router | an Edge option; guidelines documented for older releases |
+
+Two points that are easy to mix up:
+
+- On an Edge HA pair with L2 and L3 switches (the HA guide's Deployment Type 2), **HSRP or VRRP is required on the L3 switch pair**. It runs on the switches. The Edge does not run it for them.
+- The Edge's own VRRP option is a different feature: High Availability on the Device tab offers None, Active Standby Pair, Cluster and **VRRP with 3rd party router**. The older guide says VRRP can only run between the Edge and a third-party router on the same subnet through an L2 switch, that the Edge must have the higher priority to be primary, that it cannot be combined with Active-Standby HA, and that it is not supported on an interface with a WAN overlay. We could not read the 7.0 page of these guidelines, so check them in your release.
+
+## Edge HA as documented
+
+- **Models.** Standard HA (same configuration, symmetric connections to the same WAN links), Enhanced HA (each Edge has its own WAN links) and a mixed mode.
+- **Requirements.** Two Edges of the **same model**; directly connected, with under 100 ms latency; Arista does not recommend an L2 switch on the HA link; in Standard HA the LAN-side switches must support and run STP, and the Edges need mirrored WAN and LAN connections.
+- **What is synchronised.** The Orchestrator talks to the Active Edge and its configuration is mirrored to the Standby over the failover link; session information is synchronised; with BGP, the local routes are synchronised.
+- **Failover triggers.** A WAN or LAN link failure on the Active Edge, the Active Edge crashing, rebooting or becoming unresponsive (the Standby receives no heartbeat messages), a configuration change that restarts the service, and loss of signal detection on routed interfaces. The default failover threshold is 700 ms.
+- **What happens.** The Standby takes over the Active role with minimal impact on traffic and the Orchestrator raises the **High Availability Going Active** event.
+- **Which Edge is Active.** The one with more LAN interfaces; WAN interfaces break a tie.
+- **Split brain.** If the pair cannot see each other, both may become Active. Legacy HA uses a layer 2 heartbeat; in Enhanced HA the Primary Gateway is the only detection method.
+
+<Predict
+  prompt="The Active Edge of an HA pair becomes unresponsive. What does the documentation say?"
+  choices={["The Standby stops receiving heartbeats and takes over; the Orchestrator raises High Availability Going Active", "The Orchestrator configures a third Edge", "HSRP on the Edge moves the virtual IP", "Traffic stops until an administrator intervenes"]}
+  answer={0}
+>
+  When the Active Edge crashes, reboots or is unresponsive, the Standby receives no heartbeat messages, assumes the Active role and the Orchestrator generates the High Availability Going Active event.
+</Predict>
+
+## Failures, and what the Edge does about each
+
+| Failure | Who responds | Status |
+|---|---|---|
+| An Internet or MPLS router in an HSRP or VRRP pair fails | its standby router | general protocol behaviour; what the Edge does is not documented |
+| A WAN link of a single Edge fails | DMPO steers to other links | documented (Section 3) |
+| A WAN link of the Active Edge in an HA pair fails | the HA page lists it as a failover trigger; how it interacts with DMPO steering to other links is not documented | partly documented |
+| A LAN link of the Active Edge fails | failover to the Standby if it has a working LAN link | documented |
+| The only Edge fails | the site is cut off; the vendor warns that an in-path Edge is a single point of failure that may need HA | documented warning |
+| The Active Edge of an HA pair fails | the Standby takes over, event raised | documented |
+| An L2 or L3 switch fails | not documented beyond the STP and HSRP or VRRP requirements for the HA designs | not documented |
+
+<Callout variant="warning" title="What we could not confirm">
+  What an Edge does when a router, a CE or a switch next to it fails, beyond the Edge's own HA triggers, is not in the pages we read. Whether an HA pair fits the second Silver variant is not shown there either.
+</Callout>
+
+## What you would see in the VCO
+
+- **Configure > Edges** > the Edge > **Device** > **High Availability**: **None**, **Active Standby Pair**, **Cluster** or **VRRP with 3rd party router**; Advanced Options hold the HA Failover Detection Time Multiplier and Pre-empt Switchover.
+- **Monitor > Edges**: an **HA State** that turns green when the pair is ready, and an **HA Standby** tab.
+- **Monitor > Events**: **High Availability Going Active** and loss of signal events.
+- **Remote Actions** from the Edge's Shortcuts menu include **Force HA Failover** (use it only in a lab).
+
+<Callout variant="tip" title="Check this in your own VCO or site">
+  - **[observation candidate]** Open: Configure > Edges, an Edge, Device tab, High Availability section. Expect: the choices None, Active Standby Pair, Cluster and VRRP with 3rd party router. Docs may differ: a 6.x release may list different choices.
+  - **[observation candidate]** Open: Monitor > Edges on an HA pair. Expect: an HA State (green when ready) and an HA Standby tab. Docs may differ: how the Standby appears in the list is not documented.
+  - **[observation candidate]** In a lab only: Remote Actions > Force HA Failover, then Monitor > Events. Expect: a High Availability Going Active event. Docs may differ: the event name or the time it takes.
+  - **[observation candidate]** Open: the HA Advanced Options. Expect: the failover threshold is 700 ms by default. Docs may differ: the field is a multiplier and your release may show a different default.
+  - **[observation candidate]** Open: the routers' HSRP or VRRP status (on the routers). Expect: one active router per pair while the Edge sits between them and the LAN. Docs may differ: the vendor text does not say how the Edge interacts with it.
+</Callout>
+
+## Key takeaways
+
+- Silver variant 2: HSRP or VRRP routers, an L2 switch on the LAN side, the Edge replacing the L2 switch.
+- Router redundancy, an Edge HA pair and Edge VRRP are three different things.
+- HSRP or VRRP on the L3 switch pair is required in the HA design with L2 and L3 switches.
+- An HA failover is triggered by Edge-side failures and raises High Availability Going Active.
+
+## What would you look for in the VCO
+
+- What does the High Availability section say, and is the HA State green?
+- Are the two Edges the same model?
+- Which events did the last failover raise?

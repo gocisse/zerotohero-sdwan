@@ -13,7 +13,8 @@ content/
     lessons/<NN-slug>.mdx      # YAML frontmatter + MDX body
     quiz.yaml                  # section quiz questions
   diagrams/<id>.yaml           # one step-through network diagram per file
-  glossary.yaml                # glossary terms
+  glossary.yaml                # glossary terms (each with guide_topics or beyond_guide: true)
+  study-guide.yaml             # the study guide: sections G1..G5, topics and what the course offers for each
   reference/                   # author fact sheets with sourced claims tables (see reference/README.md)
   topologies/                  # simulator teaching topologies (strict YAML, validated; see docs/SIMULATOR-MODEL.md section 16)
   labs/                        # simulator scenarios (later step)
@@ -110,3 +111,64 @@ Shows a popover with the short definition and a link to the glossary entry (hove
   related: [overlay-flow-control]    # optional term ids
   lesson_ref: rt-redistribution  # optional lesson id: "Where this is taught"
 ```
+
+## Study guide (`study-guide.yaml`) and glossary `guide_topics`
+
+The learner studies from a six-section guide; this file maps it onto the course. It is a navigation layer: titles are labels, nothing from the guide is course content.
+
+```yaml
+beyond:                       # the glossary group for terms that belong to no guide topic
+  title: Beyond the study guide
+  reason: Why those terms have no topic.
+unmapped_lessons: [ov-glance] # lessons that deliberately belong to no topic
+sections:
+  - id: G1
+    title: Arista VeloCloud SD-WAN
+    topics:
+      - id: why-traditional-wan            # lowercase, unique across the whole file
+        title: Why Traditional WAN Architectures Are No Longer Enough
+        kind: concept                      # concept | config | topology
+        coverage: full                     # full | partial | none
+        note: One sentence: what is and is not covered.
+        lessons: [intro-why-wans-fall-short]
+        quiz_topics: [wan-limits]          # quiz question topic tags
+        diagrams: [wan-mpls-backhaul]
+        labs: [mtu-ipsec]                  # never self-check-*
+        sim_screens: [map]                 # see SimScreens in backend/internal/content/studyguide.go
+```
+
+Rating rules (be conservative; gaps stay visible):
+
+- `full`: a lesson really teaches the topic. Needs at least one lesson.
+- `partial`: a lesson teaches part of it, or the concept and where it lives in the VCO but not a step-by-step settings walkthrough (Config topics are partial at best). Needs at least one lesson.
+- `none`: nothing in the course teaches it. Must have no lessons. The dashboard shows it as "Not covered in this course yet" and does not count it in progress.
+- Update the `note` whenever the rating changes. Do not raise a rating without a lesson that earns it.
+
+Run `make validate-content`: it reports every problem at once (unknown ids, `none` with a lesson, `full` without one, unknown glossary topics). A lesson that is neither mapped nor listed under `unmapped_lessons` is a warning. `make course-map` renders the mapping into `docs/COURSE-MAP.md`.
+
+In `glossary.yaml`, give each term `guide_topics: [topic-id, ...]` (primary topic first: the one the term's lesson teaches, and where a `#term-<id>` deep link opens it) or `beyond_guide: true`. A term with several topics is stored once and shown under each. Never edit a definition to place it.
+
+## Topology lessons (Section 7) and observation candidates
+
+Section 7 (`sections/07-topologies`) follows the same lesson rules as the others and adds three conventions:
+
+- **Tags.** A figure or sentence that is not plainly a documented statement is tagged `(datasheet)`, `(documented)` or `(design practice)`. Design practice is our reasoning and is never written as a vendor statement. Bronze, Silver and Gold are vendor terms (`reference/bronze-silver-gold.md`); "option 1 and 2" is the course's word for the guide's variants.
+- **The box.** Every Section 7 lesson has a tip Callout titled `Check this in your own VCO or site` just before the final bridge, listing 3 to 5 bullets in this exact shape (a test checks them):
+  `- **[observation candidate]** Open: <screen>. Expect: <what the documentation says you will see>. Docs may differ: <where it may not match>.`
+  A line without `Open:` (for example "In a lab only: ...") is allowed; `Expect:` and `Docs may differ:` are required. Avoid `{` and `<` in these lines (MDX).
+- **They are not observations.** `make observations-report` lists them per lesson under "Candidates from topology lessons" in `docs/OBSERVATION-PRIORITIES.md`. To turn one into an OBSERVED row, follow `docs/HOW-TO-ADD-AN-OBSERVATION.md`; nothing is ever written to `reference/observations/` by the course author.
+
+## Network services configuration lessons (Section 8) and settings sheets
+
+- **Settings sheets** (`reference/config/`, one per service): the claims table is the settings table. A field is one row that starts `Field "<name>" (applied: ...)`; give allowed values, and a default only if the documentation states one. Menu paths, steps, limits, prerequisites, what is shown afterwards, 6.4 versus 7.0 differences and open items are rows with the prefixes `Menu path:`, `Steps:`, `Limit:`, `Prerequisite:`, `Shown afterwards:`, `6.4 vs 7.0:` and `Needs observation:` (status VERIFY).
+- **Lessons.** Each has a `## Settings reference` section (tables may sit under `###` sub-headings) with the field name in the first column; the name must occur in a VERIFIED or OBSERVED row of a `config/` sheet. Fields the pages did not give belong in a warning Callout, not in the table. Avoid `{`, `<` and the less-than character in text (MDX); write "a less-than sign".
+- The "Check this in your own VCO" box uses the same `[observation candidate]` line format as Section 7.
+
+## Segment, Profile and policy configuration lessons (Section 9)
+
+Section 9 follows the Section 8 rules (settings sheets in `reference/config/`, a `## Settings reference` section whose field names must exist in VERIFIED rows, the "Check this in your own VCO" box). Extra conventions:
+
+- **Worked examples** use documented fields and allowed values only; the values you choose (an application name, a VLAN) are said to be illustrative.
+- **Diagrams** that show behaviour the pages do not describe (a Profile change reaching an overriding Edge, a firewall verdict) are titled illustrative and end by naming what is not documented.
+- **Simulator links** (`[Try it in the simulator](/sim/...)`) are used only where the mock screen really shows the setting, and the lesson says what the mock does not model. A data-driven e2e test opens every simulator link of the section.
+

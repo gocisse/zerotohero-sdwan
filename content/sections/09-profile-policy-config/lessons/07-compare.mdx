@@ -1,0 +1,93 @@
+---
+id: prof-compare
+title: Reading and comparing configurations
+summary: "A guided method for comparing two Edges and a Profile, finding where a setting comes from, and walking through why an Edge behaves differently, with the documented places named and our method labelled."
+estimated_minutes: 10
+topics: [pcfg-compare]
+prerequisites: [prof-fw-rules, prof-app-match]
+---
+
+**By the end of this lesson you will be able to:**
+
+- compare two Edges and their <Term id="profile">Profile</Term>, reading <Term id="rules-from-profile">Rules From Profile</Term> and <Term id="override">Override</Term> ticks, using the screens the documentation names;
+- tell whether a setting or a rule comes from the Profile or from an Edge override;
+- apply a short walk to "why does this Edge behave differently";
+- say what the screens cannot tell you.
+
+## The documented places
+
+The places below are documented; the order of reading them is **our method**, not Arista's procedure.
+
+| Look at | What it tells you |
+|---|---|
+| Configure > Profiles, the Used By column | how many Edges share the Profile |
+| The Profile's Overview tab | the Edge models, network services and segments of the Profile |
+| An Edge's Device tab, the Override checkboxes | which inherited settings this Edge changes |
+| An Edge's Business Policy tab | Rules From Profile (inherited) and Edge Overrides |
+| An Edge's Firewall tab | the Rule From Profile area and the Edge's own rules |
+| The Device tab's Segment menu and Sort by segment aware | which segment a setting applies to |
+| Profiles list > Download | all Profiles exported to an Excel file, for side-by-side comparison |
+
+<Diagram id="prof-compare-walk" />
+
+## Settings reference
+
+| Field | Where it appears | What it tells you |
+|---|---|---|
+| Used By | Profiles list | the number of Edges using the Profile |
+| Override | Edge Device tab and Business Policy and Firewall tabs | the Edge changes the inherited setting |
+| Rules From Profile | Edge Business Policy tab | rules inherited from the Profile |
+| Edge Overrides | Edge Business Policy tab | rules made or changed at this Edge |
+| Rule From Profile | Edge Firewall tab | firewall rules inherited from the Profile |
+| Segment | Device tab and Business Policy tab drop-downs | which segment's settings and rules you are reading |
+| Sort by segment aware | Device tab Sort menu | separates Segment Aware from Segment Agnostic settings |
+| Download | Profiles list toolbar | exports all Profiles to Excel |
+
+## The walk: "why does this Edge behave differently?" (our method)
+
+1. **Same Profile?** Compare the two Edges' Profiles (Configure > Edges). If they differ, compare the Profiles first.
+2. **Same segment?** Check the Segment menu and drop-downs; many settings and all rules are segment aware.
+3. **Device settings.** Open both Edges' Device tabs; note every Override tick and compare the values with the Profile's.
+4. **Business policy.** Compare Rules From Profile and Edge Overrides; an Edge rule with the same match supersedes the Profile rule.
+5. **Firewall.** Compare the Rule From Profile areas and the Edge's own rules; Edge rules take priority.
+6. **Application timing.** For application rules remember the DPI delay: the first packets of a flow can match a more general rule.
+7. **State what you cannot conclude.** Rule order beyond "highest precedence", the no-match action and the order of firewall versus business policy are not documented.
+
+[Try it in the simulator](/sim/branch-override-demo/edges/store-2-edge): open an Edge, read each value's source (Profile or override), then use "What if?" to see which Edges keep their override. Existing labs that practise this walk: [Monday morning](/sim/labs/capstone-1-monday-morning), [a change request](/sim/labs/capstone-3-change-request) and [video on the wrong link](/sim/labs/video-wrong-link).
+
+<Callout variant="warning" title="What we could not confirm">
+  How the Orchestrator marks an overridden setting on screen, how to revert an override to the Profile value, and whether a later Profile edit reaches an Edge that overrides that setting are not documented. The OSPF area table is contradictory between the Profile and Edge pages. Treat these as questions to settle in your own VCO.
+</Callout>
+
+<Predict
+  prompt="Two Edges use the same Profile but one steers an application differently. Where do you look first on the Edge that differs?"
+  choices={["Its Business Policy tab: Edge Overrides, then Rules From Profile", "The Gateway's configuration", "The Profile's Overview tab only", "The Used By column"]}
+  answer={0}
+>
+  An Edge-level rule supersedes the Profile's, and the Edge Overrides section shows the Edge's new and modified rules, so it is the first place to look.
+</Predict>
+
+## What you would see in the VCO
+
+- **Configure > Profiles** and **Configure > Edges**, then each Edge's **Device**, **Business Policy** and **Firewall** tabs.
+- **Monitor > Edges** and **Diagnostics** to see the behaviour, not the configuration.
+
+<Callout variant="tip" title="Check this in your own VCO">
+  - **[observation candidate]** Open: Configure > Profiles, the Used By count, then Configure > Edges for two Edges of that Profile. Expect: both name the same Profile. Docs may differ: the Profile may be shown in a different column.
+  - **[observation candidate]** Open: the two Edges' Device tabs. Expect: Override ticked only where the Edge differs from the Profile. Docs may differ: how an overridden value is marked.
+  - **[observation candidate]** Open: the two Edges' Business Policy tabs. Expect: Rules From Profile identical and Edge Overrides different. Docs may differ: the heading of the second section.
+  - **[observation candidate]** Open: the Profiles list, Download. Expect: an Excel file with all Profiles. Docs may differ: the file's columns are not documented.
+</Callout>
+
+## Key takeaways
+
+- Start from the Profile, then each Edge's Override ticks and Edge Overrides.
+- Rules and many settings are segment aware: always note the segment.
+- The walk is our method; what is documented is where each setting and rule is shown.
+- Say what the screens cannot tell you.
+
+## What would you look for in the VCO
+
+- Do the two Edges share a Profile and a segment?
+- Which differences are overrides, and which are Profile rules?
+- Could DPI timing explain the first packets?

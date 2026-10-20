@@ -1,0 +1,85 @@
+---
+id: top-silver-1
+title: Silver option 1, Edge next to an L3 switch with Internet and MPLS
+summary: "The vendor's first Silver variant: an L3 switch, Internet links, an MPLS link on a CE router, and the Edge between the L3 switch and the Internet. Traffic flows, routes and the default gateway."
+estimated_minutes: 10
+topics: [topo-silver-1]
+prerequisites: [top-bronze]
+---
+
+**By the end of this lesson you will be able to:**
+
+- describe the first Silver variant and where the vendor places the Edge;
+- follow a flow to the Internet and a flow that uses the private transport;
+- say what changes for the default gateway and the routes, and what the vendor does not say;
+- list the failures this design does and does not cover.
+
+## What the vendor says
+
+The Silver topology is a site that has an <Term id="mpls">MPLS</Term> connection in addition to one or more public Internet links. In the first variant there is a **single L3 switch** with one or more public Internet links and an MPLS link that is **terminated on a <Term id="ce-router">CE router</Term> and reached through the L3 switch**. The Edge "goes between the L3 switch and the Internet", replacing the existing firewall or router.
+
+<Diagram id="top-silver-1" />
+
+## How traffic moves
+
+(Where the Edge sits is documented; the paths below are our illustration.)
+
+1. **LAN host to the Internet or a SaaS application.** The host sends to its default gateway, the L3 switch. The L3 switch forwards Internet-bound traffic to the Edge, because the Edge now sits where the old firewall or router was. The Edge sends it over its Internet link, inside a tunnel to the Gateway when the traffic uses the overlay.
+2. **LAN host to a data center over MPLS.** The CE router is reached through the L3 switch, so traffic for MPLS destinations can keep going to the CE without touching the Edge. To use the MPLS link as part of the **overlay**, the Edge needs a private WAN link of its own. The vendor's worked example for an <Term id="off-path-edge">off-path Edge</Term> next to an L3 switch (Hybrid Site-1) gives the Edge an interface with a private link toward the MPLS CE side and uses a static route on the L3 switch to divert traffic to the Edge.
+
+<Callout variant="warning" title="Two descriptions, not necessarily one design">
+  The guide places the Edge between the L3 switch and the Internet in the Silver description, and describes an **off-path** Edge in its worked example (Hybrid Site-1: "the Edge is deployed off-path", the L3 switch redirects traffic to it). We cannot tell from the text whether these are the same design. Read your own site's diagram before assuming which one you have.
+</Callout>
+
+## Default gateway and routes
+
+(design practice, our reasoning)
+
+- **<Term id="default-gateway">Default gateway</Term>.** The LAN's hosts keep pointing at the L3 switch. What changes is the switch's next hop for Internet-bound traffic: it must lead to the Edge, or the Edge is bypassed.
+- **Two ways out.** The CE and the Edge are now two exits for the same destinations. Decide which prefixes go where (static routes, or OSPF or BGP, Section 6) and check the result in the route table.
+- **Routes advertised back.** If the Edge advertises overlay routes to the L3 switch, and the CE also advertises routes learned over MPLS, the switch may see the same prefix from two sources. Section 6 explains route preference on the Edge; the switch applies its own rules.
+- **MTU.** Tunnels add overhead (Section 2), so check the MTU on the path between the switch and the Edge.
+
+<Predict
+  prompt="In the vendor's first Silver variant, where is the MPLS link terminated?"
+  choices={["On a CE router reached through the L3 switch", "Directly on the Edge's LAN port", "On the Orchestrator", "On the Gateway"]}
+  answer={0}
+>
+  The MPLS link is terminated on a CE router, and the CE is accessible through the L3 switch. The Edge goes between the L3 switch and the Internet.
+</Predict>
+
+## Failures
+
+| Failure | Who responds | Status |
+|---|---|---|
+| One Internet link fails | DMPO steers to another link | documented for outages (Section 3) |
+| The MPLS link or the CE fails | not described; whether the Edge sees MPLS depends on whether it has a private link of its own | not documented |
+| The Edge fails | Internet-bound traffic that depends on it is lost; a single Edge is a single point of failure | design practice |
+| The L3 switch fails | the vendor describes a single L3 switch, so the LAN loses its gateway and the CE path; nothing says the Edge helps | design practice |
+
+## What you would see in the VCO
+
+- **Configure > Edges** > the Edge > **Device**: an Internet WAN interface with **Enable WAN Overlay**; for the MPLS link, a user-defined private WAN overlay if the Edge has one; LAN interface or VLAN toward the L3 switch.
+- **Static routes** or **OSPF / BGP** in the Device tab's routing settings toward the L3 switch (Section 6).
+- **Monitor > Edges** > **Links** and **Paths**: the Internet link, and a private link if the Edge has one.
+- **Diagnostics > Remote Diagnostics > Route Table Dump** for the Edge's routes.
+
+<Callout variant="tip" title="Check this in your own VCO or site">
+  - **[observation candidate]** Open: Configure > Edges, the Edge, Device tab, Interface Settings and WAN Overlay settings. Expect: an Internet interface with WAN overlay and, if the Edge has a private link, a user-defined private overlay. Docs may differ: the worked example does not say whether a Silver site always gives the Edge a private link.
+  - **[observation candidate]** Open: Monitor > Edges, that Edge, Links tab. Expect: the Internet link, and a private link only if the Edge has one. Docs may differ: link types may be labelled differently.
+  - **[observation candidate]** Open: the Edge's static route or OSPF / BGP settings, then Diagnostics > Remote Diagnostics > Route Table Dump. Expect: the LAN prefixes reachable through the L3 switch as next hop. Docs may differ: the vendor example uses a static route; your site may use a protocol.
+  - **[observation candidate]** Open: the L3 switch's default route (on the switch). Expect: the next hop for Internet-bound traffic is the Edge's LAN address. Docs may differ: the vendor's worked example is off-path and redirects traffic with a route.
+</Callout>
+
+## Key takeaways
+
+- Silver variant 1: L3 switch, Internet links, MPLS on a CE through the L3 switch, and the Edge between the L3 switch and the Internet.
+- The L3 switch stays the LAN's gateway; the Edge becomes the exit for traffic you point at it.
+- Using MPLS as part of the overlay needs a private link on the Edge.
+- A single L3 switch and a single Edge are single points of failure.
+
+## What would you look for in the VCO
+
+- Which interfaces carry a WAN overlay, and is one of them a private link?
+- Where does the L3 switch send Internet-bound traffic, and what does the route table show?
+- Is there an HA pair, or one Edge?

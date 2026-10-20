@@ -1,0 +1,65 @@
+# Section 7, lesson 3: Bronze. Facts: reference/bronze-silver-gold.md, site-topologies.md. Failure steps are labelled illustrative.
+id: top-bronze
+title: Bronze site topology
+alt: >-
+  Branch users connect to one Edge that has two Internet links. Each link reaches a Gateway over the Internet and the Edge
+  builds tunnels over them. When one link fails, traffic uses the other. There is no MPLS link and no L3 switch.
+width: 900
+height: 540
+
+nodes:
+  - { id: users, label: Branch users, kind: host, x: 90, y: 270 }
+  - { id: edge, label: Branch Edge, kind: vce, x: 310, y: 270, sublabel: LAN gateway }
+  - { id: net1, label: Internet link 1, kind: internet, x: 560, y: 130 }
+  - { id: net2, label: Internet link 2, kind: internet, x: 560, y: 410 }
+  - { id: gw, label: Gateway, kind: vcg, x: 810, y: 270 }
+
+links:
+  - { id: lan, from: users, to: edge, style: lan }
+  - { id: wan1, from: edge, to: net1, style: underlay-internet }
+  - { id: wan2, from: edge, to: net2, style: underlay-internet }
+  - { id: n1gw, from: net1, to: gw, style: underlay-internet }
+  - { id: n2gw, from: net2, to: gw, style: underlay-internet }
+
+steps:
+  - title: One Edge, one or two Internet links
+    narration: >-
+      The Bronze topology is a typical small site: **one or two WAN links to the public Internet**, no MPLS, and no L3 switch
+      on the LAN side of the Edge.
+    highlight: [users, lan, edge, wan1, wan2, net1, net2]
+    show: [net2, wan2, n2gw, gw, n1gw]
+
+  - title: The Edge is the LAN's gateway
+    narration: >-
+      An Edge is designed to act as a gateway router between the LAN and the WAN. On a routed interface it can run a DHCP
+      server and hand out its own virtual IP address as the clients' default gateway.
+    highlight: [users, lan, edge]
+    packets:
+      - { path: [users, lan, edge], label: DHCP, color_style: lan }
+
+  - title: Traffic leaves over a link
+    narration: >-
+      The Edge sends traffic over its Internet links, in tunnels to the Gateway when the traffic uses the overlay. DMPO
+      measures both links and steers between them.
+    highlight: [users, edge, wan1, net1, n1gw, gw]
+    packets:
+      - { path: [users, lan, edge, wan1, net1, n1gw, gw], label: via link 1, color_style: overlay-tunnel }
+
+  - title: Link 1 fails (illustrative)
+    narration: >-
+      If one of two links fails, traffic uses the other. That is the outage behaviour of Section 3. With only **one** link
+      there is nothing to fail over to.
+    hide: [wan1, n1gw]
+    highlight: [users, edge, wan2, net2, n2gw, gw]
+    packets:
+      - { path: [users, lan, edge, wan2, net2, n2gw, gw], label: via link 2, color_style: overlay-tunnel }
+    callouts:
+      - { target: net1, text: "Link 1 down." }
+
+  - title: The Edge fails (design practice)
+    narration: >-
+      The description has one Edge. If it fails, the site is offline. An Edge HA pair, covered in the Silver option 2 lesson, is
+      the Edge's answer.
+    highlight: [edge]
+    callouts:
+      - { target: edge, text: "Single point of failure." }

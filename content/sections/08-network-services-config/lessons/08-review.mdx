@@ -1,0 +1,90 @@
+---
+id: svc-review
+title: Reviewing a Profile's network services
+summary: "A teaching method for reading which services a Profile uses, where each setting lives, and what to check when a service does not work, with the documented facts marked and our method labelled."
+estimated_minutes: 10
+topics: [svcfg-review]
+prerequisites: [svc-auth-vnf]
+---
+
+**By the end of this lesson you will be able to:**
+
+- read a Profile and its Edges for every network service they use;
+- say where each service's settings live and which can be overridden at the Edge;
+- apply a check order to a service that "does not work", knowing which parts are documented;
+- say what you cannot conclude from the screens, using terms such as the <Term id="source-interface">Source Interface</Term> and <Term id="vnf-insertion">VNF insertion</Term> correctly.
+
+## Reading a Profile
+
+Given a Profile, list the services it uses by looking in these places (the places are documented; the order is ours):
+
+| Look at | What it shows |
+|---|---|
+| Device tab > VPN Services | Cloud VPN, Branch to Hubs, Edge to Non SD-WAN via Gateway (<Term id="nsd-via-gateway">NSD via Gateway</Term>), Non SD-WAN Destinations via Edge (<Term id="nsd-via-edge">NSD via Edge</Term>) |
+| Device tab > Telemetry > NetFlow Settings | whether <Term id="netflow">NetFlow</Term> is activated per segment, its collectors and filters |
+| Device tab > Routing and NAT > DNS | the DNS service the Profile uses |
+| Device tab > Edge Services > Authentication | the RADIUS server |
+| Device tab > Connectivity | interfaces and VLANs: prefix delegation tags, DNS Proxy and VNF insertion live here |
+| The Edge's Device tab | Override checkboxes, Source Interface, High Availability (Cluster), Security VNF, TACACS Services |
+
+## Settings reference
+
+A field reference for the "does not work" cases, with where each is applied:
+
+| Field | Service | Applied at |
+|---|---|---|
+| Enable Edge to Non SD-WAN via Gateway | NSD via Gateway | Profile only |
+| Site Subnets | NSD via Gateway and via Edge | the service (Profile assigns it) |
+| Source Interface | NetFlow, DNS, RADIUS, TACACS | Edge |
+| Activate NetFlow | NetFlow | Profile and Edge |
+| DNS Proxy | DNS | interface |
+| DHCPv6 Client Prefix Delegation | Prefix Delegation Tags | interface, Profile and Edge |
+| Enable Branch to Hubs | Clusters and Hubs | Profile |
+| Deployment State | VNF | Edge |
+
+## When a service "does not work": our check order
+
+This is **our method**, not Arista's procedure. It uses the documented places above.
+
+1. **Is the service created and complete?** Open its list under Network Services. Check the required fields and that no field the guide marks mandatory (for example Local IP for NSD neighbours, a Source Interface for NetFlow) is empty.
+2. **Is it assigned where it is used?** Profile for NSD via Gateway (which an Edge cannot override); Profile and Edge for NetFlow, DNS and RADIUS; the interface for DNS Proxy and prefix delegation tags; the Edge for TACACS and VNF.
+3. **Does the Edge override it?** An Edge with Override ticked ignores the Profile value for that section.
+4. **Do the prerequisites hold?** For example: the data center side configured first for NSDs, a cloud subscription for Azure, an interface with Advertise enabled for the NetFlow source, a Service VLAN for VNF insertion, 5.4.0.0 or later for Hub or Cluster Interconnect.
+5. **What do the screens show?** Monitor > Events (BGP session events for NSD BGP, cluster events for Hubs), the VNF screens, the Remote Diagnostics tools. Where the documentation names no screen, you cannot tell from the pages we read whether the service is working.
+
+<Callout variant="warning" title="What you cannot conclude">
+  For NetFlow, DNS Services, Private Network Names, Prefix Delegation Tags, RADIUS and TACACS the documentation we read names no status or event. A saved, assigned service does not prove traffic is using it. Use your own tests (a collector's log, a DNS query, an authentication attempt) and record what you see.
+</Callout>
+
+<Predict
+  prompt="An NSD via Gateway is assigned in the Profile, and an Edge's administrator tries to change it only for that Edge. What does the documentation say?"
+  choices={["It cannot be overridden at the Edge; change it in the Profile", "The Edge's Override checkbox changes it for that Edge", "The Gateway lets the Edge change it", "Only a Cluster can override it"]}
+  answer={0}
+>
+  An NSD via Gateway is defined exclusively at the Profile level and cannot be overridden at the Edge level.
+</Predict>
+
+## What you would see in the VCO
+
+- **Configure > Profiles > (Profile) > Device**, section by section, and the same sections on **Configure > Edges > (Edge) > Device** with Override.
+- **Monitor > Events**, **Monitor > Edges** (HA State, VNF column) and **Diagnostics > Remote Diagnostics**.
+
+<Callout variant="tip" title="Check this in your own VCO">
+  - **[observation candidate]** Open: a Profile you know, Device tab, each of VPN Services, Telemetry, Routing and NAT and Edge Services. Expect: you can list every network service the Profile uses from those four places. Docs may differ: some services are named on interface or VLAN dialogs instead.
+  - **[observation candidate]** Open: an Edge in that Profile, Device tab. Expect: Override ticked only where the Edge differs; Source Interface visible for NetFlow, DNS and RADIUS. Docs may differ: the marking of an overridden setting is not documented.
+  - **[observation candidate]** Open: Monitor > Events, filter by Event or Message for a service you changed. Expect: events only for the services the documentation names (BGP neighbours, cluster, VNF). Docs may differ: NetFlow, DNS, RADIUS and TACACS have none documented.
+  - **[observation candidate]** Open: Remote Diagnostics on an Edge with an NSD. Expect: MTR offers the NSD path (NVS via Edge or via Gateway). Docs may differ: it appears only if configured.
+</Callout>
+
+## Key takeaways
+
+- Four places in the Device tab list almost every service: VPN Services, Telemetry, Routing and NAT, Edge Services.
+- NSD via Gateway is Profile only; Source Interface and several other settings are set at the Edge.
+- The check order is ours; the prerequisites it uses are documented.
+- For several services the documentation names no status or event, so say so rather than guess.
+
+## What would you look for in the VCO
+
+- Which services does this Profile use, and does any Edge override them?
+- Which prerequisite does the failing service depend on?
+- Which screen, if any, proves the service is in use?

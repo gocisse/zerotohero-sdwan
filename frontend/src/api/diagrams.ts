@@ -84,6 +84,9 @@ export interface GlossaryTerm {
   long?: string
   related: string[]
   lesson_ref?: string
+  /** Study-guide topic ids, primary first. */
+  guide_topics: string[]
+  beyond_guide: boolean
 }
 
 export const fetchDiagram = (id: string) => getJSON<Diagram>(`/api/diagrams/${encodeURIComponent(id)}`)

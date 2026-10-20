@@ -1,0 +1,52 @@
+# Section 9, lesson 1: creating a segment and using it. Facts: reference/config/config-segments.md.
+id: prof-segment-flow
+title: Create a segment, add it to a Profile, tie a VLAN and an interface to it
+alt: >-
+  A segment is created under Configure, Segments. A Profile adds it with Change Profile Segments. A VLAN of the Profile has a
+  Segment field and an interface setting has a Segments field. A segment that a Profile uses cannot be deleted.
+width: 900
+height: 540
+
+nodes:
+  - { id: seg, label: "Configure > Segments", kind: generic, x: 120, y: 270, sublabel: "Add, fill in, Save Changes" }
+  - { id: prof, label: "Profile", kind: generic, x: 380, y: 270, sublabel: "Change Profile Segments" }
+  - { id: vlan, label: "VLAN", kind: generic, x: 650, y: 130, sublabel: "Segment field" }
+  - { id: ifc, label: "Interface", kind: vce, x: 650, y: 410, sublabel: "Segments field" }
+
+links:
+  - { id: s-p, from: seg, to: prof, style: control, label: "add to Profile" }
+  - { id: p-v, from: prof, to: vlan, style: control }
+  - { id: p-i, from: prof, to: ifc, style: control }
+
+steps:
+  - title: 1. Create the segment
+    narration: >-
+      **Configure > Segments > Add**: Segment Name, Description, Type (Regular, Private or CDE), Service VLAN and the two Delegate
+      checkboxes, then **Save Changes**.
+    highlight: [seg]
+    show: [seg]
+
+  - title: 2. Add it to the Profile
+    narration: >-
+      On the Profile's Device tab, **Segment > Change Profile Segments**, tick the segment, **Update Segments**, **Save Changes**.
+    show: [prof, s-p]
+    highlight: [seg, s-p, prof]
+
+  - title: 3. Tie a VLAN to it
+    narration: >-
+      In **Connectivity > VLAN > + Add VLAN** the **Segment** field assigns the VLAN to one of the Profile's segments.
+    show: [vlan, p-v]
+    highlight: [prof, p-v, vlan]
+
+  - title: 4. Tie an interface to it
+    narration: >-
+      An interface setting has a **Segments** field; by default it applies to all segments.
+    show: [ifc, p-i]
+    highlight: [prof, p-i, ifc]
+
+  - title: A used segment cannot be deleted
+    narration: >-
+      A segment that a Profile uses cannot be deleted; the Change Profile Segments dialog marks it with a lock icon.
+    highlight: [seg, prof]
+    callouts:
+      - { target: seg, text: "In use: cannot be deleted." }

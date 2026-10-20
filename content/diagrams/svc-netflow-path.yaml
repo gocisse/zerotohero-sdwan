@@ -1,0 +1,44 @@
+# Section 8, lesson 5: NetFlow export path. Facts: reference/config/config-netflow.md. Packet contents are not shown.
+id: svc-netflow-path
+title: NetFlow export path
+alt: >-
+  Branch users send traffic through an Edge. The Edge sends IPFIX version 10 records from its Source Interface to a collector.
+  A filter on the collector can allow or deny flows.
+width: 900
+height: 540
+
+nodes:
+  - { id: users, label: Branch users, kind: host, x: 90, y: 270 }
+  - { id: edge, label: Edge, kind: vce, x: 330, y: 270, sublabel: Source Interface }
+  - { id: coll, label: Collector, kind: generic, x: 780, y: 270, sublabel: "name, IP, port" }
+  - { id: filt, label: Filter, kind: generic, x: 560, y: 120, sublabel: Allow or Deny }
+
+links:
+  - { id: lan, from: users, to: edge, style: lan }
+  - { id: exp, from: edge, to: coll, style: control, label: IPFIX v10 }
+  - { id: f1, from: edge, to: filt, style: control }
+  - { id: f2, from: filt, to: coll, style: control }
+
+steps:
+  - title: Collectors and filters are created once
+    narration: >-
+      Under **Network Management > NetFlow**, a collector has a name, IP and port, and a filter matches source IP, destination IP or
+      application with an Allow or Deny action. Limits: 2 collectors per segment, 8 per Profile and Edge, 16 filters per collector.
+    highlight: [coll, filt]
+    show: [coll, filt]
+
+  - title: Activate in the Profile, override at the Edge
+    narration: >-
+      In **Device > Telemetry > NetFlow Settings** choose the segment, tick **Activate NetFlow** and pick the collector. The Edge can
+      override and sets the **Source Interface**, a non-WAN interface with Advertise enabled.
+    highlight: [edge]
+    show: [edge, lan, users, f1, f2]
+
+  - title: The Edge exports records
+    narration: >-
+      The Edge sends IPFIX version 10 records, aggregated by source IP, destination IP, destination port and protocol, to the
+      collector. The documentation names no status screen or event for NetFlow.
+    highlight: [edge, exp, coll]
+    show: [exp]
+    packets:
+      - { path: [edge, exp, coll], label: IPFIX, color_style: control }

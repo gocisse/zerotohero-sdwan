@@ -1,0 +1,547 @@
+# The learner's six-section study guide (navigation labels only) and what the course offers for each topic.
+# Format and rules: content/README.md ("Study guide"). Validated with the rest of the content.
+#
+# coverage: full    a lesson really teaches the topic (at least one lesson)
+#           partial a lesson teaches part of it, or only the concept and where it lives in the VCO (at least one lesson)
+#           none    nothing in the course teaches it (no lesson)
+# The guide's own text is not available to the course author. Step 17 re-checked the G3 "Part N" topics against the lecture
+# descriptions of the course outline (a third-party source, used only to decide what each topic is about, never as a technical
+# fact); the notes say what is and is not covered. Config topics are "partial" at best: the course explains the concept and where it lives in the
+# VCO but has no step-by-step settings walkthrough.
+
+beyond:
+  title: Beyond the study guide
+  reason: "Terms the course teaches that the study guide has no topic for, mostly the routing vocabulary of Section 6 (static routes, OSPF, BGP, redistribution, route preference, Overlay Flow Control)."
+
+# Lessons that no topic teaches on purpose.
+unmapped_lessons:
+  - ov-glance
+  - ov-diagnosis
+  - rt-big-picture
+  - rt-static
+  - rt-ospf
+  - rt-bgp
+  - rt-redistribution
+  - rt-filters
+  - rt-ofc
+  - rt-diagnosis
+
+sections:
+  - id: G1
+    title: Arista VeloCloud SD-WAN
+    topics:
+      - id: why-traditional-wan
+        title: Why Traditional WAN Architectures Are No Longer Enough
+        kind: concept
+        coverage: full
+        note: "A whole lesson on how a hub-and-spoke MPLS WAN works, what it does well, and why backhauling and cloud applications made it painful."
+        lessons: [intro-why-wans-fall-short]
+        quiz_topics: [wan-limits]
+        diagrams: [wan-mpls-backhaul, wan-direct-internet]
+        labs: []
+        sim_screens: []
+      - id: business-challenges
+        title: Business Challenges That Drive the Need for SD-WAN
+        kind: concept
+        coverage: full
+        note: "A whole lesson on cost, agility, visibility, branch rollout and transport choice, and what SD-WAN means."
+        lessons: [intro-problems-sdwan-solves]
+        quiz_topics: [sdwan-benefits]
+        diagrams: []
+        labs: []
+        sim_screens: []
+      - id: how-velocloud-solves
+        title: How VeloCloud SD-WAN Solves the Problem
+        kind: concept
+        coverage: full
+        note: "A whole lesson on the three components, overlay and underlay, transport independence, policy-based control and the three planes."
+        lessons: [intro-how-velocloud-solves]
+        quiz_topics: [velocloud-components, overlay-and-tunnels]
+        diagrams: [vc-components]
+        labs: []
+        sim_screens: []
+      - id: journey
+        title: Journey of VeloCloud SD-WAN
+        kind: concept
+        coverage: full
+        note: "A whole lesson on the VeloCloud, VMware, Broadcom, Arista path and why names differ between documents and screens; some history details are unconfirmed and hedged in the lesson."
+        lessons: [intro-history-and-naming]
+        quiz_topics: [history-naming]
+        diagrams: []
+        labs: []
+        sim_screens: []
+
+  - id: G2
+    title: Arista VeloCloud SD-WAN Architecture
+    topics:
+      - id: vce
+        title: VeloCloud Edge (VCE)
+        kind: concept
+        coverage: full
+        note: "A whole lesson on what the Edge does between the LAN and the transports, what it builds, how it is provisioned and activated, and whose configuration is whose."
+        lessons: [arch-edge]
+        quiz_topics: [edge-role]
+        diagrams: [arch-edge-between]
+        labs: []
+        sim_screens: [edges]
+      - id: vco
+        title: VeloCloud Orchestrator (VCO)
+        kind: concept
+        coverage: full
+        note: "A whole lesson on what the Orchestrator manages and stores, plus an orientation tour of its main areas; what happens when it is lost is only partly documented and is hedged."
+        lessons: [arch-orchestrator, intro-vco-orientation]
+        quiz_topics: [orchestrator-role, vco-orientation]
+        diagrams: []
+        labs: []
+        sim_screens: []
+      - id: vcg
+        title: VeloCloud Gateway (VCG)
+        kind: concept
+        coverage: full
+        note: "A whole lesson on the Gateway's control-plane and optional data-plane roles, Gateway roles, Partner Gateways and placement; Gateway route reflection is described only as far as the documentation goes."
+        lessons: [arch-gateway]
+        quiz_topics: [gateway-role]
+        diagrams: [arch-gateway-roles, arch-first-packet-gateway]
+        labs: []
+        sim_screens: [map]
+      - id: underlay-overlay
+        title: Underlay and Overlay
+        kind: concept
+        coverage: full
+        note: "A whole lesson on raw transports versus the tunnels built on them and what transport independence means in practice."
+        lessons: [arch-underlay-overlay]
+        quiz_topics: [underlay-overlay]
+        diagrams: [arch-underlay-overlay]
+        labs: []
+        sim_screens: [map]
+      - id: tunnel-architecture
+        title: Tunnel Architecture
+        kind: concept
+        coverage: full
+        note: "A whole lesson on which tunnels form between which components, plus lessons on Cloud VPN and on dynamic branch-to-branch tunnels; some NAT and Hub port details are unconfirmed and hedged."
+        lessons: [arch-tunnels, ov-cloud-vpn, ov-dynamic]
+        quiz_topics: [tunnel-architecture, overlay-cloud-vpn, overlay-dynamic]
+        diagrams: [arch-branch-to-hub, arch-dynamic-direct, ov-cloud-vpn-gateway, ov-dynamic-b2b]
+        labs: [no-direct-tunnel]
+        sim_screens: [map, paths, timeline]
+      - id: ports-protocols
+        title: Ports and Protocols
+        kind: concept
+        coverage: full
+        note: "A whole lesson with a per-flow table of what must be allowed for an Edge to reach the Orchestrator, a Gateway and other Edges; unconfirmed items are marked."
+        lessons: [arch-ports-firewall]
+        quiz_topics: [firewall-ports]
+        diagrams: [arch-firewall-flows]
+        labs: []
+        sim_screens: []
+      - id: dmpo-1
+        title: Dynamic Multipath Optimization (DMPO) Part 1
+        kind: concept
+        coverage: full
+        note: "Lessons on the problem DMPO solves, flow-based versus packet-based handling, and what DMPO measures; the guide's own split into parts is unknown, so this part is mapped by theme."
+        lessons: [dmpo-overview, dmpo-monitoring]
+        quiz_topics: [dmpo-overview, dmpo-monitoring]
+        diagrams: [dmpo-probes]
+        labs: []
+        sim_screens: [monitor]
+      - id: dmpo-2
+        title: Dynamic Multipath Optimization (DMPO) Part 2
+        kind: concept
+        coverage: full
+        note: "Lessons on outages versus brownouts and the three on-demand remediation mechanisms (FEC, jitter buffer, NACK) with worked scenarios; mapped by theme because the guide's own split into parts is unknown."
+        lessons: [dmpo-outage-brownout, dmpo-remediation, dmpo-together]
+        quiz_topics: [dmpo-outage-brownout, dmpo-remediation, dmpo-scenarios]
+        diagrams: [dmpo-outage-failover, dmpo-brownout-fec, dmpo-jitter-buffer, dmpo-nack]
+        labs: []
+        sim_screens: [timeline]
+      - id: dmpo-3-link-steering
+        title: "Dynamic Multipath Optimization (DMPO) Part 3: Link Steering"
+        kind: concept
+        coverage: full
+        note: "A whole lesson on the four steering modes and the Mandatory, Preferred and Available axis, plus a guided diagnosis in the VCO; how an active remediation is shown in the VCO is not confirmed."
+        lessons: [dmpo-steering, dmpo-vco-diagnosis]
+        quiz_topics: [dmpo-steering, dmpo-vco-diagnosis]
+        diagrams: [dmpo-steering-modes]
+        labs: [video-wrong-link]
+        sim_screens: [paths, trace]
+      - id: vcmp-overhead-mtu
+        title: VCMP, Tunnel Overhead and MTU
+        kind: concept
+        coverage: full
+        note: "A whole lesson on where the bytes go, the verified overhead numbers for Internet Multipath and VPN traffic and a worked MTU calculation; VCMP itself is covered as the tunnel protocol on UDP 2426, not as a separate lesson."
+        lessons: [arch-mtu-overhead]
+        quiz_topics: [mtu-overhead]
+        diagrams: []
+        labs: [mtu-ipsec]
+        sim_screens: [trace, paths]
+
+  - id: G3
+    title: Arista VeloCloud SD-WAN Profile, Policy & Segmentation
+    topics:
+      - id: segmentation-1
+        title: Segmentation Part 1
+        kind: concept
+        coverage: full
+        note: "A whole lesson on what segments are, why you use them, the Global Segment and how traffic stays isolated."
+        lessons: [cfg-segments]
+        quiz_topics: [config-segments]
+        diagrams: [cfg-segments]
+        labs: []
+        sim_screens: [edges]
+      - id: segmentation-2
+        title: Segmentation Part 2
+        kind: config
+        coverage: full
+        note: "A lesson walks the documented steps (Configure > Segments > Add, Save Changes; Change Profile Segments; the VLAN Segment field and the interface Segments field), every segment form field with its limits and defaults (name and description 256 characters, Type, Service VLAN, the two Delegate boxes), the Global Segment rule and the per-model limits, and a labelled method for comparing the Global Segment with another; open: how to edit or rename a segment, the Service VLAN format, the delete error text and any compare screen."
+        lessons: [prof-segments, cfg-segments]
+        quiz_topics: [pcfg-segments, config-segments]
+        diagrams: [prof-segment-flow, cfg-segments]
+        labs: []
+        sim_screens: [edges, what-if]
+      - id: profile-1
+        title: Profile Part 1
+        kind: concept
+        coverage: full
+        note: "A whole lesson on what a Profile is for and contains, the Quick Start Profile, assigning Profiles and what a Profile change does to its Edges."
+        lessons: [cfg-profiles, prof-profiles]
+        quiz_topics: [config-profiles, pcfg-profiles]
+        diagrams: [cfg-profile-propagation]
+        labs: []
+        sim_screens: [what-if]
+      - id: profile-2
+        title: Profile Part 2
+        kind: config
+        coverage: full
+        note: "The Profiles and Device settings lessons walk what a Profile bundles by the documented headings: the Overview and Device tabs, Connectivity (VLAN, interfaces, ARP, Wi-Fi Radio and SSIDs, Global IPv6, Common Criteria Firewall), VPN Services, Routing and NAT (including DNS and LAN-side NAT), Telemetry and Edge Services (Authentication, NTP), plus the Business Policy and Firewall tabs, with documented defaults and override statements; open: the OSPF override conflict, Copy Profile fields and the Quick Start contents."
+        lessons: [prof-profiles, prof-device, cfg-profiles, cfg-model, cfg-overrides]
+        quiz_topics: [pcfg-profiles, pcfg-device, config-profiles, config-model, config-overrides]
+        diagrams: [prof-profile-edge, cfg-layers, cfg-profile-propagation]
+        labs: [capstone-3-change-request]
+        sim_screens: [edges, what-if, challenge]
+      - id: profile-3
+        title: Profile Part 3
+        kind: config
+        coverage: partial
+        note: "Walked from documented rows: creating, duplicating, modifying and deleting a Profile, the VLAN, interface, ARP, Wi-Fi, Global IPv6, LAN-side NAT, Telemetry and Edge Services settings, VPN settings (Section 8) and the Profile firewall settings and Edge Access; not covered as walkthroughs: the BGP, OSPF, BFD, ECMP, Overlay Route Control and Multicast fields (only in the routing lessons), Management IP, DSL and GPON, the Copy Profile dialog fields and what a Profile change does to Edges."
+        lessons: [prof-profiles, prof-device, prof-compare, cfg-profiles, cfg-diagnosis, ov-cloud-vpn, ov-hubs, cfg-firewall]
+        quiz_topics: [pcfg-profiles, pcfg-device, pcfg-compare, config-profiles, config-diagnosis, overlay-cloud-vpn, overlay-hubs, config-firewall]
+        diagrams: [prof-profile-edge, prof-compare-walk, cfg-profile-propagation]
+        labs: [capstone-1-monday-morning]
+        sim_screens: [edges]
+      - id: profile-4
+        title: Profile Part 4
+        kind: config
+        coverage: partial
+        note: "Walked from documented rows: the business policy rule editor (Match and Action fields with Priority and Service Class), the firewall rule editor, Profile assignment and how Edge rules supersede Profile rules, plus a comparison method; not covered: the Overlay QoS CoS Mapping and Tunnel Shaper settings, rule evaluation order and the no-match action, which the pages read do not state."
+        lessons: [prof-bp-rules, prof-fw-rules, prof-compare, cfg-business-policy, cfg-apps-qos, cfg-firewall, cfg-profiles, cfg-overrides]
+        quiz_topics: [pcfg-bp-rules, pcfg-fw-rules, pcfg-compare, config-business-policy, config-apps-qos, config-firewall, config-profiles, config-overrides]
+        diagrams: [prof-bp-rule-build, prof-fw-rule-eval, cfg-bp-classify]
+        labs: [capstone-3-change-request]
+        sim_screens: [edges, what-if]
+      - id: policy-1
+        title: Policy Part 1
+        kind: concept
+        coverage: full
+        note: "Business policy (match and action, precedence, Profile and Edge rules, link steering), firewall policy (Allow, Drop, Reject, Skip, stateful behaviour) and QoS traffic classes (service class times priority) are each taught, and the Profiles lesson shows how rules reach Edges; rule evaluation order, defaults and firewall-versus-business-policy order are unconfirmed and hedged."
+        lessons: [cfg-business-policy, cfg-firewall, cfg-apps-qos, prof-bp-rules, prof-fw-rules]
+        quiz_topics: [config-business-policy, config-firewall, config-apps-qos, pcfg-bp-rules, pcfg-fw-rules]
+        diagrams: [cfg-bp-classify, cfg-fw-vs-bp]
+        labs: [video-wrong-link]
+        sim_screens: [edges, trace]
+      - id: policy-2
+        title: Policy Part 2
+        kind: config
+        coverage: full
+        note: "Three lessons walk the editors field by field from documented rows: the business policy rule (Match: Source, Destination with IPv4 address match, Domain Name, Protocol and Ports, Application; Action: Priority, Network Service, Link Steering and the rest), the firewall rule (Match, Allow, Drop, Reject and Skip, logging, Stateful Firewall and Edge Access), and application matching with custom applications and DPI timing, each with a worked example; open: the Application Maps and Applications screen (page unreadable), rule evaluation order and the no-match action."
+        lessons: [prof-bp-rules, prof-fw-rules, prof-app-match, cfg-business-policy, cfg-firewall, cfg-diagnosis]
+        quiz_topics: [pcfg-bp-rules, pcfg-fw-rules, pcfg-app-match, config-business-policy, config-firewall, config-diagnosis]
+        diagrams: [prof-bp-rule-build, prof-fw-rule-eval, cfg-fw-vs-bp]
+        labs: []
+        sim_screens: [edges, trace]
+  - id: G4
+    title: Arista VeloCloud Network Services
+    topics:
+      - id: network-services
+        title: Network Services (overview)
+        kind: concept
+        coverage: full
+        note: "Two lessons: the services lesson explains what Configure > Network Services holds, and the where-services-live lesson gives each service's creation path, where it is assigned (Profile or Edge) and a create, assign, verify workflow; a review lesson reads a Profile's services. The two meanings of network service are explained."
+        lessons: [ov-services, svc-where, svc-review]
+        quiz_topics: [overlay-services, svcfg-where, svcfg-review]
+        diagrams: [svc-workflow]
+        labs: []
+        sim_screens: []
+      - id: non-sdwan-destinations
+        title: Non SD-WAN Destinations
+        kind: concept
+        coverage: full
+        note: "A whole lesson on NSD via Gateway versus via Edge, typical targets, tunnel types at a high level and the trade-offs."
+        lessons: [ov-nsd]
+        quiz_topics: [overlay-nsd]
+        diagrams: [ov-nsd]
+        labs: []
+        sim_screens: [map]
+      - id: nsd-gateway
+        title: Non SD-WAN Destinations via Gateway
+        kind: concept
+        coverage: full
+        note: "The NSD lesson has a section on the Gateway variant and the Gateway lesson covers the role, though only at a high level."
+        lessons: [ov-nsd, arch-gateway]
+        quiz_topics: [overlay-nsd]
+        diagrams: [ov-nsd]
+        labs: []
+        sim_screens: [map]
+      - id: nsd-gateway-config
+        title: "Non SD-WAN Destinations via Gateway: Config"
+        kind: config
+        coverage: partial
+        note: "Taught from documented rows: the create and assign steps, the general fields (Name, Type, Tunnel Mode, Load Sharing Method, VPN Gateway 1), the AWS VPN Gateway and Generic IKEv2 field set with defaults, BGP over IPsec fields, tunnel limits and what Monitor shows; not covered because the pages read were partial: the field tables of Check Point, Cisco ASA, Cisco ISR, Palo Alto, SonicWall, Generic IKEv1 and Generic Firewall, the Zscaler and Azure details beyond a few fields, and default Tunnel Mode."
+        lessons: [svc-nsd-gateway, ov-nsd]
+        quiz_topics: [svcfg-nsd-gateway, overlay-nsd]
+        diagrams: [svc-nsd-gateway]
+        labs: []
+        sim_screens: [map]
+      - id: nsd-edge
+        title: Non SD-WAN Destinations via Edge
+        kind: concept
+        coverage: full
+        note: "The NSD lesson has a section on the Edge variant, though only at a high level."
+        lessons: [ov-nsd]
+        quiz_topics: [overlay-nsd]
+        diagrams: [ov-nsd]
+        labs: []
+        sim_screens: [map]
+      - id: nsd-edge-config
+        title: "Non SD-WAN Destinations via Edge: Config"
+        kind: config
+        coverage: full
+        note: "A lesson walks the documented order (create the service, enable it in the Profile, add the Edge tunnel), every service field with allowed values and defaults (IKE and IPsec proposals, subnets, secondary gateway), the Edge Add Tunnel fields, the Azure Virtual WAN fields and the one-service-per-segment limit; open: BGP fields at the Edge, any status or event for this service."
+        lessons: [svc-nsd-edge, ov-nsd]
+        quiz_topics: [svcfg-nsd-edge, overlay-nsd]
+        diagrams: [svc-nsd-edge]
+        labs: []
+        sim_screens: [map]
+      - id: api-credentials
+        title: API Credentials
+        kind: concept
+        coverage: full
+        note: "The services lesson gives the table row and the credentials lesson says which values an Azure and a Zscaler subscription each need and that an Azure NSD uses the Azure subscription."
+        lessons: [svc-credentials-netflow, ov-services]
+        quiz_topics: [svcfg-credentials-netflow, overlay-services]
+        diagrams: []
+        labs: []
+        sim_screens: []
+      - id: api-credentials-config
+        title: "API Credentials: Config"
+        kind: config
+        coverage: full
+        note: "A lesson walks both lists: the Azure IaaS Subscription (Active Directory Tenant ID, Client ID, Client Secret, Get Subscriptions) and the Zscaler Cloud Subscription (name, cloud, partner admin credentials, API Key, domain, Validate Subscription); no defaults are documented and no status or role detail is given."
+        lessons: [svc-credentials-netflow, ov-services]
+        quiz_topics: [svcfg-credentials-netflow, overlay-services]
+        diagrams: []
+        labs: []
+        sim_screens: []
+      - id: clusters-hubs
+        title: Clusters and Hubs
+        kind: concept
+        coverage: full
+        note: "A whole lesson on designating a Hub, why hubs exist, Hub order and failure, and clusters in concept; the Cluster Score location and Edge-as-Hub port needs are unconfirmed."
+        lessons: [ov-hubs]
+        quiz_topics: [overlay-hubs]
+        diagrams: [ov-hub-spoke, ov-why-hub]
+        labs: [hub-down, capstone-2-hub-incident]
+        sim_screens: [map, monitor, overlay-challenge]
+      - id: clusters-hubs-config
+        title: "Clusters and Hubs: Config"
+        kind: config
+        coverage: full
+        note: "A lesson walks the documented order (create the cluster, designate it as a Hub in a Profile with Edit Hubs, assign the Edge's cluster type), the cluster fields with the Auto ReBalance default, Enable Branch to Hubs and Conditional BackHaul, the limits and the events; open: where the Cluster Score is shown and the Profile menu path of Hub or Cluster Interconnect."
+        lessons: [svc-clusters-hubs, ov-hubs]
+        quiz_topics: [svcfg-clusters-hubs, overlay-hubs]
+        diagrams: [svc-cluster, ov-hub-spoke]
+        labs: [hub-down]
+        sim_screens: [map]
+      - id: netflow
+        title: NetFlow
+        kind: concept
+        coverage: full
+        note: "The credentials-and-monitoring lesson teaches the export path (IPFIX records from the Edge's Source Interface to collectors), collectors, filters, limits and the intervals."
+        lessons: [svc-credentials-netflow, ov-services]
+        quiz_topics: [svcfg-credentials-netflow, overlay-services]
+        diagrams: [svc-netflow-path]
+        labs: []
+        sim_screens: []
+      - id: netflow-config
+        title: "NetFlow: Config"
+        kind: config
+        coverage: full
+        note: "A lesson walks collectors and filters under Network Management, the Profile NetFlow Settings (Activate NetFlow, collectors, filters, Allow All, intervals) and the Edge Override with the Source Interface, with the limits; open: the default collector port and any status or event."
+        lessons: [svc-credentials-netflow, ov-services]
+        quiz_topics: [svcfg-credentials-netflow, overlay-services]
+        diagrams: [svc-netflow-path]
+        labs: []
+        sim_screens: []
+      - id: dns
+        title: DNS Services
+        kind: concept
+        coverage: full
+        note: "The name-and-address lesson teaches public versus private DNS, the fastest-response behaviour, the preconfigured servers and the DNS Proxy condition."
+        lessons: [svc-name-address, ov-services]
+        quiz_topics: [svcfg-name-address, overlay-services]
+        diagrams: []
+        labs: []
+        sim_screens: []
+      - id: dns-config
+        title: "DNS Services: Config"
+        kind: config
+        coverage: full
+        note: "A lesson walks DNS Services (DNS Type, Service Name, IPv4 and IPv6 Server, Private Domains), the Profile Routing and NAT > DNS choices and the Edge Source Interface; open: limits on servers per service and any status."
+        lessons: [svc-name-address, ov-services]
+        quiz_topics: [svcfg-name-address, overlay-services]
+        diagrams: []
+        labs: []
+        sim_screens: []
+      - id: private-network-names
+        title: Private Network Names
+        kind: concept
+        coverage: partial
+        note: "The services lesson gives a table row and the delete rule; there is no dedicated lesson."
+        lessons: [ov-services]
+        quiz_topics: [overlay-services]
+        diagrams: []
+        labs: []
+        sim_screens: []
+      - id: private-network-names-config
+        title: "Private Network Names: Config"
+        kind: config
+        coverage: partial
+        note: "A lesson gives the single Name field, the documented purpose and the deletion rule; not covered: the screen where a name is assigned to a private WAN overlay and the effect on tunnels, which the pages read do not describe."
+        lessons: [svc-name-address, ov-services]
+        quiz_topics: [svcfg-name-address, overlay-services]
+        diagrams: []
+        labs: []
+        sim_screens: []
+      - id: prefix-delegation-tags
+        title: Prefix Delegation Tags
+        kind: concept
+        coverage: full
+        note: "The name-and-address lesson teaches what a prefix delegation tag links (a WAN interface and the LAN interfaces that share its tag) and the documented /64 LAN prefix length."
+        lessons: [svc-name-address, ov-services]
+        quiz_topics: [svcfg-name-address, overlay-services]
+        diagrams: [svc-prefix-delegation]
+        labs: []
+        sim_screens: []
+      - id: prefix-delegation-tags-config
+        title: "Prefix Delegation Tags: Config"
+        kind: config
+        coverage: full
+        note: "A lesson walks creating the tag, the WAN interface setting (DHCPv6 Client Prefix Delegation, unique tag) and the LAN interface or VLAN setting (DHCPv6 Prefix Delegation, tag, Interface Address); open: any status or event."
+        lessons: [svc-name-address, ov-services]
+        quiz_topics: [svcfg-name-address, overlay-services]
+        diagrams: [svc-prefix-delegation]
+        labs: []
+        sim_screens: []
+      - id: authentication-services
+        title: Authentication Services
+        kind: concept
+        coverage: full
+        note: "The authentication lesson teaches RADIUS (default Authentication Port 1812) and TACACS (hidden until the Operator enables it) and where each is assigned."
+        lessons: [svc-auth-vnf, ov-services]
+        quiz_topics: [svcfg-auth-vnf, overlay-services]
+        diagrams: []
+        labs: []
+        sim_screens: []
+      - id: authentication-services-config
+        title: "Authentication Services: Config"
+        kind: config
+        coverage: full
+        note: "A lesson walks the RADIUS fields (Service Name, Server Address, Shared Secret, Authentication Port, Accounting Port, Custom Attributes), the Profile Authentication choice and the Edge Override with Source Interface, and the TACACS fields and Edge Services assignment; open: any status or event and the TACACS default port."
+        lessons: [svc-auth-vnf, ov-services]
+        quiz_topics: [svcfg-auth-vnf, overlay-services]
+        diagrams: []
+        labs: []
+        sim_screens: []
+      - id: vnf
+        title: VNF
+        kind: concept
+        coverage: full
+        note: "The authentication-and-VNF lesson teaches what a VNF service is, the three documented firewall types and the deploy and insertion order."
+        lessons: [svc-auth-vnf, ov-services]
+        quiz_topics: [svcfg-auth-vnf, overlay-services]
+        diagrams: []
+        labs: []
+        sim_screens: []
+      - id: vnf-config
+        title: "VNF: Config"
+        kind: config
+        coverage: partial
+        note: "A lesson walks creating a VNF service for Check Point, Fortinet and Palo Alto, the Edge deployment fields, insertion, the supported Edge models and the monitoring screens; not covered: the Check Point settings at the Edge and the Security VNF with HA steps beyond a summary, and VNF support on the current 7x0, 4100 and 5100 Edges, which the pages read do not list."
+        lessons: [svc-auth-vnf, ov-services]
+        quiz_topics: [svcfg-auth-vnf, overlay-services]
+        diagrams: []
+        labs: []
+        sim_screens: []
+
+  - id: G5
+    title: Arista VeloCloud SD-WAN Topologies
+    topics:
+      - id: edge-models
+        title: Edge Models
+        kind: topology
+        coverage: partial
+        note: "Taught: how to read the 7x0 and 4100/5100 datasheets, the published interfaces, throughput, tunnels, flows and segments of the current models, edition and licence limits, HA between identical models, and a shortlist method; not covered: earlier generations (only a few published figures), a per-model VNF matrix, and the VCO screen that shows the model (all unconfirmed); the outline's large-branch model is not named, so its figures are checked only against the published ones."
+        lessons: [top-edge-models]
+        quiz_topics: [topo-edge-models]
+        diagrams: [top-datasheet-reading]
+        labs: []
+        sim_screens: []
+      - id: branch-site-topologies
+        title: Branch Site Topologies
+        kind: topology
+        coverage: full
+        note: "Two lessons teach the building blocks of a branch, the designer's questions, the vendor's Bronze, Silver and Gold labels and the other documented site names, plus a decision framework with three worked scenarios; the two Silver naming overlaps in the older guide are flagged, not resolved."
+        lessons: [top-overview, top-choosing]
+        quiz_topics: [topo-overview, topo-choosing]
+        diagrams: [top-decision]
+        labs: []
+        sim_screens: []
+      - id: bronze-site
+        title: Bronze Site Topology
+        kind: topology
+        coverage: full
+        note: "A whole lesson on the vendor's Bronze description (one or two Internet links, no MPLS, no L3 switch), the Edge as the LAN gateway, what the site gives and lacks and how to improve it; failure behaviour beyond DMPO link failover is design reasoning and labelled so."
+        lessons: [top-bronze]
+        quiz_topics: [topo-bronze]
+        diagrams: [top-bronze]
+        labs: []
+        sim_screens: []
+      - id: silver-site-1
+        title: Silver Site Topology Option 1
+        kind: topology
+        coverage: full
+        note: "A whole lesson on the first Silver variant (L3 switch, Internet, MPLS on a CE, the Edge between the L3 switch and the Internet), traffic flows, default gateway and route considerations; whether the guide's off-path worked example is the same design is not confirmed."
+        lessons: [top-silver-1]
+        quiz_topics: [topo-silver-1]
+        diagrams: [top-silver-1]
+        labs: []
+        sim_screens: []
+      - id: silver-site-2
+        title: Silver Site Topology Option 2
+        kind: topology
+        coverage: partial
+        note: "Taught: the second Silver variant (HSRP or VRRP routers, L2 switch, Edge replacing the L2 switch), the three kinds of redundancy and what is documented about an Edge HA failover; not covered because the vendor text is silent: how the Edge interacts with the routers' HSRP or VRRP, whether the variant uses an HA pair, and what the Edge does when a router or switch fails."
+        lessons: [top-silver-2]
+        quiz_topics: [topo-silver-2]
+        diagrams: [top-silver-2]
+        labs: []
+        sim_screens: []
+      - id: gold-site
+        title: Gold Site Topology
+        kind: topology
+        coverage: partial
+        note: "Taught: the vendor's Gold description, its virtual-IP differentiator, what changes for traffic and routes, and how it relates to Hubs (Section 5) and routing (Section 6); not covered: where the virtual IP is configured in the VCO, where the Edge sits relative to the CE and switches, and a configuration walkthrough, because the vendor text does not say."
+        lessons: [top-gold]
+        quiz_topics: [topo-gold]
+        diagrams: [top-gold]
+        labs: []
+        sim_screens: []

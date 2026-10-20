@@ -1,0 +1,99 @@
+---
+id: svc-name-address
+title: Name and address services
+summary: "DNS Services, Private Network Names and Prefix Delegation Tags: the documented settings, how they are assigned in a Profile and an Edge, limits, and what the documentation leaves open."
+estimated_minutes: 11
+topics: [svcfg-name-address]
+prerequisites: [svc-where, ov-services]
+---
+
+**By the end of this lesson you will be able to:**
+
+- create a public or private DNS service and say where it is assigned and what the DNS Proxy has to do with it;
+- create a Private Network Name and a Prefix Delegation Tag and say what each is documented to do;
+- follow the documented tag steps for a WAN and a LAN interface;
+- list what the documentation does not say about each.
+
+## DNS Services
+
+**Configure > Network Services > Network Management > DNS Services**, then **New**. The <Term id="dns-services">DNS service</Term> is Public or Private. The dnsmasq service sends requests to **all** configured servers and uses the **fastest** response; it is preconfigured with Google and Open DNS. In the **Profile** (Device tab > Routing and NAT > DNS) you pick a public service or set up **Conditional DNS Forwarding (Private DNS)**. A public service is active on a VLAN or routed interface only when the <Term id="dns-proxy">**DNS Proxy**</Term> is also activated on that interface. At the **Edge**, DNS (Override) has a **Source Interface**.
+
+## Private Network Names
+
+A <Term id="private-network-name">Private Network Name</Term> is created at **Network Management > Private Network Names > New.** The only field is **Name**. The documentation's purpose line: "Define multiple private networks and assign them to individual private WAN overlays." Only names not used by an Edge can be deleted, and Conditional Backhaul needs Branches and Conditional Backhaul Hubs to use the same Private Network name on their private links.
+
+## Prefix Delegation Tags
+
+A <Term id="prefix-delegation-tag">Prefix Delegation Tag</Term> (<Term id="prefix-delegation">DHCPv6 prefix delegation</Term>) is created at **Network Management > Prefix Delegation Tags > New**, with a unique **Name**. The tooltip says the tags "connect the LAN and WAN interfaces": a LAN interface receives prefixes from its associated WAN interface only if both share a common tag. The documented interface steps are:
+
+<Diagram id="svc-prefix-delegation" />
+
+- **WAN interface** (routed, with **Enable WAN Link**): IPv6 Settings > **DHCPv6 Client Prefix Delegation** = Enabled, then pick a tag or create one with New Tag. Each WAN interface must have a unique tag.
+- **LAN interface or VLAN** (without Enable WAN Link): Addressing Type **DHCPv6 Prefix Delegation**; the Prefix Length auto-populates as **64**; enter an Interface Address and select a tag. Multiple LAN interfaces can use the same tag.
+
+## Settings reference
+
+### DNS Services
+
+| Field | What it does | Allowed values and default |
+|---|---|---|
+| DNS Type | whether the service is public or private | Private or Public |
+| Service Name | names the service | free text |
+| IPv4 Server | a server address | an IP address, with + and - to add or delete |
+| IPv6 Server | an optional server address | an IP address |
+| Private Domains | the domains that use a private service | one or more, Private type only |
+| Source Interface | the Edge interface whose IP is the source of DNS traffic | an interface configured for the segment (Edge) |
+
+### Private Network Names
+
+| Field | What it does | Allowed values and default |
+|---|---|---|
+| Name | names a private network for assignment to a private WAN overlay | free text; no default |
+
+### Prefix Delegation Tags
+
+| Field | What it does | Allowed values and default |
+|---|---|---|
+| Name | names the tag | unique |
+| DHCPv6 Client Prefix Delegation | turns on prefix delegation on a WAN interface | Enabled, plus a tag; each WAN interface needs a unique tag |
+| Addressing Type | on a LAN interface, selects prefix delegation | DHCPv6 Prefix Delegation |
+| Prefix Length | length of the LAN prefix | auto-populates as 64 |
+
+<Callout variant="warning" title="What we could not confirm">
+  There is no "DNS mask" in the pages we read; the fastest-response behaviour is documented. Whether names of Private Networks create tunnels only between interfaces with the same name is not stated in that form, and the screen where a name is assigned to a WAN overlay was not read. For prefix delegation, the pages describe no status or events. None of the three has a documented status screen in the pages we read.
+</Callout>
+
+<Predict
+  prompt="A LAN interface should receive its IPv6 prefix from a WAN interface. What do the two interfaces need to share, according to the documentation?"
+  choices={["A common Prefix Delegation tag", "The same VLAN ID", "The same Private Network Name", "The same DNS service"]}
+  answer={0}
+>
+  A LAN interface receives prefixes from its associated WAN interface only if both share a common tag; each WAN interface needs a unique tag, and several LAN interfaces can use the same tag.
+</Predict>
+
+## What you would see in the VCO
+
+- **Configure > Network Services > Network Management**: DNS Services, Private Network Names, Prefix Delegation Tags.
+- **Configure > Profiles > (Profile) > Device > Routing and NAT > DNS**, and interface IPv6 Settings and the VLAN dialog's IPv6 Settings.
+- **Configure > Edges > (Edge) > Device**: DNS with Override.
+
+<Callout variant="tip" title="Check this in your own VCO">
+  - **[observation candidate]** Open: Network Management > DNS Services. Expect: preconfigured Google and Open DNS public services, DNS Type Public or Private, IPv4 Server and optional IPv6 Server. Docs may differ: the preconfigured entries may be hidden.
+  - **[observation candidate]** Open: a Profile's Routing and NAT > DNS and an interface's DNS Proxy checkbox. Expect: a public service activates on an interface only with DNS Proxy on. Docs may differ: the DNS Proxy default.
+  - **[observation candidate]** Open: Network Management > Private Network Names, New. Expect: one Name field. Docs may differ: where the name is assigned to a WAN overlay is not documented in the pages we read.
+  - **[observation candidate]** Open: Prefix Delegation Tags, then a WAN interface's IPv6 Settings. Expect: DHCPv6 Client Prefix Delegation with a tag list and New Tag. Docs may differ: the interface needs Enable WAN Link.
+  - **[observation candidate]** Open: a LAN interface with Addressing Type DHCPv6 Prefix Delegation. Expect: Prefix Length 64, an Interface Address and a tag. Docs may differ: the exact field order.
+</Callout>
+
+## Key takeaways
+
+- DNS Services ask all servers and use the fastest; public services need DNS Proxy on the interface.
+- A Private Network Name has one field and is assigned to private WAN overlays.
+- A prefix delegation tag links a WAN interface to LAN interfaces; the LAN prefix length shows as 64.
+- None of the three has a documented status screen.
+
+## What would you look for in the VCO
+
+- Which DNS service does the Profile use, and is DNS Proxy on for the interface?
+- Which Private Network Name is on which private link?
+- Which tag does each WAN and LAN interface use?

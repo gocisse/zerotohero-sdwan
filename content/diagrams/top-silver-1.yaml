@@ -1,0 +1,75 @@
+# Section 7, lesson 4: Silver option 1 (first variant). Facts: reference/bronze-silver-gold.md, site-topologies.md. Paths are illustrative.
+id: top-silver-1
+title: Silver option 1 topology (illustrative paths)
+alt: >-
+  Branch users connect to an L3 switch. The L3 switch connects to an Edge, which has an Internet link to a Gateway, and to a
+  CE router, which has an MPLS link to a data center. The Edge sits between the L3 switch and the Internet. A private link
+  from the Edge to the CE can bring MPLS into the overlay.
+width: 900
+height: 540
+
+nodes:
+  - { id: users, label: Branch users, kind: host, x: 70, y: 270 }
+  - { id: l3, label: L3 switch, kind: l3switch, x: 260, y: 270 }
+  - { id: edge, label: Edge, kind: vce, x: 480, y: 130 }
+  - { id: ce, label: CE router, kind: router, x: 480, y: 410 }
+  - { id: net, label: Internet, kind: internet, x: 690, y: 130 }
+  - { id: mpls, label: MPLS, kind: mpls, x: 690, y: 410 }
+  - { id: gw, label: Gateway, kind: vcg, x: 840, y: 130 }
+  - { id: dc, label: Data center, kind: datacenter, x: 840, y: 410 }
+
+links:
+  - { id: lan, from: users, to: l3, style: lan }
+  - { id: l3-edge, from: l3, to: edge, style: lan }
+  - { id: l3-ce, from: l3, to: ce, style: lan }
+  - { id: wan, from: edge, to: net, style: underlay-internet }
+  - { id: ce-mpls, from: ce, to: mpls, style: underlay-mpls }
+  - { id: net-gw, from: net, to: gw, style: underlay-internet }
+  - { id: mpls-dc, from: mpls, to: dc, style: underlay-mpls }
+  - { id: e-ce, from: edge, to: ce, style: underlay-mpls, label: private link }
+
+steps:
+  - title: Where the vendor puts the Edge
+    narration: >-
+      Silver adds an MPLS connection to the Internet links. In the first variant there is a **single L3 switch**, and the MPLS
+      link is **terminated on a CE router reached through the L3 switch**. The Edge goes **between the L3 switch and the
+      Internet**, replacing the existing firewall or router.
+    highlight: [l3, edge, net, ce, mpls]
+    show: [net, mpls, gw, dc, net-gw, mpls-dc]
+
+  - title: A flow to the Internet
+    narration: >-
+      The users' gateway is the L3 switch. It forwards Internet-bound traffic to the Edge, which sends it over the Internet
+      link, in a tunnel to the Gateway when the traffic uses the overlay.
+    highlight: [users, l3, edge, net, gw]
+    packets:
+      - { path: [users, lan, l3, l3-edge, edge, wan, net, net-gw, gw], label: Internet / SaaS, color_style: overlay-tunnel }
+
+  - title: A flow over MPLS through the CE
+    narration: >-
+      Traffic for MPLS destinations can keep going to the CE router and over MPLS without passing through the Edge.
+    highlight: [users, l3, ce, mpls, dc]
+    packets:
+      - { path: [users, lan, l3, l3-ce, ce, ce-mpls, mpls, mpls-dc, dc], label: via CE, color_style: underlay-mpls }
+
+  - title: Bringing MPLS into the overlay (worked example)
+    narration: >-
+      To use the MPLS link as part of the overlay, the Edge needs a private WAN link of its own. The vendor's worked example
+      for an Edge next to an L3 switch gives the Edge an interface with a private link toward the MPLS side. Whether it is the
+      same design as the Silver description is not stated.
+    show: [e-ce]
+    highlight: [edge, e-ce, ce, mpls, dc]
+    packets:
+      - { path: [edge, e-ce, ce, ce-mpls, mpls, mpls-dc, dc], label: overlay over MPLS, color_style: overlay-tunnel }
+    callouts:
+      - { target: e-ce, text: "Needs a private WAN link on the Edge." }
+
+  - title: Single points of failure (design practice)
+    narration: >-
+      One L3 switch and one Edge are single points of failure in this description. DMPO covers a failed link, not a failed
+      device.
+    hide: [e-ce]
+    highlight: [l3, edge]
+    callouts:
+      - { target: l3, text: "Single L3 switch." }
+      - { target: edge, text: "Single Edge." }

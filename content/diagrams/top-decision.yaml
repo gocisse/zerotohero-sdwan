@@ -1,0 +1,59 @@
+# Section 7, lesson 7: a decision flow. Illustrative: it is our framework, built on the vendor's descriptions of the labels.
+id: top-decision
+title: Choosing a topology (illustrative decision flow)
+alt: >-
+  A decision flow. The first question is whether the site has a private transport such as MPLS. If not, the site fits Bronze.
+  If yes, the next question is whether redundant HSRP or VRRP routers and an L2 switch are in place, which fits Silver option 2.
+  Otherwise the next question is whether active/active L3 switches run OSPF or BGP, which fits Gold, and if not Silver option
+  1. An Edge HA pair can be added to any outcome.
+width: 900
+height: 540
+
+nodes:
+  - { id: start, label: "Site requirements", kind: generic, x: 100, y: 270 }
+  - { id: q1, label: "MPLS link?", kind: generic, x: 300, y: 270 }
+  - { id: bronze, label: "Bronze", kind: generic, x: 300, y: 80, sublabel: "1-2 Internet links" }
+  - { id: q2, label: "HSRP / VRRP routers?", kind: generic, sublabel: "and an L2 switch", x: 540, y: 270 }
+  - { id: silver2, label: "Silver option 2", kind: generic, x: 540, y: 80 }
+  - { id: q3, label: "Active/active L3 switches?", kind: generic, sublabel: "running OSPF or BGP", x: 770, y: 270 }
+  - { id: gold, label: "Gold", kind: generic, x: 770, y: 80 }
+  - { id: silver1, label: "Silver option 1", kind: generic, x: 770, y: 460, sublabel: "one L3 switch and a CE" }
+  - { id: ha, label: "Outage not acceptable? Add an Edge HA pair", kind: generic, x: 300, y: 460 }
+
+links:
+  - { id: s-q1, from: start, to: q1, style: control }
+  - { id: q1-b, from: q1, to: bronze, style: control, label: "no" }
+  - { id: q1-q2, from: q1, to: q2, style: control, label: "yes" }
+  - { id: q2-s2, from: q2, to: silver2, style: control, label: "yes" }
+  - { id: q2-q3, from: q2, to: q3, style: control, label: "no" }
+  - { id: q3-g, from: q3, to: gold, style: control, label: "yes" }
+  - { id: q3-s1, from: q3, to: silver1, style: control, label: "no" }
+  - { id: ha-l, from: ha, to: start, style: control }
+
+steps:
+  - title: Start from the transports
+    narration: >-
+      The first question is whether the site has a private transport such as MPLS. With only one or two Internet links, the
+      vendor's Bronze description is the starting shape.
+    highlight: [start, q1, q1-b, bronze]
+    show: [q1, s-q1, bronze, q1-b]
+
+  - title: Then look at the LAN
+    narration: >-
+      With an MPLS link, look at what is on the LAN side. HSRP or VRRP routers with an L2 switch point to Silver option 2.
+    highlight: [q1, q1-q2, q2, q2-s2, silver2]
+    show: [q2, q1-q2, silver2, q2-s2]
+
+  - title: L3 switches and routing
+    narration: >-
+      Active/active L3 switches that exchange routes over OSPF or BGP, with an MPLS CE, point to Gold. A single L3 switch with a
+      CE points to Silver option 1.
+    highlight: [q2, q2-q3, q3, q3-g, gold, q3-s1, silver1]
+    show: [q3, q2-q3, gold, q3-g, silver1, q3-s1]
+
+  - title: Availability is a separate question
+    narration: >-
+      Any outcome with a single Edge is a single point of failure. If an outage is not acceptable, plan an Edge HA pair of the
+      same model, with the HA guide's switch requirements.
+    highlight: [ha]
+    show: [ha, ha-l]

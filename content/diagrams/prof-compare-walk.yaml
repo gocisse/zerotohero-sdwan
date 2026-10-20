@@ -1,0 +1,47 @@
+# Section 9, lesson 7: comparing two Edges and a Profile. Our teaching method; the places named are documented. Facts: reference/config/config-profiles.md, config-business-policy-rules.md, config-firewall-rules.md.
+id: prof-compare-walk
+title: Comparing two Edges and their Profile (our method)
+alt: >-
+  Two Edges use the same Profile. Compare their Device tabs for Override ticks, their Business Policy tabs for Edge Overrides and Rules
+  From Profile, and their Firewall tabs, then note the segment and the application timing.
+width: 900
+height: 540
+
+nodes:
+  - { id: prof, label: "Profile", kind: generic, x: 450, y: 100, sublabel: "Used By, Overview" }
+  - { id: a, label: "Edge A", kind: vce, x: 200, y: 400 }
+  - { id: b, label: "Edge B", kind: vce, x: 700, y: 400 }
+  - { id: diff, label: "Differences", kind: generic, x: 450, y: 400, sublabel: "overrides, rules, segment" }
+
+links:
+  - { id: p-a, from: prof, to: a, style: control }
+  - { id: p-b, from: prof, to: b, style: control }
+  - { id: a-d, from: a, to: diff, style: control }
+  - { id: b-d, from: b, to: diff, style: control }
+
+steps:
+  - title: 1. Same Profile and segment?
+    narration: >-
+      Check each Edge's Profile (Configure > Edges) and the Segment menu. Many settings and all rules are segment aware.
+    highlight: [prof, a, b, p-a, p-b]
+    show: [prof, a, b, p-a, p-b]
+
+  - title: 2. Device tab overrides
+    narration: >-
+      Open both Device tabs and note every **Override** tick, comparing the values with the Profile's.
+    show: [diff, a-d, b-d]
+    highlight: [a, b, a-d, b-d, diff]
+
+  - title: 3. Business policy and firewall
+    narration: >-
+      Compare **Rules From Profile** with **Edge Overrides** on the Business Policy tab, and the **Rule From Profile** area with the Edge's
+      own rules on the Firewall tab. Edge rules supersede or take priority.
+    highlight: [diff]
+    callouts:
+      - { target: diff, text: "Edge Overrides, Edge firewall rules." }
+
+  - title: 4. Say what you cannot conclude
+    narration: >-
+      Rule order beyond "highest precedence", the no-match action and how an overridden setting is marked are not documented. DPI timing can
+      also explain the first packets of a flow.
+    highlight: [diff, prof]

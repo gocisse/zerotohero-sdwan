@@ -5,11 +5,16 @@ export interface Pt {
   y: number
 }
 
-/** Path from a to b (center to center; node discs are drawn on top), plus the label anchor. */
-export function linkGeometry(a: Pt, b: Pt, curve = 0): { d: string; mid: Pt } {
+/** Path from a to b (center to center; node discs are drawn on top), the label anchor, and the point at t (0 to 1) along it. */
+export function linkGeometry(a: Pt, b: Pt, curve = 0): { d: string; mid: Pt; at: (t: number) => Pt } {
   const mx = (a.x + b.x) / 2
   const my = (a.y + b.y) / 2
-  if (!curve) return { d: `M ${a.x} ${a.y} L ${b.x} ${b.y}`, mid: { x: mx, y: my } }
+  if (!curve)
+    return {
+      d: `M ${a.x} ${a.y} L ${b.x} ${b.y}`,
+      mid: { x: mx, y: my },
+      at: (t) => ({ x: a.x + (b.x - a.x) * t, y: a.y + (b.y - a.y) * t }),
+    }
   const len = Math.hypot(b.x - a.x, b.y - a.y) || 1
   // Quadratic control point; the apex sits halfway between the chord and the control point.
   const cx = mx + (-(b.y - a.y) / len) * curve * 2
@@ -17,6 +22,10 @@ export function linkGeometry(a: Pt, b: Pt, curve = 0): { d: string; mid: Pt } {
   return {
     d: `M ${a.x} ${a.y} Q ${cx} ${cy} ${b.x} ${b.y}`,
     mid: { x: 0.25 * a.x + 0.5 * cx + 0.25 * b.x, y: 0.25 * a.y + 0.5 * cy + 0.25 * b.y },
+    at: (t) => ({
+      x: (1 - t) * (1 - t) * a.x + 2 * (1 - t) * t * cx + t * t * b.x,
+      y: (1 - t) * (1 - t) * a.y + 2 * (1 - t) * t * cy + t * t * b.y,
+    }),
   }
 }
 

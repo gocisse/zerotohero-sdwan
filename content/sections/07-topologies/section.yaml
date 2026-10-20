@@ -1,0 +1,12 @@
+id: topologies
+title: "Branch site topologies and Edge models"
+summary: Reading an Edge datasheet, the vendor's Bronze, Silver and Gold branch designs, how an Edge pair adds availability, and how to choose a design for a site.
+estimated_minutes: 70
+lessons:
+  - top-edge-models
+  - top-overview
+  - top-bronze
+  - top-silver-1
+  - top-silver-2
+  - top-gold
+  - top-choosing

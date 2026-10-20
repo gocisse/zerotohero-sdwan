@@ -1,0 +1,50 @@
+# Section 8, lesson 1: create, assign, verify. Our teaching method built on the documented steps. Facts: reference/config/*.md.
+id: svc-workflow
+title: Create, assign, verify (our teaching method)
+alt: >-
+  A network service is created in Configure, Network Services, then assigned in a Profile or an Edge, then verified on the
+  screens that show the result: the service lists, the Profile and Edge settings and Monitor, Events.
+width: 900
+height: 540
+
+nodes:
+  - { id: area, label: "Configure > Network Services", kind: generic, x: 130, y: 270, sublabel: "create the service once" }
+  - { id: profile, label: "Profile", kind: generic, x: 450, y: 130, sublabel: "settings shared by many Edges" }
+  - { id: edge, label: "Edge", kind: vce, x: 450, y: 410, sublabel: "Override only where offered" }
+  - { id: verify, label: "Verify", kind: generic, x: 770, y: 270, sublabel: "lists, settings, Monitor, Events" }
+
+links:
+  - { id: a-p, from: area, to: profile, style: control, label: "assign" }
+  - { id: a-e, from: area, to: edge, style: control, label: "or at Edge" }
+  - { id: p-v, from: profile, to: verify, style: control }
+  - { id: e-v, from: edge, to: verify, style: control }
+
+steps:
+  - title: 1. Create
+    narration: >-
+      Create the service once in **Configure > Network Services** and save it. Configuring network services is optional and can
+      be done in any order.
+    highlight: [area]
+    show: [area]
+
+  - title: 2. Assign in a Profile
+    narration: >-
+      Assign it where it is used. Settings shared by many Edges belong in the **Profile**. An NSD via Gateway, for example, is
+      defined exclusively at the Profile level.
+    show: [profile, a-p]
+    highlight: [area, a-p, profile]
+
+  - title: Or assign at the Edge
+    narration: >-
+      Where the documentation offers **Override**, an Edge can set its own value, for example the Source Interface of NetFlow, DNS,
+      RADIUS and TACACS, or the tunnels of an NSD via Edge.
+    show: [edge, a-e]
+    highlight: [area, a-e, edge]
+
+  - title: 3. Verify
+    narration: >-
+      Check the result on the screens that show it: the service lists, the Profile and Edge settings that name the service,
+      **Monitor > Events**, and where one exists a Monitor screen. The documentation names no status for several services, so
+      record what you see.
+    show: [verify, p-v, e-v]
+    highlight: [profile, edge, verify, p-v, e-v]

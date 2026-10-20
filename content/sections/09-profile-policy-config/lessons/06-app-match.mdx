@@ -1,0 +1,85 @@
+---
+id: prof-app-match
+title: Application matching
+summary: "How an application is selected in a business policy or firewall rule, custom applications and their fields, matching by domain name, and what is documented about identification, caching and DPI."
+estimated_minutes: 9
+topics: [pcfg-app-match]
+prerequisites: [prof-bp-rules, cfg-apps-qos]
+---
+
+**By the end of this lesson you will be able to:**
+
+- select an application in a business policy rule and in a firewall rule;
+- create a <Term id="custom-application">custom application</Term> with the documented fields and say its limits;
+- say when to match by domain name instead of by application;
+- say what is documented about <Term id="dpi">DPI</Term> timing and caching.
+
+## Selecting an application in a rule
+
+In both editors the **Application** field is **Any** (the default) or **Define**. **Define** lets you choose an application from the menu and, optionally, a DSCP value to match incoming traffic. The menu lists the applications (see <Term id="smart-defaults">Smart Defaults</Term>) created through the Application Maps and Custom Applications, with a label for custom ones. To match a destination by name instead, use **Destination > Define > Domain Name**, which matches the whole name or part of it. Application matching depends on the DPI engine.
+
+## Custom applications
+
+**Configure > Custom Applications > New Custom Application** (Enterprise Admins and Superusers configure; Customer Support only views). Fill in the fields and select **Create**; the application appears on the main screen. The main screen also has Upload, Activate or Deactivate, More > Download JSON and a State column (Active or Inactive). To use one, set the rule's Application to Define and choose it, on a Profile or an Edge.
+
+## Settings reference
+
+| Field | What it does | Allowed values and default |
+|---|---|---|
+| Application Name | a unique name | free text |
+| Display Name | a unique display name | free text |
+| Description | optional text | |
+| Activate Application | activates it while creating; the Orchestrator sends it to the Edge on save | default not stated |
+| Category | the application category | chosen from a menu; the values are not listed |
+| Do Not Use Cache | classifies by DPI regardless of IP-port or protocol-port mappings | enable or disable |
+| Must Not Perform DPI | the application does not use DPI | even if Do Not Use Cache is activated |
+| Known IP Port Mapping | TCP ports, UDP ports and IP or subnets | "in a valid format"; the format is not specified |
+| Known Protocol Port Mapping | TCP and UDP ports | "in a valid format" |
+| Application | selects an application in a rule | Any (default) or Define |
+| Domain Name | matches a destination by name | all or part of the name |
+
+**Limits.** At most 250 custom applications per Enterprise; a custom application cannot be deleted; one that a Profile or an Edge uses cannot be deactivated. "Configuring a Custom Application resets Edge network flows, which may cause a brief connection interruption."
+
+## Identification, caching and timing
+
+- The DPI engine usually needs the **first 5 to 10 packets** of a flow to identify the application. The firewall and business policy must act earlier, so the first flow may match a more general rule.
+- Identified destinations are cached; an entry expires after **10 minutes** of no traffic to that destination IP and port.
+- Each application has a service class and a business priority; the service class of a default application cannot be changed (Section 4).
+
+<Callout variant="warning" title="What we could not confirm">
+  The Application Maps and the Applications screen could not be read (the page returned HTTP 403), so we do not know how to choose or browse a default application on that screen, whether Netflix is in the list, or the fields for domain-name matching inside a custom application. The course's "Netflix.com rule" is an example: you can match an application, or a destination domain name, but the documentation does not say which one a given site needs.
+</Callout>
+
+<Predict
+  prompt="A new flow to a SaaS site matches a general rule for its first packets and the specific application rule later. What explains it, according to the documentation?"
+  choices={["The DPI engine needs the first 5 to 10 packets to identify the application", "Rules are evaluated in random order", "The Gateway reclassifies the flow", "Custom applications always load late"]}
+  answer={0}
+>
+  The documentation says the DPI engine usually needs the first 5 to 10 packets to identify an application, so the first flow may match a more general rule.
+</Predict>
+
+## What you would see in the VCO
+
+- **Configure > Custom Applications**: the list with State, Used By Profile and Used By Edges.
+- **A rule's Match tab**: Application Any or Define, with the menu of applications.
+- **Monitor > Events > Applications**.
+
+<Callout variant="tip" title="Check this in your own VCO">
+  - **[observation candidate]** Open: Configure > Custom Applications, New Custom Application. Expect: Application Name, Display Name, Description, Activate Application, Category, Do Not Use Cache, Must Not Perform DPI and the two mapping fields. Docs may differ: your role may only view.
+  - **[observation candidate]** Open: a business policy rule's Match tab, Application, Define. Expect: a menu of applications that includes your custom ones with a label. Docs may differ: how default applications are listed is not documented.
+  - **[observation candidate]** Open: the Custom Applications list. Expect: State (Active or Inactive) and Used By Profile and Used By Edges columns. Docs may differ: column names.
+  - **[observation candidate]** Open: a firewall rule's Match section, Application, Define. Expect: the same application menu and a DSCP flag. Docs may differ: the DSCP values are not listed.
+</Callout>
+
+## Key takeaways
+
+- Application is Any by default; Define selects an application and optionally a DSCP value.
+- A custom application has a name, display name, category, cache and DPI options and port mappings; at most 250 per Enterprise.
+- DPI needs 5 to 10 packets, and identified destinations are cached for 10 minutes of inactivity.
+- The Applications screen was not readable; domain-name matching is a Destination field.
+
+## What would you look for in the VCO
+
+- Does the rule match an application or a domain name?
+- Is the application default or custom, and is it active?
+- Could the first packets of the flow have matched a different rule?

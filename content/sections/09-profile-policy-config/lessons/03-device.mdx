@@ -1,0 +1,126 @@
+---
+id: prof-device
+title: Profile device settings
+summary: "The Device tab's documented sections and headings, then the VLAN, interface, Wi-Fi, authentication, DNS and other settings with their documented defaults and which can be overridden on the Edge."
+estimated_minutes: 12
+topics: [pcfg-device]
+prerequisites: [prof-profiles, svc-name-address]
+---
+
+**By the end of this lesson you will be able to:**
+
+- use the <Term id="override">Override</Term> statements correctly and name the Device tab's categories and the sections in each, by their documented headings;
+- read the VLAN and interface settings and their documented defaults;
+- say where Wi-Fi, authentication, DNS, NAT and VPN settings live in a Profile;
+- say which settings the documentation says an Edge can override, and which it does not say.
+
+## The Device tab
+
+Configure > Profiles > the Profile > **Device** tab. The **View** menu has Expand All and Collapse All; the **Sort** menu has Sort by category (default) and Sort by segment aware. After a change an action bar appears to review it; **Save Changes** saves. The documented categories and sections are:
+
+| Category | Sections |
+|---|---|
+| Connectivity | VLAN, Management IP, ARP Timeouts, Interfaces, Wireless Link Management, Global IPv6, Wi-Fi Radio, Common Criteria Firewall |
+| VPN Services | Cloud VPN, Non SD-WAN Destination via Edge, Cloud Security Service (Zscaler, Gateway Handoff Assignment and Controller Assignment appear only when the Operator enables them) |
+| Routing and NAT | Multicast, DNS, OSPF, BFD, LAN-Side NAT Rules, BGP, ECMP, Overlay Route Control |
+| Telemetry | Visibility Mode, Syslog, Netflow Settings, SNMP |
+| Edge Services | Authentication, NTP |
+
+[Try it in the simulator](/sim/branch-override-demo/edges/store-2-edge?tab=device): the mock Device tab shows eight settings (ARP Timeouts, BFD, ECMP, Wi-Fi Radio, Global IPv6, SNMP, RADIUS, Stateful Firewall) with their VLANs and interfaces, and which come from the Profile or an override. It does not model the other fields below.
+
+## Settings reference
+
+### VLAN (Connectivity > VLAN > + Add VLAN)
+
+| Field | What it does | Allowed values and default |
+|---|---|---|
+| VLAN Name | names the VLAN | must be unique |
+| VLAN ID | the numeric ID | |
+| ICMP Echo Response | lets the VLAN answer ICMP echo | selected by default on a routed interface |
+| DNS Proxy | local DNS proxying on the VLAN | selected by default at the VLAN level |
+| IPv4 DHCP Server | who serves DHCP | Activated, Relay or Deactivated |
+| Assign Overlapping Subnets | the same subnet on every Edge | shows the Edge LAN address and prefix fields |
+| VNF Insertion | redirects VLAN traffic to a VNF | needs a service VLAN mapped to the segment |
+
+### Interfaces (Connectivity > Interfaces)
+
+| Field | What it does | Allowed values and default |
+|---|---|---|
+| Interface Enabled | makes the interface available | selected by default |
+| Capability | routed or switched | Routed by default on a routed interface, Switched on a switch port |
+| Mode | switch port mode | Access (one VLAN) or Trunk (several VLANs and one untagged) |
+| Enable WAN Overlay | builds the overlay over the link | selected by default |
+| WAN Overlay | how the link is defined | Auto-Detect Overlay by default, or User Defined Overlay |
+| Addressing Type | IPv4 addressing | DHCP by default; Static or PPPoE |
+| <Term id="reverse-path-forwarding">Reverse Path Forwarding</Term> | return route check, after Trusted Source | Not Enabled, Specific (default) or Loose |
+| L2 Autonegotiate | link negotiation | selected by default |
+| L2 MTU | interface MTU | default 1500 bytes for routed interfaces |
+
+### Other Connectivity and Telemetry sections
+
+| Field | What it does | Allowed values and default |
+|---|---|---|
+| Stale | ARP entry becomes stale (<Term id="arp-timeouts">Connectivity > ARP Timeouts</Term>) | default 2 minutes, range 1 minute to 23 hours 58 minutes |
+| Dead | ARP entry is dead | default 25 minutes; Stale must be less than Dead |
+| Cleanup | ARP entry is removed | default 4 hours; Dead must be less than Cleanup |
+| Wi-Fi radio | turns the radio on or off | enabled by default; Channel Automatic by default; Bands 2.4 GHz, 5 GHz or both |
+| Enable Common Criteria Firewall | drops, counts and logs listed packet types | deactivated by default |
+| All IPv6 Traffic | Global IPv6 setting | activated by default |
+| Type | <Term id="lan-side-nat-rule">LAN-side NAT rule</Term> type (Routing and NAT) | Source or Destination, with Inside and Outside Address; only the first matching rule executes |
+| Visibility Mode | how clients are tracked | by MAC address or by IP address; default not stated |
+| Port | SNMP version 2c port | default 161; Allow Any IPs on by default |
+| Private NTP Servers | NTP servers (Edge Services) | two or three recommended; Edge as NTP Server after at least one server |
+| RADIUS Server | the authentication server (Edge Services > Authentication) | chosen from Network Services > Authentication Services |
+
+**Wi-Fi SSIDs** (Add Wi-Fi SSID, model dependent) have an SSID, a Broadcast option and a Security choice of Open, WPA2 / Personal (a passphrase) or WPA2 / Enterprise (a RADIUS server selected for both the Profile and the Edge). **DNS** is under Routing and NAT (Lesson 6 of Section 8); **VPN** under VPN Services (Section 8).
+
+## Which settings can the Edge override?
+
+| Setting | What the documentation says |
+|---|---|
+| Interface settings (routed interface table) | the table lists the settings that "support overrides at the Edge level" |
+| ARP Timeouts | Edges can override the inherited timeouts |
+| Wi-Fi Radio | the Edge can override with an Override checkbox |
+| Global IPv6, Wireless Link Management | the Edge can override |
+| Common Criteria Firewall, NTP | an Edge-level setting is documented on a separate page |
+| LAN-Side NAT Rules, Syslog, SNMP, Visibility Mode | not stated in the Profile page |
+| OSPF areas | the Profile page says the table fields cannot be overridden at the Edge, while the Edge page lists OSPF among settings with Override: the two pages conflict |
+| Loopback interfaces, VLAN LAN Interfaces and SSID | configured at the Edge only |
+
+<Callout variant="warning" title="What we could not confirm">
+  The settings above come from a summary of the page, and the routing sections (BGP, OSPF filters, BFD, ECMP, Overlay Route Control, Multicast) are documented in Section 6, not repeated here. How the VCO marks an overridden setting, the complete list of overridable settings, and the OSPF conflict are unresolved; check your own release.
+</Callout>
+
+<Predict
+  prompt="You add a VLAN in a Profile and leave DNS Proxy alone. What does the documentation say about its state at the VLAN level?"
+  choices={["It is selected by default", "It is off by default", "It depends on the Edge model", "It can only be set at the Edge"]}
+  answer={0}
+>
+  The Profile page says DNS Proxy is selected by default at the VLAN level and works regardless of the DHCP server setting.
+</Predict>
+
+## What you would see in the VCO
+
+- **Configure > Profiles > (Profile) > Device**, expanded by category, with the Segment menu at the top.
+- **Configure > Edges > (Edge) > Device**: the same sections with an Override checkbox beside inherited settings.
+
+<Callout variant="tip" title="Check this in your own VCO">
+  - **[observation candidate]** Open: a Profile's Device tab, View > Expand All. Expect: the categories Connectivity, VPN Services, Routing and NAT, Telemetry and Edge Services. Docs may differ: sections may be hidden for your role or release.
+  - **[observation candidate]** Open: Connectivity > Interfaces, one routed interface. Expect: Interface Enabled, Enable WAN Overlay and ICMP Echo Response selected, Addressing Type DHCP. Docs may differ: your Profile may have changed them.
+  - **[observation candidate]** Open: Connectivity > ARP Timeouts. Expect: Stale 2 minutes, Dead 25 minutes and Cleanup 4 hours unless overridden. Docs may differ: defaults are as documented for 7.0.
+  - **[observation candidate]** Open: an Edge's Device tab for the same sections. Expect: an Override checkbox beside the inherited settings. Docs may differ: how an overridden value is marked is not documented.
+  - **[observation candidate]** Open: Routing and NAT > OSPF, then the same Edge. Expect: the area table cannot be overridden at the Edge (Profile page). Docs may differ: the Edge page lists OSPF with an Override.
+</Callout>
+
+## Key takeaways
+
+- The Device tab has five categories; settings are saved with Save Changes.
+- Many interface and VLAN fields have documented defaults (Interface Enabled, WAN Overlay, DHCP addressing, DNS Proxy).
+- Override statements are per setting; some are not stated and OSPF is contradictory.
+- Wi-Fi, authentication, DNS, NAT and VPN are all Device tab sections.
+
+## What would you look for in the VCO
+
+- In which section does this setting live, and does the Edge override it?
+- Which default is in force for the field?
+- Is the setting segment aware?

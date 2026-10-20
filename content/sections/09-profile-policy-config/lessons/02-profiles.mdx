@@ -1,0 +1,84 @@
+---
+id: prof-profiles
+title: Profiles, configuration
+summary: "Creating, duplicating, modifying and deleting a Profile, the Profile page and its tabs, the Quick Start Profile, assigning a Profile to an Edge, and what a Profile change does as far as it is documented."
+estimated_minutes: 10
+topics: [pcfg-profiles]
+prerequisites: [cfg-profiles, prof-segments]
+---
+
+**By the end of this lesson you will be able to:**
+
+- create, duplicate, modify and delete a <Term id="profile">Profile</Term> with the documented steps;
+- name the Profile page's tabs and the Profiles list's columns;
+- say how a Profile reaches an Edge and what the documentation says about a Profile change;
+- say what is documented about the <Term id="quick-start-profile">Quick Start Profile</Term> and what is not.
+
+## The documented steps
+
+- **Create.** Configure > Profiles > **New Profile**, "Enter a name and description for the new Profile and select Create". The Device tab opens.
+- **Duplicate.** Select a Profile and choose **Duplicate**, or on the Profile page **Shortcuts > Duplicate Profile**, which opens a Copy Profile dialog.
+- **Modify.** Select a Profile and choose **Modify**, or **Shortcuts > Modify Profile**. The **Overview** tab's **EDIT** changes the Profile Name, Description and Local Credentials. Changes on the Device tab need **Save Changes**.
+- **Delete.** **More > Delete**, or Shortcuts > Delete Profile. "User cannot delete the Profiles that are associated with Edges."
+- **Assign to an Edge.** A Profile is chosen from a drop-down when an Edge is provisioned (Configure > Edges > Add Edge).
+
+<Diagram id="prof-profile-edge" />
+
+## The page, the tabs and the list
+
+The Profile page names two tabs, **Device** and **Overview**. The Overview shows all the Profile's configuration, including the Edge models enabled for it, the configured network services and the assigned segments. The business policy and firewall pages refer to a **Business Policy** tab and a **Firewall** tab of the Profile; the Profiles list reaches them with the **Biz. Pol** and **Firewall** View links, so the pages word it differently. The list's columns are Name, **Used By** (the number of Edges), Biz. Pol and Firewall; its toolbar has New Profile, Duplicate, Modify, Download (all Profiles to an Excel file) and More.
+
+## What a Profile change does
+
+The Profile pages say only that a Profile is a template applied to many Edges and that interface settings are applied automatically to the associated Edges (<Term id="inheritance">inheritance</Term>), with an <Term id="override">Override</Term> possible per Edge. The Appendix lists which configuration changes restart the Edge service (a brief traffic interruption; in an HA pair a failover). When an Edge is moved to another Profile only a few effects are documented (Section 4). Whether a later Profile edit reaches an Edge that overrides that setting is not stated.
+
+## Settings reference
+
+| Field | What it does | Allowed values and default |
+|---|---|---|
+| Name | names the Profile | entered in the New Profile dialog and editable on the Overview tab |
+| Description | free text | entered with the name |
+| <Term id="local-credentials">Local Credentials</Term> | the Profile's local credentials (Overview tab, EDIT) | default is a random password; at least 8 and fewer than 32 characters, one number and one lowercase character |
+| Used By | the number of Edges using the Profile | list column |
+| Overview | all configurations of the Profile in one view | tab; includes Edge models, network services and segments |
+| Copy Profile | duplicates a Profile | a dialog; its fields were not described |
+| Download | exports all Profiles to an Excel file | list toolbar |
+
+<Callout variant="warning" title="What we could not confirm">
+  The fields of the Copy Profile dialog, what the Quick Start Profile contains and whether it can be edited or deleted, when and how a Profile change is pushed to Edges, and the 6.4 Profile pages are not in the pages we read. The Profiles page names two tabs while other pages name four.
+</Callout>
+
+<Predict
+  prompt="Ten Edges use Profile P and you try to delete P from the Profiles page. What does the documentation say?"
+  choices={["It cannot be deleted while Edges are associated with it", "It is deleted and the Edges fall back to Quick Start", "It is deleted after a warning", "Only the Operator can delete a Profile"]}
+  answer={0}
+>
+  The guide says users cannot delete Profiles that are associated with Edges. The Used By column shows how many Edges use it.
+</Predict>
+
+## What you would see in the VCO
+
+- **Configure > Profiles**: the list with Used By, Biz. Pol and Firewall.
+- **A Profile's Overview and Device tabs** and the Shortcuts menu.
+- **Configure > Edges > Add Edge**: the Profile drop-down.
+
+<Callout variant="tip" title="Check this in your own VCO">
+  - **[observation candidate]** Open: Configure > Profiles. Expect: columns Name, Used By, Biz. Pol and Firewall, and a toolbar with New Profile, Duplicate, Modify, Download and More. Docs may differ: columns may be hidden.
+  - **[observation candidate]** Open: a Profile's page. Expect: tabs Device and Overview, and a Shortcuts menu. Docs may differ: Business Policy and Firewall may also appear as tabs.
+  - **[observation candidate]** Open: a Profile's Overview tab. Expect: the Edge models, network services and segments of the Profile, and EDIT for name, description and Local Credentials. Docs may differ: the layout.
+  - **[observation candidate]** Open: Shortcuts > Duplicate Profile on a lab Profile. Expect: a Copy Profile dialog. Docs may differ: its fields are not documented.
+  - **[observation candidate]** Open: Configure > Edges > Add Edge. Expect: a Profile drop-down. Docs may differ: Quick Start may be preselected.
+</Callout>
+
+## Key takeaways
+
+- Create with New Profile, duplicate with Duplicate or Copy Profile, modify through Modify or the Overview tab, delete only when no Edge uses it.
+- The Profile page has Device and Overview tabs; Biz. Pol and Firewall are View links in the list.
+- A Profile is assigned to an Edge when the Edge is provisioned; interface settings flow automatically unless overridden.
+- What a change does to Edges is only partly documented.
+
+## What would you look for in the VCO
+
+- Which Profile does this Edge use, and how many Edges share it?
+- Which tab holds the setting I am looking for?
+- Does the change restart anything?

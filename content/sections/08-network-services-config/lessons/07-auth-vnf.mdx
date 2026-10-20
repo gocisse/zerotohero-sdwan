@@ -1,0 +1,113 @@
+---
+id: svc-auth-vnf
+title: Authentication Services and VNF
+summary: "RADIUS and TACACS services, how they are assigned in a Profile and an Edge, and Edge Services (VNFs): the vendor types, their settings, deployment on an Edge, insertion, limits and what to verify."
+estimated_minutes: 12
+topics: [svcfg-auth-vnf]
+prerequisites: [svc-where, ov-services]
+---
+
+**By the end of this lesson you will be able to:**
+
+- create a RADIUS service and a TACACS service and say where each is assigned and where the source interface is set;
+- create a <Term id="vnf">VNF</Term> service for the three documented firewall types and deploy it on an Edge;
+- say what <Term id="vnf-insertion">VNF insertion</Term> needs, and which Edge models the documentation lists;
+- name what is shown afterwards and what the documentation leaves open.
+
+## Authentication Services (RADIUS)
+
+**Configure > Network Services > Network Management > Authentication Services > New Authentication**, then **Add**. The <Term id="authentication-service">authentication service</Term> is part of the 802.1x configuration. It is **assigned** in the Profile (Device tab > Edge Services > **Authentication** > RADIUS Server, or New Radius Service) and at the Edge (Device tab > Authentication > **Override** > RADIUS Server and **Source Interface**). Source interfaces are set only at the Edge level. For Wi-Fi WPA2 Enterprise the system requires a RADIUS server selected for both the Profile and the Edge.
+
+## TACACS Services
+
+**Network Management > TACACS Services > Configure TACACS Service.** The <Term id="tacacs">TACACS</Term> section is **hidden by default**; the Operator enables it. At the Edge: Device tab > **Edge Services** > TACACS Services, pick a service (or + New TACACS Service), a Source Interface and Save Changes. A TACACS service used by an Edge cannot be deleted.
+
+## Edge Services (VNFs)
+
+**Configure > Network Services > Edge Services > VNFs > New**, enter a name, choose a type and its settings. The three documented types are Check Point, Fortinet and Palo Alto Networks firewalls. The order for deploying one is:
+
+1. **Create the VNF service** with the type's settings (table below).
+2. **Deploy it on an Edge:** Configure > Edges > (Edge) > Device > **Security VNF** > Configure Security VNF > **Deploy**, then VLAN, VM-1 IP, VM-1 Hostname and Deployment State, choose the service, **Update**. Only an Operator can activate the Security VNF configuration.
+3. **Insert it into the traffic:** map a Service VLAN ID to each segment at Configure > Segments, then on the VLAN select **VNF Insertion** (or, for a routed interface, activate Trusted Source and deactivate the WAN overlay).
+
+**Limits:** the 7.0 Edge page lists the supported Edge models as **520v, 840, 620, 640 and 680**, with minimum software per type (Palo Alto 3.2.0 or 3.4.3, Check Point 3.3.2 or 3.4.3, Fortinet 3.3.1 or 4.0.0); only Check Point is supported with HA, on Edge 4.0.0 or later. Palo Alto needs Panorama 8.0.5 or later and a VNF Licence (Deactivate the licence before removing the configuration). Check Point needs R77.20 or later on the VNF and 80.30 or later on the manager. If the image checksum does not match, the Edge does not deploy the VNF.
+
+## Settings reference
+
+### Authentication Services (RADIUS)
+
+| Field | What it does | Allowed values and default |
+|---|---|---|
+| Service Name | names the service | free text |
+| Server Address | the RADIUS server | an IP address |
+| Shared Secret | the shared password | a less-than sign is not supported from release 4.5 |
+| Authentication Port | the server port | 1 to 65535, default 1812 |
+| Accounting Port | optional accounting port | a port number if required; no default stated |
+| Custom Attributes | extra attributes | select Add and enter them |
+| Source Interface | the Edge interface whose IP is the source (Edge) | an Edge interface for the segment; default Auto, which picks from the global segment in a set order |
+
+### TACACS Services
+
+| Field | What it does | Allowed values and default |
+|---|---|---|
+| Service Name | names the service | free text |
+| Server Address | the TACACS server | an IP address |
+| Port | the server port | a port value; no default stated |
+| Shared Secret | the shared password | a less-than sign is not supported from release 4.5 |
+
+### Edge Services (VNFs)
+
+| Field | What it does | Allowed values and default |
+|---|---|---|
+| Primary Check Point Mgmt Server IP | the management server (Smart Console) | Check Point |
+| SIC Key for Mgmt Server Access | password to register the VNF | Check Point |
+| Fortinet Mgmt Server IP | the FortiManager address | Fortinet |
+| FortiManager Serial Number | the manager's serial | Fortinet |
+| Registration Password | registers the VNF with FortiManager | Fortinet |
+| Primary Panorama IP Address | the Panorama server | Palo Alto Networks |
+| Panorama Auth Key | key the VNF uses to log in to Panorama | Palo Alto Networks |
+| VNF Image Location | where the Orchestrator downloads the image | Check Point and Fortinet |
+| Image Version | the image to deploy | from a system property only an Operator sets; Fortinet lists 6.4.0, 6.2.4, 6.0.5 and 6.2.0 |
+| Download Type | how the image is fetched | https (Username, Password) or s3 (Access Key ID, Secret Access Key, Region) |
+| Deployment State | whether the VM is powered on | "Image Downloaded and Powered On" (traffic transits the VNF only with this) or "Powered Off" |
+| Inspection Mode | Fortinet inspection mode | Proxy (default) or Flow |
+
+<Callout variant="warning" title="What we could not confirm">
+  The current 7x0, 4100 and 5100 Edges are not in the VNF model tables, so VNF support on them is not documented in the pages we read. Whether Check Point and Fortinet need a separate VNF licence, how long a deploy takes, and any status of RADIUS or TACACS services are not stated.
+</Callout>
+
+<Predict
+  prompt="A Fortinet VNF is deployed with the Deployment State 'Image Downloaded and Powered Off', and you expect traffic to pass through it. What does the documentation say?"
+  choices={["Do not use Powered Off if traffic must pass through the VNF", "Powered Off is the normal state for inspection", "The Orchestrator powers it on at the first packet", "Powered Off is required for Check Point HA"]}
+  answer={0}
+>
+  Traffic transits the VNF only with "Image Downloaded and Powered On"; the documentation says not to use Powered Off if traffic must pass through it.
+</Predict>
+
+## What you would see in the VCO
+
+- **Monitor > Edges**: a VNF column (hover for the type) and a VNF VM Status link.
+- **Monitor > Network Services > Edge VNFs**: Edges and VM status.
+- **Monitor > Alerts**: "VNF VM config changed" messages such as VNF deployed, VNF is DOWN, VNF is UP, and VNF insertion turned on or off; alerts are enabled under Service Settings > Alerts and Notifications > Incidents > VNF Configuration.
+- For RADIUS and TACACS the documentation names no status screen.
+
+<Callout variant="tip" title="Check this in your own VCO">
+  - **[observation candidate]** Open: Network Management > Authentication Services, New Authentication. Expect: Service Name, Server Address, Shared Secret, Authentication Port 1812 and an optional Accounting Port. Docs may differ: the Accounting Port may have a default.
+  - **[observation candidate]** Open: an Edge's Device tab, Authentication, Override. Expect: RADIUS Server and Source Interface defaulting to Auto. Docs may differ: the Edge Services section may order them differently.
+  - **[observation candidate]** Open: Network Management, looking for TACACS Services. Expect: absent unless the Operator enabled it. Docs may differ: your customer may have it on.
+  - **[observation candidate]** Open: Network Services > Edge Services > VNFs, New. Expect: a type list of Check Point, Fortinet and Palo Alto Networks firewalls. Docs may differ: a customer may see fewer types.
+  - **[observation candidate]** Open: Monitor > Network Services > Edge VNFs after a deployment in a lab. Expect: the Edge and its VM status. Docs may differ: the exact status words.
+</Callout>
+
+## Key takeaways
+
+- RADIUS is created under Network Services and assigned in the Profile and the Edge; the Authentication Port defaults to 1812.
+- TACACS is hidden until the Operator enables it, and its source interface is set at the Edge.
+- A VNF is created once, deployed on an Edge, then inserted per VLAN or routed interface.
+- VNF support is documented for named older Edge models, not for the current 7x0, 4100 and 5100.
+
+## What would you look for in the VCO
+
+- Which RADIUS or TACACS service does this Edge use, and from which source interface?
+- Which VNF is deployed, in which Deployment State, and is insertion on?
+- Is the Edge model one the documentation lists for the VNF?

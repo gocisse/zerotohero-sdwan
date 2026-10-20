@@ -14,6 +14,9 @@ type GlossaryTerm struct {
 	Long      string   `yaml:"long" json:"long,omitempty"`
 	Related   []string `yaml:"related" json:"related"`
 	LessonRef string   `yaml:"lesson_ref" json:"lesson_ref,omitempty"`
+	// GuideTopics are the study-guide topics the term belongs to, primary first. A term with none is BeyondGuide.
+	GuideTopics []string `yaml:"guide_topics" json:"guide_topics"`
+	BeyondGuide bool     `yaml:"beyond_guide" json:"beyond_guide"`
 }
 
 // ---- MDX component references ----

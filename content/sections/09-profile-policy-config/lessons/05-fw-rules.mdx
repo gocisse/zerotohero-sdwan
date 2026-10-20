@@ -1,0 +1,101 @@
+---
+id: prof-fw-rules
+title: Firewall rules, configuration
+summary: "The firewall rule editor field by field, the Stateful Firewall and related settings with their documented defaults, a worked example from documented fields, and how Profile and Edge rules are listed."
+estimated_minutes: 11
+topics: [pcfg-fw-rules]
+prerequisites: [cfg-firewall, prof-bp-rules]
+---
+
+**By the end of this lesson you will be able to:**
+
+- open the firewall rule editor on a Profile or an Edge and create a rule in the documented order;
+- read each Match field and each action, with the documented defaults;
+- say what <Term id="stateful-firewall">Stateful Firewall</Term> changes and what its documented defaults are;
+- say how Profile and Edge rules are listed and what the documentation does not say about evaluation.
+
+## Where and in what order
+
+A firewall rule is created on a Profile (**Configure > Profiles > (Profile) > Firewall**, or the Firewall View link) or on an Edge (**Configure > Edges > (Edge) > Firewall**). The documented steps: under Configure Firewall, Firewall Rules, **+ NEW RULE**; a unique **Rule Name** (or **Duplicate Rule**); the **Match** section; the **Firewall Action** section; optionally a comment and a Security Service Group; **Create**. Edges inherit the Profile's rules and settings; inherited rules (<Term id="rules-from-profile">Rules From Profile</Term>) show in the **Rule From Profile** area of the Edge's Firewall tab; Edge rules take priority over inherited ones; a Profile rule cannot be edited at the Edge, so you create a rule with the same name and new parameters there.
+
+<Diagram id="prof-fw-rule-eval" />
+
+## Settings reference
+
+### Rule editor
+
+| Field | What it does | Allowed values and default |
+|---|---|---|
+| Rule Name | a unique name | or base it on an existing rule with Duplicate Rule |
+| IP Version | the address family | IPv4, IPv6 or IPv4 and IPv6 (the default); Source and Destination addresses cannot be set in Mixed mode |
+| Source | which traffic by origin | Any (default), Object Group or Define (VLAN, Interface and IP Address, MAC Address, Transport Port) |
+| Destination | which traffic by target | Any (default), Object Group or Define (VLAN, Interface, IP Address, Domain Name, Transport, Protocol) |
+| Protocol | the transport protocol | GRE, ICMP, TCP or UDP; ICMP not supported in Mixed mode |
+| Application | which application | Any (default) or Define, with a DSCP flag |
+| Firewall | the action | Allow, Drop (silent), Reject (discards and sends a reset) or Skip (next rule); Reject and Skip need Stateful Firewall |
+| <Term id="hosted-firewall-logging">Hosted Firewall Logging</Term> | sends logs to the Orchestrator | ON or OFF; turned OFF automatically for Allow and on again for Drop |
+| Syslog Forwarding | sends logs to the syslog collector | ON or OFF for any action |
+| New Comment | a comment on the rule | up to 50 characters |
+| Security Services | a Security Service Group | active only when the action is Allow |
+
+### Related settings
+
+| Field | What it does | Allowed values and default |
+|---|---|---|
+| Firewall Status | the firewall feature | activated by default; off at the Profile means off for all its Edges |
+| Stateful Firewall | session tracking, directional matching | deactivated by default for an Enterprise; needs Edge 3.4.0 or later; timeouts Established TCP 7440 s, Non-established TCP 240 s, UDP 300 s, Other 60 s |
+| <Term id="edge-access">Edge Access</Term> | which management access the Edge allows | Support Access Deny All, Console Access Deny, SNMP Access Deny All, Local Web UI Access Deny All, Local Web UI Port 80 |
+| Port Forwarding | forwards a WAN port to a LAN host | Edge only, under Additional Settings > Inbound ACLs |
+| 1:1 NAT | maps an outside IP to an inside IP | Edge only, under Additional Settings > Inbound ACLs |
+
+By default the Edge blocks all inbound traffic except self-destined traffic unless Port Forwarding or 1:1 NAT rules exist. Edge firewalls apply to traffic passing through the Edge, not to self-originating or self-destined traffic.
+
+## A worked example (documented fields only)
+
+Goal: silently drop ICMP that comes from a guest VLAN. The values are illustrative; the fields and values are documented.
+
+1. **Rule Name:** a name you choose. **IP Version:** IPv4.
+2. **Match:** Source **Define > VLAN** (the guest VLAN); Destination **Define > Protocol = ICMP**; Application Any.
+3. **Firewall Action:** **Drop**. Leave **Syslog Forwarding** on if you want the log forwarded to the collector.
+4. **Create.** Check it under Firewall Rules and, on an Edge, under Rule From Profile.
+
+[Try it in the simulator](/sim/branch-override-demo/edges/store-2-edge?tab=firewall): the mock Firewall tab shows rules with a VLAN or protocol match and an allow or drop action, and the Stateful Firewall setting. It does not model the fields above beyond those.
+
+<Callout variant="warning" title="What we could not confirm">
+  Rule evaluation order, the action when no rule matches, whether the firewall decides before or after business policy, whether general rules are scoped to a segment, and which action is preselected are not stated in the pages we read. The page's text for the destination transport field says "source port", which looks like a documentation error. The last part of the 7.0 page (Enhanced Firewall Services detail and Firewall Logs) was not read.
+</Callout>
+
+<Predict
+  prompt="You want a blocked source to receive a reset instead of silence. Which action, and what does it need?"
+  choices={["Reject, with Stateful Firewall activated", "Drop, with no requirement", "Skip, with Stateful Firewall deactivated", "Allow, with Hosted Firewall Logging on"]}
+  answer={0}
+>
+  Reject discards the packets and sends an explicit reset to the source; Reject and Skip are available only when Stateful Firewall is activated.
+</Predict>
+
+## What you would see in the VCO
+
+- **Configure > Profiles > (Profile) > Firewall**: Configure Firewall, Firewall Rules, + NEW RULE, with DELETE, CLONE and COMMENT HISTORY.
+- **Configure > Edges > (Edge) > Firewall**: the Rule From Profile area and the Edge's own rules.
+- **Monitor > Firewall Logs**.
+
+<Callout variant="tip" title="Check this in your own VCO">
+  - **[observation candidate]** Open: a Profile's Firewall tab, + NEW RULE. Expect: Rule Name, Duplicate Rule, Match with IP Version, Source, Destination and Application, and a Firewall Action section. Docs may differ: the layout.
+  - **[observation candidate]** Open: the Firewall action list with Stateful Firewall off. Expect: Allow and Drop only, Reject and Skip unavailable. Docs may differ: they may be shown but disabled.
+  - **[observation candidate]** Open: the Profile's Stateful Firewall setting. Expect: deactivated for an Enterprise by default. Docs may differ: the 6.4 page also calls it a customer capability.
+  - **[observation candidate]** Open: an Edge's Firewall tab. Expect: a Rule From Profile area listing the Profile's rules, and an Override checkbox. Docs may differ: the Edge Overrides heading was not documented on this page.
+  - **[observation candidate]** Open: Edge Access settings. Expect: Support Access, Console Access, SNMP Access and Local Web UI Access defaulting to deny. Docs may differ: the defaults of your release.
+</Callout>
+
+## Key takeaways
+
+- A firewall rule is + NEW RULE: name, Match, Firewall Action, Create; Edges inherit Profile rules and can create overriding ones.
+- Actions are Allow, Drop, Reject and Skip; Reject and Skip need Stateful Firewall, which is off by default.
+- Match fields default to Any; logging has two independent boxes.
+- Evaluation order and the no-match action are not documented.
+
+## What would you look for in the VCO
+
+- Which rule applies, and is it inherited or an Edge override?
+- Is Stateful Firewall on for this customer?
+- What do the Firewall Logs show for the flow?

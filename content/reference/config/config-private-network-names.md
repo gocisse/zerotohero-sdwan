@@ -1,0 +1,17 @@
+# Configuration: Private Network Names
+
+Read: 7.0 Network Services (200000 to 269017), 7.0 Profile device settings (100000 to 200000), 6.4 Network Services (200000 to 266968).
+
+Gathered 2026-10-20 for step 18. Every row is one checkable statement. Rows that start with `Field "<name>"` are the SETTINGS TABLE of this service: the field name is exactly as the documentation names it, followed by what it does, the allowed values or format, the default only if the page states one, and where it is applied (Profile, Edge or both). "Summarised via WebFetch" means the Arista page was read through a summarising tool with verbatim quotes requested; where the tool said a line is its paraphrase the row says so. Prefixes: `Menu path:`, `Steps:`, `Limit:`, `Prerequisite:`, `Shown afterwards:`, `6.4 vs 7.0:`, `Needs observation:`.
+
+| claim | source URL | doc version | status |
+|---|---|---|---|
+| Menu path: Configure > Network Services > Network Management > expand Private Network Names; select New or New Private Network Name (shown only when the table is empty), enter a name, Save Changes. | https://www.arista.com/en/admin-guide-vc-7-0/sd-wan-7-0-configure-network-services | 7.0, summarised via WebFetch | VERIFIED |
+| Field "Name" (the only field; applied: Enterprise list, assigned to a private WAN overlay at the Edge or Profile): the name of the private network. Default: not stated. | https://www.arista.com/en/admin-guide-vc-7-0/sd-wan-7-0-configure-network-services | 7.0, summarised via WebFetch | VERIFIED |
+| Purpose (quote): "Define multiple private networks and assign them to individual private WAN overlays." | https://www.arista.com/en/admin-guide-vc-7-0/sd-wan-7-0-configure-network-services | 7.0, summarised via WebFetch | VERIFIED |
+| Limit: only names not used by an Edge can be deleted; the delete dialog asks for the count of items to delete. Table actions: Delete, Columns. | https://www.arista.com/en/admin-guide-vc-7-0/sd-wan-7-0-configure-network-services | 7.0, summarised via WebFetch | VERIFIED |
+| Prerequisite (paraphrase, Conditional Backhaul): Branches and Conditional Backhaul Hubs must use the same Private Network name on their Private links. | https://www.arista.com/en/admin-guide-vc-7-0/sd-wan-7-0-configure-device-settings-for-profiles | 7.0, summarised via WebFetch | VERIFIED |
+| Third-party claim "tunnels form only between interfaces with the same private network name": not stated in this form. The pages read say only that names are assigned to private WAN overlays and, for Conditional Backhaul, that the Branch and the Hub use the same name on their private links. Unconfirmed as a general rule. [needs observation] | https://www.arista.com/en/admin-guide-vc-7-0/sd-wan-7-0-configure-network-services | 7.0, summarised via WebFetch | VERIFY |
+| Where on the Edge or Profile the name is assigned (the WAN overlay field label and screen): not in the pages read. [needs observation] | https://www.arista.com/en/admin-guide-vc-7-0/sd-wan-7-0-configure-device-settings-for-profiles | 7.0, summarised via WebFetch | VERIFY |
+| 6.4 vs 7.0: the same single name field, the same deletion rule; no defaults in either. | https://www.arista.com/en/admin-guide-vc-6-4/sd-wan-6-4-configuring-network-services | 6.4, summarised via WebFetch | VERIFIED |
+| Shown afterwards: the page read describes no status or events. [needs observation] | https://www.arista.com/en/admin-guide-vc-7-0/sd-wan-7-0-configure-network-services | 7.0, summarised via WebFetch | VERIFY |

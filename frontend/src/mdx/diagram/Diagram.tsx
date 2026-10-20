@@ -16,6 +16,7 @@ import DiagramCanvas from './DiagramCanvas'
 import { hiddenAt } from './geometry'
 import { LINK_STYLES } from './linkStyles'
 import { packetDurationMs } from './packets'
+import { panTarget } from './panTarget'
 
 const reducedQuery = '(prefers-reduced-motion: reduce)'
 function useReducedMotion(): boolean {
@@ -79,6 +80,8 @@ function DiagramPlayer({ diagram: d }: { diagram: DiagramDef }) {
   const reduced = useReducedMotion()
   const scrollRef = useRef<HTMLDivElement>(null)
   const [pannable, setPannable] = useState(false)
+  // Changes when the canvas has laid out at a new width: the callout bubbles move with it, so the pan target is computed again.
+  const [layoutWidth, setLayoutWidth] = useState(0)
   const linkPaths = useRef(new Map<string, SVGPathElement>())
   const registerPath = useCallback((id: string, el: SVGPathElement | null) => {
     if (el) linkPaths.current.set(id, el)
@@ -126,24 +129,24 @@ function DiagramPlayer({ diagram: d }: { diagram: DiagramDef }) {
     }
     const nodes = d.nodes.filter((n) => focusIds.has(n.id))
     const xs = (nodes.length > 0 ? nodes : d.nodes).map((n) => n.x)
-    const cx = (Math.min(...xs) + Math.max(...xs)) / 2
     const vb = svg.viewBox.baseVal
     const ratio = svg.clientWidth / vb.width
-    let left = (cx - vb.x) * ratio - box.clientWidth / 2
-    // Keep the step's callout bubbles in view too: centre the nodes and the bubbles together when they fit.
     const boxRect = box.getBoundingClientRect()
-    const bubbles = Array.from(box.querySelectorAll('[data-callout-bubble]')).map((el) => el.getBoundingClientRect())
-    if (bubbles.length > 0) {
-      const nodeL = (Math.min(...xs) - vb.x) * ratio - 41 * ratio
-      const nodeR = (Math.max(...xs) - vb.x) * ratio + 41 * ratio
-      const bubL = Math.min(...bubbles.map((r) => r.left - boxRect.left + box.scrollLeft))
-      const bubR = Math.max(...bubbles.map((r) => r.right - boxRect.left + box.scrollLeft))
-      const lo = Math.min(nodeL, bubL)
-      const hi = Math.max(nodeR, bubR)
-      if (hi - lo <= box.clientWidth) left = (lo + hi) / 2 - box.clientWidth / 2
-    }
-    box.scrollTo({ left: Math.max(0, left), behavior: reduced ? 'auto' : 'smooth' })
-  }, [index, step, d, reduced])
+    const bubbles = Array.from(box.querySelectorAll('[data-callout-bubble]')).map((el) => {
+      const r = el.getBoundingClientRect()
+      return { left: r.left - boxRect.left + box.scrollLeft, right: r.right - boxRect.left + box.scrollLeft }
+    })
+    const left = panTarget({
+      nodes: {
+        left: (Math.min(...xs) - vb.x) * ratio - 41 * ratio,
+        right: (Math.max(...xs) - vb.x) * ratio + 41 * ratio,
+      },
+      bubbles,
+      view: box.clientWidth,
+      maxScroll: box.scrollWidth - box.clientWidth,
+    })
+    box.scrollTo({ left, behavior: reduced ? 'auto' : 'smooth' })
+  }, [index, step, d, reduced, layoutWidth])
 
   const onKeyDown = (e: React.KeyboardEvent) => {
     if (!stepped || e.altKey || e.ctrlKey || e.metaKey) return
@@ -160,6 +163,7 @@ function DiagramPlayer({ diagram: d }: { diagram: DiagramDef }) {
 
   return (
     <figure
+      id={`diagram-${d.id}`}
       className="not-prose my-6 rounded-xl border border-slate-200 bg-slate-50 p-3 dark:border-slate-800 dark:bg-slate-900"
       data-diagram={d.id}
     >
@@ -173,6 +177,7 @@ function DiagramPlayer({ diagram: d }: { diagram: DiagramDef }) {
       >
         <div ref={scrollRef} className="overflow-x-auto">
           <DiagramCanvas
+            onLayout={setLayoutWidth}
             diagram={d}
             hidden={hidden}
             highlight={highlight}

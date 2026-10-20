@@ -16,6 +16,10 @@ type Bundle struct {
 	HasGlossary  bool
 	Glossary     []GlossaryTerm
 	GlossaryBad  bool
+	GuidePath    string
+	HasGuide     bool
+	Guide        StudyGuide
+	GuideBroken  bool
 	Extra        []string // unexpected files, relative to the content dir
 }
 

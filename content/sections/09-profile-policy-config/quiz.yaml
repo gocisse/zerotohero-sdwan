@@ -1,0 +1,399 @@
+# Section 9 quiz. Correct answers use only VERIFIED rows in content/reference/config/{config-segments,config-profiles,config-business-policy-rules,config-firewall-rules,config-application-match}.md.
+# No answer rests on a VERIFY row, a default the pages do not state, or the "our method" walks.
+
+- id: prof-q-seg-path
+  topic: pcfg-segments
+  difficulty: 1
+  type: single_choice
+  prompt: "Where is a segment created, and with which steps?"
+  options:
+    - id: right
+      text: "Configure > Segments > Add, fill in the form, Save Changes"
+    - id: profile
+      text: "Configure > Profiles > Device tab > Add Segment"
+      explanation: "A Profile adds an existing segment with Change Profile Segments; segments are created under Configure > Segments."
+    - id: edge
+      text: "Configure > Edges > the Edge > Segments"
+      explanation: "Segments are defined for the Enterprise, not on an Edge."
+    - id: gw
+      text: "Operator portal > Gateways > Segments"
+      explanation: "The guide places segments in the Enterprise's Configure tab."
+  correct: right
+  explanation: "The guide's steps are Configure > Segments, Add, fill in the form fields, then Save Changes."
+  lesson_ref: prof-segments
+
+- id: prof-q-seg-order
+  topic: pcfg-segments
+  difficulty: 2
+  type: ordering
+  prompt: "Put the documented steps for using a new segment in a Profile's VLAN in order."
+  options:
+    - id: create
+      text: "Create the segment under Configure > Segments (Add, then Save Changes)"
+    - id: addprof
+      text: "Add it to the Profile with Segment > Change Profile Segments, then Update Segments"
+    - id: vlan
+      text: "Add a VLAN and choose the segment in its Segment field"
+    - id: save
+      text: "Select Save Changes on the Device tab"
+  correct: [create, addprof, vlan, save]
+  explanation: "A segment is created first, then added to the Profile; the VLAN dialog's Segment field picks among the Profile's segments, and Save Changes saves the Device tab."
+  lesson_ref: prof-segments
+
+- id: prof-q-seg-delete
+  topic: pcfg-segments
+  difficulty: 2
+  type: single_choice
+  prompt: "Scenario: the guest segment is included in a Profile and you try to delete it under Configure > Segments. What does the documentation say?"
+  options:
+    - id: no
+      text: "Users cannot delete a segment used by a Profile"
+    - id: yes
+      text: "It is deleted and removed from the Profile"
+      explanation: "A segment that a Profile uses cannot be deleted."
+    - id: restart
+      text: "It is deleted after the Edges restart"
+      explanation: "No such behaviour is documented."
+    - id: op
+      text: "Only the Operator can delete it"
+      explanation: "The restriction is about use by a Profile, not the role."
+  correct: no
+  explanation: "The guide says users cannot delete a segment used by a Profile; the Change Profile Segments dialog marks segments in use with an icon."
+  lesson_ref: prof-segments
+
+- id: prof-q-profile-delete
+  topic: pcfg-profiles
+  difficulty: 1
+  type: true_false
+  prompt: "**True or false:** A Profile can be deleted while Edges are still associated with it."
+  correct: false
+  explanation: "The guide says users cannot delete Profiles that are associated with Edges."
+  lesson_ref: prof-profiles
+
+- id: prof-q-usedby
+  topic: pcfg-profiles
+  difficulty: 1
+  type: single_choice
+  prompt: "Which column of the Profiles list shows how many Edges use a Profile?"
+  options:
+    - id: used
+      text: "Used By"
+    - id: bp
+      text: "Biz. Pol"
+      explanation: "That column is a View link to the Profile's business policy."
+    - id: fw
+      text: "Firewall"
+      explanation: "That column is a View link to the Profile's firewall."
+    - id: name
+      text: "Name"
+      explanation: "The Name links to the Profile's configuration."
+  correct: used
+  explanation: "The Profiles list has a Used By column with the number of Edges associated with the Profile."
+  lesson_ref: prof-profiles
+
+- id: prof-q-credentials
+  topic: pcfg-profiles
+  difficulty: 2
+  type: single_choice
+  prompt: "What is the documented default of a Profile's Local Credentials on the Overview tab?"
+  options:
+    - id: random
+      text: "A random password set by the Orchestrator"
+    - id: admin
+      text: "The word admin"
+      explanation: "No fixed default is documented."
+    - id: empty
+      text: "No password"
+      explanation: "The default is a random password."
+    - id: edge
+      text: "The password of the first Edge that uses the Profile"
+      explanation: "No such rule is documented."
+  correct: random
+  explanation: "The default local credentials are set to a random password by the Orchestrator; EDIT > Change Password changes them."
+  lesson_ref: prof-profiles
+
+- id: prof-q-defaults
+  topic: pcfg-device
+  difficulty: 3
+  type: multi_choice
+  prompt: "Which are documented defaults of a Profile's routed interface? (Select all that apply.)"
+  options:
+    - id: enabled
+      text: "Interface Enabled is selected"
+    - id: overlay
+      text: "Enable WAN Overlay is selected"
+    - id: dhcp
+      text: "The IPv4 Addressing Type is DHCP"
+    - id: mtu
+      text: "L2 MTU is 9000 bytes"
+      explanation: "The documented default is 1500 bytes for routed interfaces."
+    - id: switched
+      text: "Capability is Switched"
+      explanation: "A routed interface defaults to Routed; Switched is the default on a switch port."
+  correct: [enabled, overlay, dhcp]
+  explanation: "The Profile page lists Interface Enabled and Enable WAN Overlay as selected by default and DHCP as the default addressing type; the L2 MTU default is 1500."
+  lesson_ref: prof-device
+
+- id: prof-q-arp
+  topic: pcfg-device
+  difficulty: 2
+  type: single_choice
+  prompt: "Scenario: an administrator overrides the ARP timeouts and sets Dead lower than Stale. What does the documentation require?"
+  options:
+    - id: order
+      text: "Stale must be less than Dead, and Dead less than Cleanup"
+    - id: any
+      text: "Any order is accepted"
+      explanation: "The values must increase in order."
+    - id: reverse
+      text: "Cleanup must be less than Stale"
+      explanation: "The order is Stale, then Dead, then Cleanup."
+    - id: equal
+      text: "All three must be equal"
+      explanation: "They have different defaults (2 minutes, 25 minutes, 4 hours)."
+  correct: order
+  explanation: "The guide says Stale must be less than Dead and Dead less than Cleanup; the defaults are 2 minutes, 25 minutes and 4 hours."
+  lesson_ref: prof-device
+
+- id: prof-q-dnsproxy
+  topic: pcfg-device
+  difficulty: 2
+  type: single_choice
+  prompt: "What is the documented default of DNS Proxy at the VLAN level of a Profile?"
+  options:
+    - id: sel
+      text: "Selected"
+    - id: unsel
+      text: "Not selected"
+      explanation: "It is selected by default at the VLAN level."
+    - id: model
+      text: "Selected only on Wi-Fi Edges"
+      explanation: "No model dependency is documented."
+    - id: edge
+      text: "Always set at the Edge"
+      explanation: "It is a VLAN setting in the Profile."
+  correct: sel
+  explanation: "The Profile page says DNS Proxy is selected by default and works regardless of the DHCP server setting."
+  lesson_ref: prof-device
+
+- id: prof-q-action-fields
+  topic: pcfg-bp-rules
+  difficulty: 2
+  type: multi_choice
+  prompt: "Which of these are fields of the Action tab of a business policy rule? (Select all that apply.)"
+  options:
+    - id: prio
+      text: "Priority"
+    - id: net
+      text: "Network Service"
+    - id: steer
+      text: "Link Steering"
+    - id: domain
+      text: "Domain Name"
+      explanation: "Domain Name is a Destination field on the Match tab."
+    - id: source
+      text: "Source"
+      explanation: "Source is on the Match tab."
+  correct: [prio, net, steer]
+  explanation: "The Action tab has Priority, Network Service, Link Steering, Service Class, Enable Rate Limit, Enable NAT and the DSCP tags; Source, Destination and Application are on the Match tab."
+  lesson_ref: prof-bp-rules
+
+- id: prof-q-edge-rule
+  topic: pcfg-bp-rules
+  difficulty: 2
+  type: single_choice
+  prompt: "Scenario: a Profile rule steers an application over MPLS and Branch X needs it over LTE. What does the documentation say to do?"
+  options:
+    - id: same
+      text: "Create an identical rule at the Edge with new parameters; it supersedes the Profile rule"
+    - id: edit
+      text: "Edit the Profile rule from the Edge"
+      explanation: "Rules created at the Profile cannot be updated at the Edge."
+    - id: delete
+      text: "Delete the rule under Rules From Profile"
+      explanation: "Inherited rules cannot be changed at the Edge."
+    - id: bp
+      text: "Turn on Conditional Backhaul"
+      explanation: "That is a different option."
+  correct: same
+  explanation: "The Edge cannot update a Profile rule; the Edge creates the same rule with new parameters, which appears under Edge Overrides and supersedes the Profile rule."
+  lesson_ref: prof-bp-rules
+
+- id: prof-q-steer-default
+  topic: pcfg-bp-rules
+  difficulty: 1
+  type: single_choice
+  prompt: "Which Link Steering option is the documented default for all applications?"
+  options:
+    - id: auto
+      text: "Auto"
+    - id: tg
+      text: "Transport Group"
+      explanation: "Transport Group is a choice, not the default."
+    - id: iface
+      text: "Interface"
+      explanation: "Interface steering is available only at the Edge override level."
+    - id: wan
+      text: "WAN Link"
+      explanation: "WAN Link steering is available only at the Edge override level."
+  correct: auto
+  explanation: "Auto is the default; DMPO selects the best links and enables on-demand remediation."
+  lesson_ref: prof-bp-rules
+
+- id: prof-q-steer-levels
+  topic: pcfg-bp-rules
+  difficulty: 2
+  type: true_false
+  prompt: "**True or false:** Link Steering by Interface or by WAN Link can be set in a rule on a Profile."
+  correct: false
+  explanation: "Interface and WAN Link steering are available only at the Edge override level; Transport Group works at both Profile and Edge."
+  lesson_ref: prof-bp-rules
+
+- id: prof-q-reject
+  topic: pcfg-fw-rules
+  difficulty: 2
+  type: single_choice
+  prompt: "Scenario: a blocked source should receive an explicit reset instead of silence. Which action, and what does it need?"
+  options:
+    - id: reject
+      text: "Reject, with Stateful Firewall activated"
+    - id: drop
+      text: "Drop, with no requirement"
+      explanation: "Drop discards silently."
+    - id: skip
+      text: "Skip, with Stateful Firewall deactivated"
+      explanation: "Skip moves to the next rule and needs Stateful Firewall."
+    - id: allow
+      text: "Allow with logging on"
+      explanation: "Allow permits the packets."
+  correct: reject
+  explanation: "Reject discards the packets and sends an explicit reset to the source; Reject and Skip are available only when Stateful Firewall is activated."
+  lesson_ref: prof-fw-rules
+
+- id: prof-q-stateful
+  topic: pcfg-fw-rules
+  difficulty: 3
+  type: multi_choice
+  prompt: "Which statements about Stateful Firewall are documented? (Select all that apply.)"
+  options:
+    - id: deact
+      text: "It is deactivated by default for an Enterprise"
+    - id: tcp
+      text: "The Established TCP timeout defaults to 7440 seconds"
+    - id: ver
+      text: "It requires Edge release 3.4.0 or later"
+    - id: skip
+      text: "Reject and Skip are available without it"
+      explanation: "Reject and Skip need Stateful Firewall."
+    - id: asym
+      text: "Asymmetric routing is supported with it"
+      explanation: "Asymmetric routing is not supported on Edges with Stateful Firewall activated."
+  correct: [deact, tcp, ver]
+  explanation: "Stateful Firewall is off by default, needs Edge 3.4.0 or later and has an Established TCP timeout default of 7440 seconds; asymmetric routing is not supported with it."
+  lesson_ref: prof-fw-rules
+
+- id: prof-q-hosted-log
+  topic: pcfg-fw-rules
+  difficulty: 2
+  type: single_choice
+  prompt: "What does the firewall rule page say about Hosted Firewall Logging when the action is Allow?"
+  options:
+    - id: autooff
+      text: "It is turned OFF automatically for Allow and enabled again for Drop"
+    - id: alwayson
+      text: "It is always on"
+      explanation: "It is turned off for Allow."
+    - id: sys
+      text: "It is the same setting as Syslog Forwarding"
+      explanation: "Syslog Forwarding is an independent checkbox."
+    - id: none
+      text: "It is not available for Allow"
+      explanation: "It is turned off automatically; the page does not say it is unavailable."
+  correct: autooff
+  explanation: "Hosted Firewall Logging is an ON/OFF checkbox that is automatically turned off for Allow and on again for Drop; Syslog Forwarding is independent."
+  lesson_ref: prof-fw-rules
+
+- id: prof-q-dpi-first
+  topic: pcfg-app-match
+  difficulty: 3
+  type: single_choice
+  prompt: "Scenario: a rule matches an application, but the first flow to a SaaS site is handled by a more general rule. What does the documentation say explains it?"
+  options:
+    - id: dpi
+      text: "The DPI engine usually needs the first 5 to 10 packets to identify the application, so the first flow may match a more general rule"
+    - id: order
+      text: "Rules are evaluated in the order they were created"
+      explanation: "The pages say rules are listed by highest precedence; creation order is not mentioned."
+    - id: gw
+      text: "The Gateway reclassifies the first flow"
+      explanation: "No such behaviour is documented."
+    - id: cache
+      text: "The application cache is cleared every minute"
+      explanation: "Cache entries expire after 10 minutes of no traffic to the destination."
+  correct: dpi
+  explanation: "Application matching depends on the DPI engine, which usually needs the first 5 to 10 packets; identified destinations are cached for 10 minutes of inactivity."
+  lesson_ref: prof-app-match
+
+- id: prof-q-custom-max
+  topic: pcfg-app-match
+  difficulty: 2
+  type: single_choice
+  prompt: "What is the documented maximum number of custom applications per Enterprise?"
+  options:
+    - id: n250
+      text: "250"
+    - id: n25
+      text: "25"
+      explanation: "The documented maximum is 250."
+    - id: n2500
+      text: "2500"
+      explanation: "2500 is the number of applications covered by Smart Defaults."
+    - id: nolimit
+      text: "No limit"
+      explanation: "The page states a maximum of 250."
+  correct: n250
+  explanation: "The Custom Applications page says the maximum number users can create for each Enterprise is 250."
+  lesson_ref: prof-app-match
+
+- id: prof-q-compare-edge
+  topic: pcfg-compare
+  difficulty: 2
+  type: single_choice
+  prompt: "Scenario: two Edges use the same Profile, but one steers an application differently. Where do you look first on the Edge that differs?"
+  options:
+    - id: eo
+      text: "Its Business Policy tab, Edge Overrides, then Rules From Profile"
+    - id: gw
+      text: "The Gateway's configuration"
+      explanation: "The Edge's own rules are on its Business Policy tab."
+    - id: overview
+      text: "The Profile's Overview tab only"
+      explanation: "The Overview shows the Profile, not the Edge's overrides."
+    - id: usedby
+      text: "The Used By column"
+      explanation: "It only counts Edges."
+  correct: eo
+  explanation: "An Edge-level rule supersedes the Profile's, and the Edge Overrides section shows the Edge's new and modified rules."
+  lesson_ref: prof-compare
+
+- id: prof-q-wrong-link
+  topic: pcfg-compare
+  difficulty: 3
+  type: multi_choice
+  prompt: "Scenario: a rule matches an application but its traffic still takes the other link. Which statements are documented? (Select all that apply.)"
+  options:
+    - id: edgerule
+      text: "An Edge can have its own rule that supersedes the Profile's rule, shown under Edge Overrides"
+    - id: dpi
+      text: "Early packets of a flow may match a less specific rule until DPI identifies the application"
+    - id: levels
+      text: "Interface and WAN Link steering are set only at the Edge override level"
+    - id: fwfirst
+      text: "The firewall is always evaluated before business policy"
+      explanation: "The order of firewall and business policy is not stated."
+    - id: created
+      text: "Rules are evaluated in the order they were created"
+      explanation: "The pages say rules are listed in order of highest precedence."
+  correct: [edgerule, dpi, levels]
+  explanation: "The documented points are an Edge rule that supersedes a Profile rule, the DPI delay for application rules, and Interface and WAN Link steering being Edge-override only. Evaluation order beyond highest precedence and the firewall versus business policy order are not documented."
+  lesson_ref: prof-compare

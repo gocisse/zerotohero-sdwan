@@ -1,0 +1,399 @@
+# Section 8 quiz. Correct answers use only VERIFIED rows in content/reference/config/*.md (the settings sheets).
+# No answer rests on a VERIFY row, a default the pages do not state, or the "create, assign, verify" method (our wording).
+
+- id: svc-q-optional
+  topic: svcfg-where
+  difficulty: 1
+  type: single_choice
+  prompt: "What does the documentation say about configuring network services under Configure > Network Services?"
+  options:
+    - id: right
+      text: "It is optional and can be configured in any order"
+    - id: order
+      text: "The services must be configured in the order they are listed"
+      explanation: "The guide says any order."
+    - id: all
+      text: "Every service must exist before an Edge can be activated"
+      explanation: "The guide calls configuring them optional."
+    - id: gw
+      text: "It is done on the Gateway, not in the Orchestrator"
+      explanation: "The area is in the Orchestrator."
+  correct: right
+  explanation: "The guide says configuring Network Services is optional and can be configured in any order."
+  lesson_ref: svc-where
+
+- id: svc-q-nsdgw-override
+  topic: svcfg-where
+  difficulty: 1
+  type: true_false
+  prompt: "**True or false:** An NSD via Gateway can be overridden for a single Edge at the Edge level."
+  correct: false
+  explanation: "An NSD via Gateway is defined exclusively at the Profile level and cannot be overridden at the Edge level."
+  lesson_ref: svc-where
+
+- id: svc-q-area
+  topic: svcfg-where
+  difficulty: 2
+  type: multi_choice
+  prompt: "Which of these are services listed in the Configure > Network Services area? (Select all that apply.)"
+  options:
+    - id: nsd
+      text: "Non SD-WAN Destinations via Gateway"
+    - id: netflow
+      text: "NetFlow"
+    - id: dnsserv
+      text: "DNS Services"
+    - id: bp
+      text: "Business policy rules"
+      explanation: "Business policy has its own tab; its network service action (Direct, Multi-Path, Internet Backhaul) is the second meaning of the words."
+    - id: remed
+      text: "DMPO remediation"
+      explanation: "Remediation is a DMPO behaviour, not a service in this area."
+  correct: [nsd, netflow, dnsserv]
+  explanation: "The area lists NSD via Gateway, NSD via Edge, API Credentials, Clusters and Hubs, NetFlow, DNS Services, Private Network Names, Prefix Delegation Tags, Authentication Services, TACACS Services and Edge Services."
+  lesson_ref: svc-where
+
+- id: svc-q-assign-gw
+  topic: svcfg-nsd-gateway
+  difficulty: 2
+  type: single_choice
+  prompt: "Scenario: an NSD via Gateway of type AWS VPN Gateway has been created. Where do you assign it so the branches use it?"
+  options:
+    - id: profile
+      text: "In the Profile: Device tab, VPN Services, Cloud VPN on, Enable Edge to Non SD-WAN via Gateway"
+    - id: edge
+      text: "On each Edge, with Override"
+      explanation: "An NSD via Gateway cannot be overridden at the Edge level."
+    - id: bp
+      text: "In a business policy rule"
+      explanation: "A business policy network service action is a different thing."
+    - id: gw
+      text: "In the Gateway's own configuration"
+      explanation: "The assignment is in the Profile."
+  correct: profile
+  explanation: "The Profile's VPN Services section has the Enable Edge to Non SD-WAN via Gateway checkbox under Edge to Non SD-WAN Sites, with a menu to choose the destination."
+  lesson_ref: svc-nsd-gateway
+
+- id: svc-q-order-gw
+  topic: svcfg-nsd-gateway
+  difficulty: 2
+  type: ordering
+  prompt: "Put the documented steps for an NSD via Gateway in order."
+  options:
+    - id: new
+      text: "Select New under Non SD-WAN Destinations via Gateway"
+    - id: general
+      text: "Enter the general fields and select Create"
+    - id: type
+      text: "Complete the type-specific settings and select Save Changes"
+    - id: assign
+      text: "Assign the NSD to a Profile"
+  correct: [new, general, type, assign]
+  explanation: "The guide's steps: New, enter the fields and Create, complete the type settings and Save Changes, then associate the NSD with a Profile."
+  lesson_ref: svc-nsd-gateway
+
+- id: svc-q-subnets
+  topic: svcfg-nsd-gateway
+  difficulty: 2
+  type: single_choice
+  prompt: "Scenario: an NSD via Gateway has no site subnets configured and the tunnel does not activate. What does the guide say to do?"
+  options:
+    - id: deact
+      text: "Deactivate Site Subnets so the tunnel can activate"
+    - id: mode
+      text: "Change the Tunnel Mode to Active/Active"
+      explanation: "Tunnel Mode is about the number of endpoints."
+    - id: sa
+      text: "Lower the IPsec SA Lifetime"
+      explanation: "Lifetimes are not the documented remedy."
+    - id: redundant
+      text: "Turn on Redundant VeloCloud Cloud VPN"
+      explanation: "That adds redundant tunnels; it does not address missing subnets."
+  correct: deact
+  explanation: "The guide says that if there are no site subnets configured, deactivate Site Subnets to activate the tunnel."
+  lesson_ref: svc-nsd-gateway
+
+- id: svc-q-bgp
+  topic: svcfg-nsd-gateway
+  difficulty: 3
+  type: multi_choice
+  prompt: "Which statements about BGP over IPsec for an NSD via Gateway are documented? (Select all that apply.)"
+  options:
+    - id: ebgp
+      text: "Only eBGP is supported"
+    - id: localip
+      text: "Local IP is mandatory for configuring Non SD-WAN neighbors"
+    - id: maxhop
+      text: "Max-hop is 2 to 255 from release 5.1, with a default of 2"
+    - id: ibgp
+      text: "iBGP is recommended between the Gateway and the destination"
+      explanation: "The guide recommends eBGP."
+    - id: keep
+      text: "The Keep Alive default is 120 seconds"
+      explanation: "The Keep Alive default is 60 seconds (Hold Timer 180, Connect 120)."
+  correct: [ebgp, localip, maxhop]
+  explanation: "Only eBGP is supported; Local IP is mandatory for Non SD-WAN neighbors; Max-hop is 2 to 255 with a default of 2. Keep Alive defaults to 60 seconds."
+  lesson_ref: svc-nsd-gateway
+
+- id: svc-q-edge-one
+  topic: svcfg-nsd-edge
+  difficulty: 2
+  type: single_choice
+  prompt: "Scenario: a segment already uses an NSD via Edge service and you want to enable a second NSD via Edge service for the same segment. What does the documentation say?"
+  options:
+    - id: one
+      text: "The Orchestrator allows only one NSD via Edge service per segment"
+    - id: any
+      text: "Any number is allowed if the names differ"
+      explanation: "Only one per segment is allowed."
+    - id: two
+      text: "Two are allowed if one is Active/Standby"
+      explanation: "The limit is not tied to the tunnel mode."
+    - id: share
+      text: "Two segments must share the same service"
+      explanation: "Two segments cannot share the same service."
+  correct: one
+  explanation: "The Orchestrator allows only one Non SD-WAN Destination via Edge service per segment, and two segments cannot share the same service."
+  lesson_ref: svc-nsd-edge
+
+- id: svc-q-edge-init
+  topic: svcfg-nsd-edge
+  difficulty: 1
+  type: true_false
+  prompt: "**True or false:** An NSD via Edge only initiates tunnels; it does not respond to tunnel requests."
+  correct: true
+  explanation: "The guide says a Non SD-WAN Destination via Edge acts as an initiator for forming the tunnel."
+  lesson_ref: svc-nsd-edge
+
+- id: svc-q-edge-dh
+  topic: svcfg-nsd-edge
+  difficulty: 2
+  type: single_choice
+  prompt: "In the IKE Proposal of an NSD via Edge, which DH Group is the documented default?"
+  options:
+    - id: d14
+      text: "14"
+    - id: d2
+      text: "2"
+      explanation: "2 is the default of the AWS VPN Gateway type of an NSD via Gateway."
+    - id: d5
+      text: "5"
+      explanation: "5 is the default PFS only for the Palo Alto Gateway type."
+    - id: d21
+      text: "21"
+      explanation: "21 is an allowed value, not the default."
+  correct: d14
+  explanation: "The IKE Proposal DH Group allows 2, 5, 14, 15, 16, 19, 20 or 21, with a default of 14."
+  lesson_ref: svc-nsd-edge
+
+- id: svc-q-rebalance
+  topic: svcfg-clusters-hubs
+  difficulty: 2
+  type: single_choice
+  prompt: "Scenario: you create a new Hub cluster and leave Auto ReBalance untouched. What does the documentation say about its state and what it does when on?"
+  options:
+    - id: off
+      text: "It is off by default; when on, Spokes move off a Hub whose Cluster Score is above 70, one per minute"
+    - id: on
+      text: "It is on by default and moves all Spokes at once"
+      explanation: "It is off by default, and moves one Spoke per minute."
+    - id: model
+      text: "It depends on the Edge model"
+      explanation: "No such dependency is documented."
+    - id: all
+      text: "It rebalances even if every Hub is above 70"
+      explanation: "Nothing is rebalanced if all Hubs exceed 70."
+  correct: off
+  explanation: "Auto ReBalance is deactivated by default; when on, Spokes are rebalanced at one per minute while a Hub exceeds a Cluster Score of 70, and not if all Hubs exceed 70."
+  lesson_ref: svc-clusters-hubs
+
+- id: svc-q-cluster-req
+  topic: svcfg-clusters-hubs
+  difficulty: 3
+  type: multi_choice
+  prompt: "Which statements about cluster members are documented? (Select all that apply.)"
+  options:
+    - id: model
+      text: "Members should be the same model and capacity"
+    - id: asn
+      text: "Each member needs LAN-side dynamic routing, for example eBGP, with a unique ASN"
+    - id: nohub
+      text: "Edges assigned to a cluster cannot also be assigned as individual Hubs"
+    - id: tunnel
+      text: "Hubs in a cluster build tunnels to each other"
+      explanation: "The guide says Hubs in a cluster do not tunnel to each other."
+    - id: any
+      text: "Any mix of Edge models is recommended"
+      explanation: "Same model and capacity is recommended."
+  correct: [model, asn, nohub]
+  explanation: "Members should match in model and capacity, need LAN-side dynamic routing with unique ASNs, and Edges in a cluster cannot be individual Hubs; Hubs in a cluster do not tunnel to each other."
+  lesson_ref: svc-clusters-hubs
+
+- id: svc-q-netflow-nodata
+  topic: svcfg-credentials-netflow
+  difficulty: 3
+  type: multi_choice
+  prompt: "Scenario: a Profile has NetFlow activated with a collector, but the collector receives nothing from one Edge. Which statements are documented? (Select all that apply.)"
+  options:
+    - id: src
+      text: "Without a suitable Source Interface the Edge may not choose a source and may not generate NetFlow packets"
+    - id: iface
+      text: "The Source Interface must be a non-WAN interface (Loopback, VLAN, Routed or Sub-Interface) with Advertise enabled"
+    - id: lan
+      text: "NetFlow needs at least one up and advertised LAN or routed interface on the segment"
+    - id: port
+      text: "The default collector port is 2055"
+      explanation: "No default collector port is documented."
+    - id: noover
+      text: "The Edge cannot override the Profile's NetFlow settings"
+      explanation: "The Edge page documents an Override for NetFlow."
+  correct: [src, iface, lan]
+  explanation: "The Edge page documents the Source Interface requirement, and the guide says NetFlow needs at least one up and advertised LAN or routed interface on the segment. No default port is stated and the Edge can override NetFlow."
+  lesson_ref: svc-credentials-netflow
+
+- id: svc-q-azure
+  topic: svcfg-credentials-netflow
+  difficulty: 1
+  type: single_choice
+  prompt: "Which values does an IaaS Subscription for Microsoft Azure in API Credentials need?"
+  options:
+    - id: azure
+      text: "Active Directory Tenant ID, Client ID and Client Secret"
+    - id: zs
+      text: "Subscription Name, Zscaler Cloud, Partner Admin Username and Password, API Key and Domain"
+      explanation: "Those are the Cloud Subscription (Zscaler) fields."
+    - id: psk
+      text: "A pre-shared key and a DH Group"
+      explanation: "Those are tunnel settings of an NSD."
+    - id: collector
+      text: "A collector name, IP and port"
+      explanation: "Those are NetFlow collector fields."
+  correct: azure
+  explanation: "IaaS Subscriptions for Microsoft Azure take an Active Directory Tenant ID, a Client ID and a Client Secret; Get Subscriptions retrieves the Azure subscriptions."
+  lesson_ref: svc-credentials-netflow
+
+- id: svc-q-pd
+  topic: svcfg-name-address
+  difficulty: 2
+  type: single_choice
+  prompt: "Scenario: a LAN interface should receive its IPv6 prefix from a WAN interface of the same Edge. What do the two interfaces share, according to the documentation?"
+  options:
+    - id: tag
+      text: "A common Prefix Delegation tag"
+    - id: vlan
+      text: "The same VLAN ID"
+      explanation: "A VLAN ID is not the link."
+    - id: pnn
+      text: "The same Private Network Name"
+      explanation: "Private Network Names are assigned to private WAN overlays."
+    - id: dns
+      text: "The same DNS service"
+      explanation: "DNS services are unrelated to prefixes."
+  correct: tag
+  explanation: "A LAN interface receives prefixes from its associated WAN interface only if both share a common tag; each WAN interface needs a unique tag and several LAN interfaces can share one."
+  lesson_ref: svc-name-address
+
+- id: svc-q-dnsproxy
+  topic: svcfg-name-address
+  difficulty: 2
+  type: single_choice
+  prompt: "When is a public DNS service active on a VLAN or routed interface?"
+  options:
+    - id: proxy
+      text: "Only when the DNS Proxy is also activated on that same interface"
+    - id: always
+      text: "Always, once it is created under Network Services"
+      explanation: "It also needs the DNS Proxy on the interface."
+    - id: gwdns
+      text: "Only on interfaces with the WAN overlay enabled"
+      explanation: "The documented condition is the DNS Proxy."
+    - id: fast
+      text: "Only when it is the fastest server in the list"
+      explanation: "The Edge asks all servers and uses the fastest response; that is not an activation condition."
+  correct: proxy
+  explanation: "The Profile page says the public DNS service activates on a VLAN or routed interface only when users also activate the DNS Proxy on that same interface."
+  lesson_ref: svc-name-address
+
+- id: svc-q-radius-port
+  topic: svcfg-auth-vnf
+  difficulty: 1
+  type: single_choice
+  prompt: "What is the documented default of the Authentication Port of a RADIUS service?"
+  options:
+    - id: p1812
+      text: "1812"
+    - id: p1813
+      text: "1813"
+      explanation: "1813 is not named in the pages we read; the Accounting Port is optional with no default."
+    - id: p49
+      text: "49"
+      explanation: "No default is stated for the TACACS port."
+    - id: p443
+      text: "443"
+      explanation: "Not documented for RADIUS."
+  correct: p1812
+  explanation: "The Authentication Port accepts 1 to 65535 and defaults to 1812; the Accounting Port is optional."
+  lesson_ref: svc-auth-vnf
+
+- id: svc-q-tacacs-hidden
+  topic: svcfg-auth-vnf
+  difficulty: 2
+  type: single_choice
+  prompt: "Scenario: an administrator cannot find TACACS Services under Network Management. What does the documentation say?"
+  options:
+    - id: hidden
+      text: "The TACACS section is hidden by default; the Operator has to enable it"
+    - id: renamed
+      text: "It was removed in 7.0"
+      explanation: "The 7.0 and 6.4 pages both document it."
+    - id: edge
+      text: "It exists only on the Edge, never under Network Services"
+      explanation: "It is created under Network Services and assigned at the Edge."
+    - id: gw
+      text: "It is enabled by creating an NSD via Gateway"
+      explanation: "No such dependency is documented."
+  correct: hidden
+  explanation: "The TACACS section is hidden by default and must be activated by the Operator; per-Edge settings are under Edge Services."
+  lesson_ref: svc-auth-vnf
+
+- id: svc-q-review-profile
+  topic: svcfg-review
+  difficulty: 2
+  type: single_choice
+  prompt: "Scenario: during a review you find that one Edge needs a different NSD via Gateway from the rest of its Profile. Where must that change be made?"
+  options:
+    - id: profile
+      text: "In a Profile: it cannot be overridden at the Edge level"
+    - id: edge
+      text: "At the Edge, with the Override checkbox"
+      explanation: "An NSD via Gateway has no Edge override."
+    - id: bp
+      text: "In the Edge's business policy"
+      explanation: "A business policy is not where NSDs are assigned."
+    - id: gwcfg
+      text: "On the Gateway"
+      explanation: "The assignment is in the Profile."
+  correct: profile
+  explanation: "An NSD via Gateway is defined exclusively at the Profile level; use another Profile for that Edge if it must differ."
+  lesson_ref: svc-review
+
+- id: svc-q-review-prereq
+  topic: svcfg-review
+  difficulty: 3
+  type: single_choice
+  prompt: "Scenario: an NSD via Gateway is created and assigned, yet the tunnel has nothing to talk to. Which documented prerequisite is worth checking first?"
+  options:
+    - id: dc
+      text: "That the data center administrator has configured the Gateway side and the data center VPN tunnel is active"
+    - id: ospf
+      text: "That OSPF is enabled on the Edge"
+      explanation: "OSPF is not a documented prerequisite for an NSD via Gateway."
+    - id: hub
+      text: "That a Hub cluster exists"
+      explanation: "Clusters are a different service."
+    - id: vnf
+      text: "That a VNF is deployed"
+      explanation: "A VNF is not a prerequisite."
+  correct: dc
+  explanation: "The Profile page says the Data Center Administrator must configure the Gateway side and activate the Data Center VPN tunnel first."
+  lesson_ref: svc-review

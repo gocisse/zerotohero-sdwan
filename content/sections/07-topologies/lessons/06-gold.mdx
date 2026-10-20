@@ -1,0 +1,77 @@
+---
+id: top-gold
+title: Gold, the large branch with L3 switches and dynamic routing
+summary: "The vendor's Gold design: active/active L3 switches, OSPF or BGP, an MPLS CE and a virtual IP for reaching one WAN link over two routed interfaces, and what changes for traffic and routes."
+estimated_minutes: 11
+topics: [topo-gold]
+prerequisites: [top-silver-2, ov-hubs]
+---
+
+**By the end of this lesson you will be able to:**
+
+- describe the Gold topology and its key differentiator;
+- say what changes for traffic and routes compared with Bronze and Silver;
+- connect Gold to the Hub lessons of Section 5 and the routing lessons of Section 6;
+- list what the vendor text does not say about Gold.
+
+## What the vendor says
+
+The Gold topology is a typical large branch. It has **active/active L3 switches that communicate routes using OSPF or BGP**, one or more public Internet links, and an MPLS link terminated on a <Term id="ce-router">CE router</Term> that also speaks OSPF or BGP and is reached through the L3 switches. The key differentiator the vendor names is that **a single WAN link is accessible via two routed interfaces**; to support it, a **virtual IP address is provisioned inside the Edge** and can be advertised over OSPF, BGP, or statically routed to the interfaces.
+
+<Diagram id="top-gold" />
+
+## What changes for traffic and routes
+
+- **Routes are exchanged, not just defaulted.** In Bronze the LAN's gateway is the Edge. Here the Edge, two L3 switches and the CE all take part in routing, so the question becomes "who learns which prefix from whom". That is the territory of Section 6: static routes, <Term id="ospf">OSPF</Term>, <Term id="ebgp">BGP</Term>, <Term id="redistribution">redistribution</Term> and route preference.
+- **One WAN link, two routed interfaces.** The vendor's differentiator is that a single WAN link is accessible via two routed interfaces, with a virtual IP address inside the Edge to support it (documented). The text does not say which two interfaces, how they are wired to the switches, or how the switches share traffic (equal-cost or primary and backup).
+- **Overlay prefixes toward the LAN.** The Edge must tell the L3 switches about prefixes learned over the overlay, and the switches must tell the Edge about the LAN. Section 6 lists the switches (overlay prefix, connected routes, redistribution). Their defaults are unconfirmed there, so check them in your release.
+- **Regional hubs.** Arista positions the 4100 and 5100 for large branches and regional hubs. A Hub is an Edge designated in the Profile that branch Edges build permanent tunnels to (Section 5). A Gold branch and a Hub are different roles that can share a model class, and the vendor's Hub examples are drawn as one-arm or two-arm designs, not as Gold.
+- **Sizing.** A large site needs a model whose flows, segments and tunnels fit (Lesson 1) and, if it is a Hub, a tunnel count that fits.
+
+<Predict
+  prompt="What is the virtual IP address in the Gold topology for?"
+  choices={["So a single WAN link can be reached through two routed interfaces", "To replace the Orchestrator address", "To give the Gateway a second tunnel", "To label the MPLS provider"]}
+  answer={0}
+>
+  The vendor names it as the way to support a single WAN link that is accessible via two routed interfaces. It can be advertised over OSPF or BGP, or statically routed to the interfaces.
+</Predict>
+
+## Failures
+
+| Failure | Who responds | Status |
+|---|---|---|
+| One of the two L3 switches fails | the other active/active switch carries the routes | design practice; the vendor describes active/active switches, not the failure |
+| An Internet link fails | DMPO steers to other links | documented (Section 3) |
+| The Edge fails | a single Edge is a single point of failure; an HA pair is the Edge's answer (Lesson 5) | design practice with a documented HA feature |
+| A routing session drops | routes from that neighbour are withdrawn by the protocol | general protocol behaviour; see Section 6 for the Edge's route handling |
+
+<Callout variant="warning" title="What we could not confirm">
+  The vendor text read does not say where the Edge sits relative to the CE and switches in Gold, whether the Edge is a pair, where the virtual IP is configured in the VCO, or how the switches share traffic across the two paths. Our diagram is therefore marked illustrative.
+</Callout>
+
+## What you would see in the VCO
+
+- **Configure > Edges** > the Edge > **Device** > **Routing and NAT**: **OSPF** and **BGP** settings for the L3 switch neighbours (Section 6).
+- **Diagnostics > Remote Diagnostics > Route Table Dump** and the BGP or OSPF neighbour tests (Section 6).
+- **Configure > Network Services > Clusters and Hubs** if the large site is also a Hub.
+- **Monitor > Edges** > **Links** for the Internet and private links.
+
+<Callout variant="tip" title="Check this in your own VCO or site">
+  - **[observation candidate]** Open: Configure > Edges, the Edge, Device tab, Routing and NAT (OSPF and BGP). Expect: neighbours or areas for the L3 switches and maybe the CE. Docs may differ: the vendor text names the protocols but not the Edge's role towards the CE.
+  - **[observation candidate]** Open: Diagnostics > Remote Diagnostics > Route Table Dump. Expect: LAN prefixes learned from OSPF or BGP, with the source shown, and overlay prefixes from other sites. Docs may differ: reason codes and columns are described in Section 6.
+  - **[observation candidate]** Open: the Edge's interface and routing configuration for a virtual IP address. Expect: some address that is advertised over OSPF, BGP or a static route. Docs may differ: where the virtual IP is configured is not documented in the pages we read.
+  - **[observation candidate]** Open: Configure > Network Services > Clusters and Hubs. Expect: this Edge listed as a Hub or in a cluster only if it is one. Docs may differ: a Gold branch is not necessarily a Hub.
+</Callout>
+
+## Key takeaways
+
+- Gold is a large branch with active/active L3 switches running OSPF or BGP and an MPLS CE.
+- Its differentiator is reaching a single WAN link over two routed interfaces through a virtual IP in the Edge.
+- Routing, not defaulting, decides traffic: Section 6 is the toolbox.
+- A Gold branch is not automatically a Hub.
+
+## What would you look for in the VCO
+
+- Which neighbours does the Edge have, and what does the route table show for each?
+- Which prefixes does the Edge advertise to the switches, and which does it learn?
+- Is this Edge also a Hub?

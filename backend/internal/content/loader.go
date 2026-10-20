@@ -53,7 +53,7 @@ func ReadBundle(fsys fs.FS) (*Bundle, ErrorList) {
 		case e.IsDir() && allowedRootDirs[name]:
 		case e.IsDir():
 			b.Extra = append(b.Extra, name+"/")
-		case name != "course.yaml" && name != "README.md" && name != "glossary.yaml":
+		case name != "course.yaml" && name != "README.md" && name != "glossary.yaml" && name != "study-guide.yaml":
 			b.Extra = append(b.Extra, name)
 		}
 	}
@@ -90,6 +90,7 @@ func ReadBundle(fsys fs.FS) (*Bundle, ErrorList) {
 		}
 	}
 
+	readGuide(fsys, b, &errs)
 	readTopologies(fsys, b, &errs)
 	readLabs(fsys, b, &errs)
 
@@ -250,12 +251,18 @@ func Build(b *Bundle) *Course {
 		topologies: buildTopologies(b.Topologies),
 		labs:       buildLabs(b.Labs),
 	}
+	if b.HasGuide && !b.GuideBroken {
+		g := b.Guide
+		c.guide = &g
+		_, c.guideWarnings = checkGuide(b)
+	}
 	for _, d := range b.Diagrams {
 		c.diagrams[d.D.ID] = d.D.normalized()
 	}
 	for i := range c.Glossary {
 		c.Glossary[i].Aliases = append([]string{}, c.Glossary[i].Aliases...)
 		c.Glossary[i].Related = append([]string{}, c.Glossary[i].Related...)
+		c.Glossary[i].GuideTopics = append([]string{}, c.Glossary[i].GuideTopics...)
 	}
 	byID := map[string]*SectionBundle{}
 	for i := range b.Sections {
@@ -320,6 +327,28 @@ func readReferences(fsys fs.FS, b *Bundle, errs *ErrorList) []ReferenceDoc {
 					od.Content = string(data)
 				}
 				refs = append(refs, od)
+			}
+			continue
+		}
+		if e.IsDir() && e.Name() == "config" {
+			// Settings-level fact sheets, one per network service (step 18): same claims-table rule as the sheets above.
+			cfg, _ := fs.ReadDir(fsys, p)
+			for _, c := range cfg {
+				cp := path.Join(p, c.Name())
+				if ignored(c.Name()) || c.Name() == "README.md" {
+					continue
+				}
+				if c.IsDir() {
+					b.Extra = append(b.Extra, cp+"/")
+					continue
+				}
+				cd := ReferenceDoc{Path: cp}
+				if data, err := fs.ReadFile(fsys, cp); err != nil {
+					errs.add(cp, "cannot read file: %v", unwrapPathErr(err))
+				} else {
+					cd.Content = string(data)
+				}
+				refs = append(refs, cd)
 			}
 			continue
 		}

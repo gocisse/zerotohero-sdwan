@@ -1,0 +1,13 @@
+id: network-services-config
+title: "Network services: configuration walkthroughs"
+summary: Where network services live, then the settings of each one as the documentation names them (NSD via Gateway and via Edge, Clusters and Hubs, API Credentials, NetFlow, DNS, Private Network Names, Prefix Delegation Tags, Authentication and VNF), how to assign them, and how to review a Profile.
+estimated_minutes: 85
+lessons:
+  - svc-where
+  - svc-nsd-gateway
+  - svc-nsd-edge
+  - svc-clusters-hubs
+  - svc-credentials-netflow
+  - svc-name-address
+  - svc-auth-vnf
+  - svc-review

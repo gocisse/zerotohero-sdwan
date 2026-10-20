@@ -1,0 +1,12 @@
+id: profile-policy-config
+title: "Segments, Profiles and policy: configuration walkthroughs"
+summary: Creating a segment and adding it to a Profile, creating and changing a Profile, the Profile's Device settings by their documented headings, building business policy and firewall rules field by field, matching applications, and comparing configurations to see where a setting comes from.
+estimated_minutes: 75
+lessons:
+  - prof-segments
+  - prof-profiles
+  - prof-device
+  - prof-bp-rules
+  - prof-fw-rules
+  - prof-app-match
+  - prof-compare

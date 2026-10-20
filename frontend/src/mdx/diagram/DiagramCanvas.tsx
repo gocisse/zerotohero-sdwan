@@ -1,6 +1,6 @@
 import { useEffect, useId, useMemo, useRef, useState } from 'react'
 import type { Diagram, DiagramStep } from '../../api'
-import { bubbleSize, labelRect, placeCallout, type Rect } from './calloutPlacement'
+import { bubbleSize, labelRect, placeCallout, placeLinkLabel, pxPerUnit, type Rect } from './calloutPlacement'
 import { nodeDisc } from './packetLabel'
 import { groupBox, groupMembers, linkGeometry } from './geometry'
 import NodeIcon from './icons'
@@ -18,6 +18,8 @@ interface Props {
   animate: boolean
   registerPath: (linkId: string, el: SVGPathElement | null) => void
   getPath: (linkId: string) => SVGPathElement | undefined
+  /** Called after the canvas has laid out at a new width, so a parent that pans to the callouts can measure them again. */
+  onLayout?: (width: number) => void
 }
 
 const stateClass = (hidden: boolean, dimmed: boolean) =>
@@ -33,6 +35,7 @@ export default function DiagramCanvas({
   animate,
   registerPath,
   getPath,
+  onLayout,
 }: Props) {
   const [hover, setHover] = useState<string | null>(null)
   const [focus, setFocus] = useState<string | null>(null)
@@ -62,6 +65,9 @@ export default function DiagramCanvas({
     ro.observe(el)
     return () => ro.disconnect()
   }, [])
+  useEffect(() => {
+    if (width > 0) onLayout?.(width)
+  }, [width, onLayout])
   const scale = width > 0 ? width / d.width : 1
   const boost = Math.min(Math.max(1, 0.66 / scale), 2.2)
   const showSub = scale >= 0.55
@@ -80,25 +86,32 @@ export default function DiagramCanvas({
   const pct = (x: number, total: number) => `${(x / total) * 100}%`
   const clampX = (x: number) => `${Math.min(Math.max(((x + pad) / totalW) * 100, 14), 86)}%`
 
-  // Callouts avoid link labels, node discs and node labels (see calloutPlacement.ts).
-  const obstacles: Rect[] = [
-    ...d.links.flatMap((l) =>
-      l.label && showLinkLabels && !linkHidden(l.id)
-        ? [labelRect(geoms.get(l.id)!.mid.x, geoms.get(l.id)!.mid.y - 8, l.label, 13 * boost)]
+  // The disc and label of every node, in viewBox units. Link labels slide along their link to stay clear of these, and
+  // callouts avoid both (see calloutPlacement.ts).
+  const nodeRect = (n: (typeof d.nodes)[number]): Rect => {
+    const half = Math.max(41, (n.label.length * 17 * boost * 0.56) / 2)
+    return {
+      x: n.x - half,
+      y: n.y - 41,
+      width: 2 * half,
+      height: 41 + 58 + 17 * boost + (n.sublabel && showSub ? 20 : 0),
+    }
+  }
+  const allNodeRects = d.nodes.map(nodeRect)
+  const labelAt = new Map(
+    d.links.flatMap((l) =>
+      l.label && showLinkLabels
+        ? [[l.id, placeLinkLabel(geoms.get(l.id)!.at, l.label, 13 * boost, allNodeRects)] as const]
         : [],
     ),
-    ...d.nodes.flatMap((n) =>
-      hidden.has(n.id)
-        ? []
-        : [
-            {
-              x: n.x - Math.max(41, (n.label.length * 17 * boost * 0.56) / 2),
-              y: n.y - 41,
-              width: 2 * Math.max(41, (n.label.length * 17 * boost * 0.56) / 2),
-              height: 41 + 58 + 17 * boost + (n.sublabel && showSub ? 20 : 0),
-            },
-          ],
+  )
+  const obstacles: Rect[] = [
+    ...d.links.flatMap((l) =>
+      labelAt.has(l.id) && !linkHidden(l.id)
+        ? [labelRect(labelAt.get(l.id)!.x, labelAt.get(l.id)!.y - 8, l.label!, 13 * boost)]
+        : [],
     ),
+    ...d.nodes.flatMap((n) => (hidden.has(n.id) ? [] : [nodeRect(n)])),
   ]
   const discs = useMemo(() => d.nodes.filter((n) => !hidden.has(n.id)).map((n) => nodeDisc(n.x, n.y)), [d, hidden])
   const canvasRect: Rect = { x: -pad, y: 0, width: totalW, height: d.height }
@@ -106,9 +119,13 @@ export default function DiagramCanvas({
     const n = nodeById.get(c.target)
     const l = linkById.get(c.target)
     const anchor =
-      n && !hidden.has(n.id) ? { x: n.x, y: n.y - 41 } : l && !linkHidden(l.id) ? geoms.get(l.id)!.mid : null
+      n && !hidden.has(n.id)
+        ? { x: n.x, y: n.y - 41 }
+        : l && !linkHidden(l.id)
+          ? (labelAt.get(l.id) ?? geoms.get(l.id)!.mid)
+          : null
     if (!anchor) return []
-    const size = bubbleSize(c.text, scale)
+    const size = bubbleSize(c.text, pxPerUnit(width, totalW))
     const placed = placeCallout({
       anchor,
       size,
@@ -178,8 +195,8 @@ export default function DiagramCanvas({
               />
               {l.label && showLinkLabels && (
                 <text
-                  x={geo.mid.x}
-                  y={geo.mid.y - 8}
+                  x={(labelAt.get(l.id) ?? geo.mid).x}
+                  y={(labelAt.get(l.id) ?? geo.mid).y - 8}
                   textAnchor="middle"
                   fontSize={13 * boost}
                   paintOrder="stroke"

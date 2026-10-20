@@ -28,6 +28,7 @@ type ProgressStore interface {
 	QuestionStates(ctx context.Context) ([]domain.QuestionState, error)
 	AnswerHistory(ctx context.Context) ([]domain.AnswerEvent, error)
 	LabProgressAll(ctx context.Context) (map[string]domain.LabProgress, error)
+	ActivityEvents(ctx context.Context, since time.Time) ([]domain.ActivityEvent, error)
 	SetLabStatus(ctx context.Context, labID, status string, now time.Time) (domain.LabProgress, error)
 	RecordLabAttempt(ctx context.Context, labID string, now time.Time) (domain.LabProgress, error)
 	UseLabHint(ctx context.Context, labID string, n int, now time.Time) (domain.LabProgress, error)

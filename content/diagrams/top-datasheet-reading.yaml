@@ -1,0 +1,69 @@
+# Section 7, lesson 1: how to read an Edge datasheet. Illustrative layout: no figures are shown. Facts: reference/edge-models.md.
+id: top-datasheet-reading
+title: Reading an Edge datasheet (illustrative)
+alt: >-
+  A datasheet is shown as a set of sections: footnotes with the test conditions and software release, a connectivity table,
+  a performance and scale table, an editions table and the date and document number. Each section answers one design
+  question about your site.
+width: 900
+height: 540
+
+nodes:
+  - { id: sheet, label: Edge datasheet, kind: generic, x: 450, y: 270, sublabel: one per model family }
+  - { id: foot, label: "Footnotes: conditions and release", kind: generic, x: 150, y: 90 }
+  - { id: date, label: Date and document number, kind: generic, x: 450, y: 70 }
+  - { id: conn, label: Connectivity table, kind: generic, x: 750, y: 90 }
+  - { id: perf, label: Performance and scale, kind: generic, x: 150, y: 450 }
+  - { id: ed, label: Editions and licences, kind: generic, x: 450, y: 470 }
+  - { id: ha, label: HA link performance, kind: generic, x: 750, y: 450 }
+  - { id: site, label: Your site's needs, kind: host, x: 700, y: 270 }
+
+links:
+  - { id: l-foot, from: sheet, to: foot, style: control }
+  - { id: l-date, from: sheet, to: date, style: control }
+  - { id: l-conn, from: sheet, to: conn, style: control }
+  - { id: l-perf, from: sheet, to: perf, style: control }
+  - { id: l-ed, from: sheet, to: ed, style: control }
+  - { id: l-ha, from: sheet, to: ha, style: control }
+
+steps:
+  - title: One sheet per model family
+    narration: >-
+      Arista publishes a datasheet for the 7x0 series and another for the 4100 and 5100. Each is a set of tables. Read the
+      sections in an order that follows your design questions.
+    highlight: [sheet]
+    show: [foot, date, conn, perf, ed, ha, l-foot, l-date, l-conn, l-perf, l-ed, l-ha]
+
+  - title: Start with the date and the conditions
+    narration: >-
+      Check the date and document number, then the footnotes. The throughput figures were measured with stated packet sizes
+      (1300-byte large packets or IMIX), with DPI on, and the datasheets say the performance needs software release R7.0.0.
+    highlight: [date, foot, l-date, l-foot]
+    callouts:
+      - { target: foot, text: "Same conditions as your site?" }
+
+  - title: Ports and speeds
+    narration: >-
+      The connectivity table lists how many ports of each type the model has: RJ-45 at 1G or 2.5G, SFP, SFP+, SFP28, QSFP.
+      Match it to your transports and your LAN.
+    highlight: [conn, l-conn]
+
+  - title: Throughput, tunnels, flows and segments
+    narration: >-
+      The performance and scale table gives throughput, maximum tunnels, flows per second, concurrent flows, BGP routes and
+      segments. A branch checks throughput and flows; a Hub checks the tunnel row first.
+    highlight: [perf, l-perf]
+
+  - title: Editions, licences and availability
+    narration: >-
+      The editions table shows limits that come from the software edition, such as the number of data segments, and the
+      bandwidth tiers a model is sold with. The HA link row gives the throughput across the link of an Edge pair.
+    highlight: [ed, ha, l-ed, l-ha]
+
+  - title: Compare with your site
+    narration: >-
+      Put your own numbers next to the published ones and keep headroom. A datasheet figure is a test result under stated
+      conditions, not a promise for your traffic.
+    highlight: [site, sheet]
+    show: [site]
+    hide: [l-foot, l-date, l-conn, l-perf, l-ed, l-ha]

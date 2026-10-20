@@ -1,0 +1,55 @@
+# Section 8, lesson 2: NSD via Gateway. Facts: reference/config/config-nsd-gateway.md. The tunnel and BGP session are the documented roles.
+id: svc-nsd-gateway
+title: Non SD-WAN Destination via Gateway
+alt: >-
+  A branch Edge connects to a Gateway. The Gateway initiates an IPsec tunnel to a Non SD-WAN destination such as an AWS VPN
+  Gateway, and an eBGP session can run over it. The destination is defined in the Profile and the Edge cannot override it.
+width: 900
+height: 540
+
+nodes:
+  - { id: users, label: Branch users, kind: host, x: 80, y: 270 }
+  - { id: edge, label: Branch Edge, kind: vce, x: 270, y: 270 }
+  - { id: gw, label: Gateway, kind: vcg, x: 500, y: 270 }
+  - { id: aws, label: "Non SD-WAN destination", kind: cloud, x: 770, y: 270, sublabel: "for example AWS VPN Gateway" }
+  - { id: vco, label: Orchestrator, kind: vco, x: 500, y: 90 }
+
+links:
+  - { id: lan, from: users, to: edge, style: lan }
+  - { id: tun, from: edge, to: gw, style: overlay-tunnel, label: tunnel }
+  - { id: ipsec, from: gw, to: aws, style: ipsec, label: IPsec }
+  - { id: cfg, from: vco, to: gw, style: control }
+  - { id: cfg2, from: vco, to: edge, style: control }
+
+steps:
+  - title: Define the destination in the Profile
+    narration: >-
+      Under **Configure > Network Services > Non SD-WAN Destinations via Gateway**, create the destination (Name, Type, Tunnel Mode,
+      VPN Gateway 1) and complete its type settings. Then assign it in the Profile (Cloud VPN, **Enable Edge to Non SD-WAN via Gateway**).
+      An Edge cannot override it.
+    highlight: [vco, cfg, cfg2]
+    show: [vco, cfg, cfg2]
+
+  - title: The Gateway initiates the IPsec tunnel
+    narration: >-
+      The Gateway functions as the tunnel initiator; it cannot be the responder. The peer administrator must have configured the
+      destination side first.
+    highlight: [gw, aws, ipsec]
+    packets:
+      - { path: [gw, ipsec, aws], label: IKE / IPsec, color_style: ipsec }
+
+  - title: Branch traffic reaches the destination
+    narration: >-
+      Traffic from the branch goes to the Gateway and out through the IPsec tunnel. Site Subnets say which subnets are behind the
+      destination.
+    highlight: [users, edge, gw, aws]
+    packets:
+      - { path: [users, lan, edge, tun, gw, ipsec, aws], label: to destination, color_style: overlay-tunnel }
+
+  - title: BGP over IPsec (optional)
+    narration: >-
+      The BGP column's Edit opens the BGP Editor: Local ASN, Router ID and Neighbors. Only **eBGP** is supported with BGP over IPsec,
+      and the Monitor events "BGP session established to Gateway neighbor" and "Unavailable Gateway BGP neighbor" report it.
+    highlight: [gw, aws, ipsec]
+    callouts:
+      - { target: ipsec, text: "eBGP session over the tunnel." }

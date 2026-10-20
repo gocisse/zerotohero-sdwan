@@ -1,0 +1,51 @@
+# Section 8, lesson 3: NSD via Edge. Facts: reference/config/config-nsd-edge.md.
+id: svc-nsd-edge
+title: Non SD-WAN Destination via Edge
+alt: >-
+  A branch Edge builds an IPsec tunnel itself, over one of its WAN links, to a Non SD-WAN destination such as a data center
+  gateway. The service is created in Network Services, enabled in the Profile and the tunnel is added at the Edge.
+width: 900
+height: 540
+
+nodes:
+  - { id: users, label: Branch users, kind: host, x: 80, y: 270 }
+  - { id: edge, label: Branch Edge, kind: vce, x: 300, y: 270 }
+  - { id: net, label: Internet or private WAN link, kind: internet, x: 520, y: 270 }
+  - { id: dest, label: Non SD-WAN destination, kind: datacenter, x: 770, y: 270 }
+  - { id: vco, label: Orchestrator, kind: vco, x: 300, y: 90 }
+
+links:
+  - { id: lan, from: users, to: edge, style: lan }
+  - { id: wan, from: edge, to: net, style: underlay-internet }
+  - { id: ipsec, from: net, to: dest, style: ipsec, label: IPsec }
+  - { id: cfg, from: vco, to: edge, style: control }
+
+steps:
+  - title: Create the service and enable it in the Profile
+    narration: >-
+      Create the service under **Configure > Network Services > Non SD-WAN Destinations via Edge**, then in the Profile's VPN Services
+      select **Enable Non SD-WAN via Edge**. Only one such service per segment is allowed.
+    highlight: [vco, cfg]
+    show: [vco, cfg]
+
+  - title: Add the tunnel at the Edge
+    narration: >-
+      On the Edge, VPN Services > Non SD-WAN Destination via Edge, Override, then **+** adds a tunnel: Authentication Method, Public WAN
+      Link, identification and the destination's public IP.
+    highlight: [edge, wan]
+
+  - title: The Edge initiates the tunnel
+    narration: >-
+      This service only initiates tunnels. The IKE and IPsec proposals (for example DH Group 14, SHA 256, lifetimes 1440 and 480
+      minutes by default) must match the destination.
+    highlight: [edge, net, dest, ipsec]
+    packets:
+      - { path: [edge, wan, net, ipsec, dest], label: IKE / IPsec, color_style: ipsec }
+
+  - title: Traffic to the destination
+    narration: >-
+      Traffic for the Site Subnets goes through the tunnel. The documentation names no status screen for this service, so verify
+      with your own tests.
+    highlight: [users, edge, dest]
+    packets:
+      - { path: [users, lan, edge, wan, net, ipsec, dest], label: to site subnets, color_style: ipsec }

@@ -1,6 +1,6 @@
 import { expect, test } from '@playwright/test'
 import {
-  allLessons, answerUI, getCourse, getJSON, getQuiz, gotoQuestion, lessonUrl, openLesson, waitForAttempt,
+  allLessons, answerUI, openProgressDetails, getCourse, getJSON, getQuiz, gotoQuestion, lessonUrl, openLesson, waitForAttempt,
   type AttemptResult, type Course, type QuestionResult, type QuizQuestion, type SectionSummary,
 } from './support'
 
@@ -90,6 +90,7 @@ test('dashboard shows the failed attempt and the weak topics the API reports', a
   const weak = (await getJSON<{ topics: { topic: string; weak: boolean }[] }>(request, '/api/progress/topics')).topics.filter((t) => t.weak).map((t) => t.topic).sort()
 
   await page.goto('/progress')
+  await openProgressDetails(page)
   await expect(page.getByTestId('overall-pct')).toBeVisible()
   const row = page.locator(`[data-section="${section.id}"]`)
   await expect(row.locator('[data-col=attempts]')).toHaveText(String(sp.quiz_attempts))
@@ -99,7 +100,8 @@ test('dashboard shows the failed attempt and the weak topics the API reports', a
     await expect(page.locator('[data-weak-topic]').first()).toBeVisible()
     const shown = (await page.locator('[data-weak-topic]').evaluateAll((els) => els.map((e) => (e as HTMLElement).dataset.weakTopic!))).sort()
     expect(shown).toEqual(weak)
-    for (const link of await page.locator('[data-weak-topic] a').all()) await expect(link).toHaveAttribute('href', /^\/course\//)
+    // Each weak topic links to the lessons to review and to its study guide topic.
+    for (const link of await page.locator('[data-weak-topic] a').all()) await expect(link).toHaveAttribute('href', /^\/(course\/|progress#topic-)/)
   }
 })
 
@@ -214,10 +216,12 @@ test('skipping from a section card records the skip and leads forward', async ({
 
 test('progress persists across a reload', async ({ page }) => {
   await page.goto('/progress')
+  await openProgressDetails(page)
   await expect(page.getByTestId('overall-pct')).toBeVisible()
   await page.waitForTimeout(600)
   const before = await page.locator('main').innerText()
   await page.reload()
+  await openProgressDetails(page)
   await expect(page.getByTestId('overall-pct')).toBeVisible()
   await page.waitForTimeout(600)
   expect(await page.locator('main').innerText()).toBe(before)

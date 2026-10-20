@@ -1,5 +1,5 @@
 import { expect, test, type APIRequestContext } from '@playwright/test'
-import { getJSON } from './support'
+import { getJSON, openProgressDetails } from './support'
 
 // Lab tests (step 14). Labs, tasks, choices and fixes are discovered through the API. The right answers are found by
 // asking the server's own check endpoint, so no answer is hard-coded here.
@@ -104,6 +104,7 @@ test.describe('labs', () => {
     }
     // The dashboard counts them.
     await page.goto('/progress')
+    await openProgressDetails(page)
     await expect(page.locator('[data-labs-block]')).toContainText(`${labs.length} of ${labs.length} completed`)
   })
 

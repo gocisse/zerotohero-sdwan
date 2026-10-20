@@ -68,9 +68,11 @@ var (
 	ObservationEffects = []string{"confirms", "corrects", "contradicts"}
 )
 
-// SheetName returns the fact sheet name of a reference path ("reference/bgp.md" -> "bgp").
+// SheetName returns the fact sheet name of a reference path ("reference/bgp.md" -> "bgp"; the settings sheets in
+// reference/config/ keep their own file name, for example "config-dns").
 func SheetName(path string) string {
 	n := strings.TrimPrefix(path, "reference/")
+	n = strings.TrimPrefix(n, "config/")
 	return strings.TrimSuffix(n, ".md")
 }
 

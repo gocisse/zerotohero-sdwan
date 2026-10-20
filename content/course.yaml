@@ -7,3 +7,6 @@ sections:
   - configuration
   - overlay
   - routing
+  - topologies
+  - network-services-config
+  - profile-policy-config

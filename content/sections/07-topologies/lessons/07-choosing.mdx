@@ -1,0 +1,117 @@
+---
+id: top-choosing
+title: Choosing a topology
+summary: "A decision framework for a branch (size, availability, transports, LAN routing), a decision table, and three worked scenarios that end with the VCO settings you would expect and where they live."
+estimated_minutes: 12
+topics: [topo-choosing]
+prerequisites: [top-gold]
+---
+
+**By the end of this lesson you will be able to:**
+
+- apply a short decision framework to a site;
+- map the answers to Bronze, Silver option 1 or 2, or Gold, and say when to add an Edge pair;
+- work through three scenarios from requirements to expected VCO settings;
+- say which parts of a recommendation are documented and which are design practice.
+
+## The framework
+
+(design practice, our method; the facts it relies on are tagged as documented)
+
+1. **Transports.** Internet only, or Internet plus a private link such as MPLS?
+2. **LAN.** Is there an L3 switch, a pair of routers with HSRP or VRRP, or nothing between the users and the Edge?
+3. **Routing toward the LAN.** Are <Term id="static-route">static routes</Term> enough, or does the LAN need <Term id="ospf">OSPF</Term> or <Term id="ebgp">BGP</Term> with the Edge?
+4. **Availability.** Can the site accept an outage if one Edge fails? If not, plan an <Term id="edge-ha">Edge pair</Term> of the same model.
+5. **Size.** Users, flows, segments, throughput and, for a Hub, tunnels: read the datasheet row (Lesson 1).
+6. **Budget and effort.** More devices mean more to buy and to operate.
+
+<Diagram id="top-decision" />
+
+## Decision table
+
+| If the site has... | Start from | Documented basis | Add |
+|---|---|---|---|
+| one or two Internet links, no MPLS, no L3 switch | Bronze | the Bronze description | a second link; an HA pair if an outage is not acceptable (design practice) |
+| Internet and MPLS, a single L3 switch and a CE | Silver option 1 | the first Silver variant | a private link on the Edge to bring MPLS into the overlay; routes |
+| Internet and MPLS, redundant HSRP or VRRP routers, an L2 switch | Silver option 2 | the second Silver variant | an HA pair, with the HA guide's requirements |
+| a large LAN with active/active L3 switches running OSPF or BGP, and an MPLS CE | Gold | the Gold description | an HA pair; a model sized for flows and segments |
+| a data center that branches tunnel to | a Hub design, not a branch label | Hub 1 and Hub 2 in Site Configurations | a model sized by tunnel scale |
+
+No label is a requirement. A site can need parts of two (for example an HA pair in a Bronze-sized site).
+
+## Scenario 1: a 40-user office with one Internet link
+
+**Requirements.** Cloud applications, one broadband link, no MPLS, no L3 switch, short outages tolerable for now.
+
+**Choice.** It fits the vendor's Bronze description (one or two Internet links, no MPLS, no L3 switch). What is missing compared with Silver is a private transport; what is missing for resilience is a second link and a second Edge (design practice).
+
+**VCO settings you would expect, and where they live.**
+
+- A WAN interface with **Enable WAN Overlay** and a LAN interface or VLAN, on **Configure > Edges > (Edge) > Device > Interface Settings** (documented).
+- The Edge's **DHCP server**, if it serves the LAN (documented as an Edge feature; the exact screen was not confirmed).
+- The Edge's Profile and segments: **Configure > Profiles** (Section 4).
+- **High Availability: None** (a documented option).
+- A model whose throughput and segments fit; a small 7x0 is the class to compare (Lesson 1).
+
+## Scenario 2: a regional office with Internet, MPLS and an L3 switch
+
+**Requirements.** An Internet link and an MPLS link on a CE router reached through one L3 switch; keep using MPLS for the data center; send cloud traffic to the Internet through the overlay.
+
+**Choice.** It fits Silver option 1 (the Edge between the L3 switch and the Internet).
+
+**VCO settings you would expect, and where they live.**
+
+- An Internet WAN interface with WAN overlay and, to include MPLS in the overlay, a **user-defined private WAN overlay** on a second interface (**Device > Interface Settings** and **WAN Overlay Settings**; the Hybrid Site-1 example uses a private link toward the CE side).
+- Routes toward the L3 switch: **static routes** or **OSPF / BGP** in the Device tab (Section 6).
+- **Branch to Hubs** or **Cloud VPN** in the Profile if the data center is a Hub (**Configure > Profiles > Device > VPN Services**, Section 5).
+- Check the result in **Diagnostics > Remote Diagnostics > Route Table Dump**.
+
+## Scenario 3: a large site that must survive an Edge failure
+
+**Requirements.** Two L3 switches running OSPF, an MPLS CE, several hundred users and many thousands of flows, and an Edge failure must not take the site down.
+
+**Choice.** It fits Gold, plus an Edge HA pair of the same model. With L2 and L3 switches, the HA guide says HSRP or VRRP is required on the L3 switch pair and the LAN-side switches must support STP.
+
+**VCO settings you would expect, and where they live.**
+
+- **Configure > Edges > (Edge) > Device > High Availability > Active Standby Pair** (documented). Only the first Edge is provisioned on the Orchestrator.
+- **OSPF** (or **BGP**) toward the switches in the Device tab (Section 6), and a virtual IP for a WAN link reachable through two routed interfaces (the location is not documented).
+- A model chosen from the flow, segment and, if it is a Hub, tunnel rows of the datasheet (Lesson 1).
+- Events and state after a failover: **Monitor > Edges** (HA State) and **Monitor > Events**.
+
+<Predict
+  prompt="Scenario 3 uses an Edge pair with L2 and L3 switches. Which requirement does the HA guide add for the L3 switch pair?"
+  choices={["HSRP or VRRP must be configured on the pair", "The switches must run VCMP", "The switches must be Arista models", "The pair must be connected through the Gateway"]}
+  answer={0}
+>
+  For HA Deployment Type 2 (L2 and L3 switches), the guide says HSRP or VRRP is required on the L3 switch pair. It runs on the switches.
+</Predict>
+
+<Callout variant="warning" title="What this lesson cannot promise">
+  The labels describe a starting shape. The vendor text does not say how the Edge interacts with the routers' HSRP or VRRP in Silver option 2, where the Gold virtual IP is configured, or what the Edge does when an adjacent switch or router fails. Verify those in your own site before relying on them.
+</Callout>
+
+## What you would see in the VCO
+
+- **Configure > Edges** > the Edge > **Device**: **Interface Settings**, **WAN Overlay**, routing settings and the **High Availability** section; **Configure > Profiles** for the template.
+- **Monitor > Edges**: **Links**, **Paths**, **HA State** and **HA Standby**.
+- **Diagnostics > Remote Diagnostics > Route Table Dump**.
+
+<Callout variant="tip" title="Check this in your own VCO or site">
+  - **[observation candidate]** Open: Configure > Edges and take three sites you know. Expect: each can be classified from its WAN overlay interfaces, routing settings and High Availability choice. Docs may differ: the labels are not shown in the VCO, and real sites mix designs.
+  - **[observation candidate]** Open: the High Availability section of an Edge you believe has no pair. Expect: None. Docs may differ: it may be a Cluster member or use VRRP with a third-party router.
+  - **[observation candidate]** Open: Monitor > Edges, the Links tab, for an Internet-plus-MPLS site. Expect: both an Internet link and a private link only if the Edge has a private link of its own. Docs may differ: the CE-only path stays outside the Edge.
+  - **[observation candidate]** Open: the datasheet row for your model and the Edge's real flow and tunnel counts (Monitor > Edges). Expect: counts well below the published maxima. Docs may differ: the figures are test results under stated conditions.
+</Callout>
+
+## Key takeaways
+
+- Ask about transports, LAN, routing, availability and size, in that order.
+- Bronze, Silver option 1, Silver option 2 and Gold are starting shapes from the vendor's descriptions; an HA pair can be added to any of them.
+- Each scenario ends in settings you can find in the VCO; where the vendor text is silent, say so.
+
+## What would you look for in the VCO
+
+- Which description does this site match, and what is different?
+- Does the Edge have a private link, an HA pair, a routing protocol toward the LAN?
+- Which published limits does this model leave headroom for?

@@ -30,6 +30,25 @@ var SheetSections = map[string][]string{
 	"cloud-vpn": {"overlay"}, "hubs-and-branches": {"overlay"}, "non-sdwan-destinations": {"overlay"}, "network-services-other": {"overlay"}, "overlay-paths": {"overlay"}, "vco-overlay-ui": {"overlay"},
 	"routing-overview": {"routing"}, "static-routes": {"routing"}, "ospf": {"routing"}, "bgp": {"routing"}, "route-redistribution-and-precedence": {"routing"},
 	"overlay-flow-control": {"routing"}, "vco-routing-ui": {"routing"},
+	"config-nsd-gateway": {"network-services-config"}, "config-nsd-edge": {"network-services-config"}, "config-api-credentials": {"network-services-config"}, "config-clusters-hubs": {"network-services-config"},
+	"config-netflow": {"network-services-config"}, "config-dns": {"network-services-config"}, "config-private-network-names": {"network-services-config"}, "config-prefix-delegation": {"network-services-config"},
+	"config-authentication": {"network-services-config"}, "config-vnf": {"network-services-config"},
+	"config-segments": {"profile-policy-config"}, "config-profiles": {"profile-policy-config"}, "config-business-policy-rules": {"profile-policy-config"},
+	"config-firewall-rules": {"profile-policy-config"}, "config-application-match": {"profile-policy-config"},
+	"edge-models": {"topologies"}, "site-topologies": {"topologies"}, "bronze-silver-gold": {"topologies"}, "edge-ha": {"topologies"}, "vco-edge-models-ui": {"topologies"},
+}
+
+// SectionCandidate is an observation candidate with the section of its lesson.
+type SectionCandidate struct {
+	Section string
+	content.ObservationCandidate
+}
+
+// candidateGroups says which sections have a candidates part in the report, in order, and its title.
+var candidateGroups = []struct{ Section, Title string }{
+	{"topologies", "Candidates from topology lessons"},
+	{"network-services-config", "Candidates from network services config lessons"},
+	{"profile-policy-config", "Candidates from profile and policy config lessons"},
 }
 
 // Item is one open question: a VERIFY row or an assumption.
@@ -57,6 +76,8 @@ type Report struct {
 	Assumptions   int
 	Observations  []string
 	ResolvedCount int
+	// Candidates are the [observation candidate] lines of the lessons, with the id of the section each lesson is in.
+	Candidates []SectionCandidate
 }
 
 var citeRe = regexp.MustCompile(`//\s*rule:\s*([a-z0-9-]+)`)
@@ -102,6 +123,13 @@ func Build(contentDir, simDir, model string) (*Report, error) {
 	}
 
 	rep := &Report{}
+	for _, s := range course.Sections {
+		for _, l := range s.Lessons {
+			for _, c := range content.ParseCandidates(l.Meta.ID, l.Body) {
+				rep.Candidates = append(rep.Candidates, SectionCandidate{Section: s.Meta.ID, ObservationCandidate: c})
+			}
+		}
+	}
 	obsFiles := map[string]bool{}
 	for _, b := range blocks {
 		obsFiles[b.File] = true
@@ -291,6 +319,9 @@ func (r *Report) Markdown() string {
 	}
 	fmt.Fprintf(&b, "- VERIFY rows: **%d**; assumptions: **%d**; items with an observation attached: **%d**; still open: **%d**.\n", r.VerifyRows, r.Assumptions, r.ResolvedCount, open)
 	fmt.Fprintf(&b, "- Observation files: %s.\n\n", list(r.Observations, 20))
+	for _, g := range candidateGroups {
+		b.WriteString(r.candidatesMarkdown(g.Section, g.Title))
+	}
 	b.WriteString("## How the ranking works\n\n")
 	b.WriteString("Items that block the most content come first. `score` = for an **assumption**: 10 per lab that relies on it + 6 per engine rule + 2 per place in the engine that cites it + 3 per lesson (a lab's goal lessons, or a lesson that names the assumption) + 1 per quiz question tied to those lessons. For a **VERIFY row**: 6 per not-modelled engine rule built on it + 2 per engine citation + 1 per lesson of the section(s) the sheet backs (section-level, because lessons are not tagged with rows) + 1 per lab in those sections. Labs never depend on a VERIFY row (the lab validator rejects an answer that does), so a VERIFY row ranks by what the engine withholds.\n\n")
 	b.WriteString("Quiz questions never rest on a VERIFY row or an assumption (their answers use VERIFIED rows only); the count shows how many questions sit in the affected lessons and should be re-read if an observation corrects something.\n\n")
@@ -330,3 +361,41 @@ func (r *Report) Markdown() string {
 	}
 	return b.String()
 }
+
+// candidatesMarkdown renders one "Candidates from ..." section: every [observation candidate] line of the lessons of a course
+// section, counted per lesson, with the screen to open, the documented expectation and where the documentation may differ.
+func (r *Report) candidatesMarkdown(section, title string) string {
+	var b strings.Builder
+	fmt.Fprintf(&b, "## %s\n\n", title)
+	var mine []SectionCandidate
+	for _, c := range r.Candidates {
+		if c.Section == section {
+			mine = append(mine, c)
+		}
+	}
+	if len(mine) == 0 {
+		b.WriteString("No lesson lists an observation candidate.\n\n")
+		return b.String()
+	}
+	var order []string
+	per := map[string]int{}
+	for _, c := range mine {
+		if per[c.Lesson] == 0 {
+			order = append(order, c.Lesson)
+		}
+		per[c.Lesson]++
+	}
+	fmt.Fprintf(&b, "Lessons that end with a \"Check this in your own VCO\" box mark each suggested check `[observation candidate]`. They are **not** observations and settle nothing: they are things to look at in a real VCO or site. **%d candidate(s) in %d lesson(s).** When you have seen one, follow `docs/HOW-TO-ADD-AN-OBSERVATION.md`.\n\n", len(mine), len(order))
+	b.WriteString("| lesson | candidates |\n|---|---|\n")
+	for _, id := range order {
+		fmt.Fprintf(&b, "| %s | %d |\n", id, per[id])
+	}
+	b.WriteString("\n| lesson | screen to open | documented expectation | where the documentation may differ |\n|---|---|---|---|\n")
+	for _, c := range mine {
+		fmt.Fprintf(&b, "| %s | %s | %s | %s |\n", c.Lesson, cell(c.Screen), cell(c.Expect), cell(c.Differ))
+	}
+	b.WriteString("\n")
+	return b.String()
+}
+
+func cell(s string) string { return strings.ReplaceAll(s, "|", "/") }

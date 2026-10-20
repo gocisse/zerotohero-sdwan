@@ -1,0 +1,100 @@
+---
+id: svc-nsd-edge
+title: Non SD-WAN Destinations via Edge, configuration
+summary: "The documented steps and settings for an NSD via Edge: the service, the IKE and IPsec proposals, site subnets, enabling it in the Profile, the Edge-level tunnel and what to verify."
+estimated_minutes: 11
+topics: [svcfg-nsd-edge]
+prerequisites: [svc-nsd-gateway]
+---
+
+**By the end of this lesson you will be able to:**
+
+- follow the documented order for an <Term id="nsd-via-edge">NSD via Edge</Term>: create, enable in the Profile, add the Edge tunnel;
+- read the IKE and IPsec proposal settings, their allowed values and documented defaults;
+- say how it differs from an NSD via Gateway in who initiates and where it is configured;
+- list the limits and what the documentation does not say about verification.
+
+## The documented order
+
+An NSD via Edge is a tunnel that an **Edge** builds to an external destination. The documented steps are:
+
+1. **Configure > Network Services > Non SD-WAN Destinations via Edge > New** ("New NSD via Edge" appears only when the table is empty). Enter the settings below and save.
+2. **Enable it in the Profile**: Device tab > VPN Services > Cloud VPN on > under Non SD-WAN Destinations via Edge select **Enable Non SD-WAN via Edge**, select a configured service and Add more as needed. The "Enable Service" checkboxes deactivate individual services.
+3. **At the Edge**: Device tab > VPN Services > Non SD-WAN Destination via Edge > Override, then use **+** in the Action column to add a tunnel (public WAN link, identification, destination addresses).
+
+The tunnel is negotiated with <Term id="ike">IKE</Term> (version 1 or 2, set by the service type) and protected with <Term id="ipsec">IPsec</Term>. This service **only initiates** tunnels; it does not respond to them. The documentation also says the data center administrator must have configured the data center gateway and its VPN tunnel must be up, that the Orchestrator allows **only one NSD via Edge service per segment**, and that two segments cannot share the same service.
+
+<Diagram id="svc-nsd-edge" />
+
+## Settings reference
+
+| Field | What it does | Allowed values and default |
+|---|---|---|
+| Service Name | names the service | required |
+| Service Type | the peer type | Generic IKEv1 Router (Route Based VPN), Generic IKEv2 Router (Route Based VPN) or Microsoft Azure Virtual WAN, required |
+| Tunnel mode | endpoint arrangement | Active/Active, Active/Hot-Standby or Active/Standby; no default stated |
+| IP Version | address family of the tunnel | IPv4 or IPv6; no default stated |
+| Primary VPN Gateway Public IP | the destination's address | required |
+| Secondary VPN Gateway | an additional destination | Add, Remove, Keep Tunnel Active, or reuse the primary's settings |
+| IKE Proposal Encryption | IKE encryption | AES 128 (default), AES 256, AES 128 GCM, AES 256 GCM or Auto |
+| IKE Proposal DH Group | key exchange group | 2, 5, 14, 15, 16, 19, 20 or 21; default 14 |
+| IKE Proposal Hash | IKE hash | SHA 1, SHA 256, SHA 384, SHA 512 or Auto; default SHA 256; SHA 384 and 512 are not available for Azure Virtual WAN |
+| IKE SA Lifetime | lifetime of the IKE security association | 10 to 1440 minutes, default 1440 |
+| DPD Timeout (sec) | dead peer detection timeout | added to an internal timer; 0 does not disable DPD from 5.1.0 |
+| IPsec Proposal Encryption | IPsec encryption | None, AES 128 (default) or AES 256 |
+| IPsec Proposal PFS | perfect forward secrecy | 2, 5, 14, 15, 16, 19, 20 or 21; default 14 |
+| IPsec Proposal Hash | IPsec hash | SHA 1, SHA 256 (default), SHA 384 or SHA 512 |
+| IPsec SA Lifetime | lifetime of the IPsec security association | 3 to 480 minutes, default 480 |
+| Site Subnets | subnets behind the destination | Add (subnet and description) or Delete |
+
+At the Edge, the **Add Tunnel** dialog documents these fields:
+
+| Field | What it does | Allowed values and default |
+|---|---|---|
+| Authentication Method | how the tunnel authenticates | PSK or Certificate; Certificate appears only when a system property enables it |
+| Public WAN Link | the WAN link the tunnel uses | a link of the Edge |
+| Local Identification Type | the type of the local identity | FQDN, User FQDN, IPv4 or IPv6 (PSK only); for Certificate it defaults to DER_ASN1_DN |
+| Remote Identification Type | the type of the remote identity | shown only for Certificate; only DER_ASN1_DN is supported |
+| Destination Primary Public IP | the destination's address | and a Destination Secondary Public IP |
+
+For an Azure Virtual WAN service you also choose a **Subscription** (from API Credentials), a Virtual WAN and a Virtual Hub; the resource group and region fill in. Azure automation supports only IKEv2 with the Azure default IPsec policies (except GCM) when the Edge is the initiator and Azure the responder. For AWS interoperability the guide says to keep the IPsec SA lifetime under 60 minutes (50 recommended) and to match the DH Group and PFS.
+
+<Callout variant="warning" title="Fields we could not confirm">
+  The pages we read do not describe a status screen or events for an NSD via Edge, nor how the Edge-level Add Tunnel fields relate to the Network Services fields. BGP can be configured for NSD neighbours at an Edge, but we did not read the page with those fields. The authentication method defaults are not stated.
+</Callout>
+
+<Predict
+  prompt="You want one Edge-built NSD tunnel for a segment, and a second NSD via Edge service for the same segment. What does the documentation say?"
+  choices={["Only one NSD via Edge service per segment is allowed", "Any number, as long as the names differ", "Two, if one is Active/Standby", "Only an NSD via Gateway can be used per segment"]}
+  answer={0}
+>
+  The Orchestrator allows only one Non SD-WAN Destination via Edge service per segment, and two segments cannot share the same service.
+</Predict>
+
+## What you would see in the VCO
+
+- **Configure > Network Services > Non SD-WAN Destinations via Edge**: the service list.
+- **Configure > Profiles > (Profile) > Device > VPN Services**: Cloud VPN and the Non SD-WAN Destinations via Edge section.
+- **Configure > Edges > (Edge) > Device > VPN Services**: Non SD-WAN Destination via Edge with Override and the + Add Tunnel action.
+- **Diagnostics > Remote Diagnostics > MTR**: a path choice of NVS via Edge when configured.
+
+<Callout variant="tip" title="Check this in your own VCO">
+  - **[observation candidate]** Open: Configure > Network Services > Non SD-WAN Destinations via Edge, New. Expect: Service Type offers Generic IKEv1 Router, Generic IKEv2 Router and Microsoft Azure Virtual WAN. Docs may differ: later releases may add types.
+  - **[observation candidate]** Open: the New dialog's IKE Proposal. Expect: DH Group 14, Hash SHA 256, IKE SA Lifetime 1440. Docs may differ: defaults are as documented for 6.4 and 7.0.
+  - **[observation candidate]** Open: the Profile's VPN Services, Non SD-WAN Destinations via Edge. Expect: Enable Non SD-WAN via Edge and a list of services with Enable Service checkboxes. Docs may differ: the Profile page and the Edge page spell the section name differently.
+  - **[observation candidate]** Open: the Edge's VPN Services, the + Add Tunnel dialog. Expect: Authentication Method (PSK, and Certificate only if enabled), Public WAN Link and the identification fields. Docs may differ: the certificate option depends on a system property.
+  - **[observation candidate]** Open: Monitor > Events around enabling the service. Expect: the documentation names no specific event; note any tunnel events that appear. Docs may differ: this is an open item.
+</Callout>
+
+## Key takeaways
+
+- Create the service, enable it in the Profile, then add the Edge tunnel; the Edge initiates only.
+- One NSD via Edge service per segment, and two segments cannot share it.
+- IKE and IPsec proposals have documented defaults (DH Group 14, SHA 256, 1440 and 480 minutes).
+- The documentation says little about verification: record what you see.
+
+## What would you look for in the VCO
+
+- Which service is enabled in the Profile, and for which segment?
+- Does the Edge's Add Tunnel use PSK or Certificate, and which WAN link?
+- Do the destination's IKE and IPsec settings match the proposals?

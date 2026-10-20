@@ -1,0 +1,79 @@
+# Section 7, lesson 5: Silver option 2 (second variant) and Edge HA. Facts: reference/bronze-silver-gold.md, edge-ha.md. Placement of the HA pair is illustrative.
+id: top-silver-2
+title: Silver option 2 topology and Edge HA (illustrative placement)
+alt: >-
+  Branch users connect to an L2 switch that is connected to an Internet router and an MPLS router. The two routers run HSRP
+  or VRRP between them. The Edge replaces the L2 switch. A standby Edge joined by a failover link can be added, and when the
+  active Edge becomes unresponsive the standby takes over.
+width: 900
+height: 540
+
+nodes:
+  - { id: users, label: Branch users, kind: host, x: 70, y: 270 }
+  - { id: l2, label: L2 switch, kind: l2switch, x: 250, y: 270 }
+  - { id: edge, label: Active Edge, kind: vce, x: 360, y: 270 }
+  - { id: edge2, label: Standby Edge, kind: vce, x: 360, y: 450 }
+  - { id: rinet, label: Internet router, kind: router, x: 540, y: 130 }
+  - { id: rmpls, label: MPLS router, kind: router, x: 540, y: 410 }
+  - { id: net, label: Internet, kind: internet, x: 770, y: 130 }
+  - { id: mpls, label: MPLS, kind: mpls, x: 770, y: 410 }
+
+links:
+  - { id: lan, from: users, to: l2, style: lan }
+  - { id: l2-ri, from: l2, to: rinet, style: lan }
+  - { id: l2-rm, from: l2, to: rmpls, style: lan }
+  - { id: lan-e, from: users, to: edge, style: lan }
+  - { id: e-ri, from: edge, to: rinet, style: lan }
+  - { id: e-rm, from: edge, to: rmpls, style: lan }
+  - { id: r-r, from: rinet, to: rmpls, style: control, label: HSRP / VRRP, curve: 60 }
+  - { id: ri-net, from: rinet, to: net, style: underlay-internet }
+  - { id: rm-mpls, from: rmpls, to: mpls, style: underlay-mpls }
+  - { id: ha, from: edge, to: edge2, style: control, label: failover link }
+  - { id: lan-e2, from: users, to: edge2, style: lan }
+  - { id: e2-ri, from: edge2, to: rinet, style: lan }
+  - { id: e2-rm, from: edge2, to: rmpls, style: lan }
+
+steps:
+  - title: Before the Edge
+    narration: >-
+      In the second Silver variant the site has an **Internet router and an MPLS router** deployed with HSRP or VRRP, and an
+      **L2 switch on the LAN side**.
+    highlight: [users, l2, rinet, rmpls, net, mpls, r-r]
+    hide: [edge, edge2, lan-e, e-ri, e-rm, ha]
+
+  - title: The Edge replaces the L2 switch
+    narration: >-
+      The Edge takes the place of the L2 switch. The vendor text does not say how the Edge interacts with the routers' HSRP
+      or VRRP.
+    hide: [l2, lan, l2-ri, l2-rm]
+    show: [edge, lan-e, e-ri, e-rm]
+    highlight: [edge, lan-e, e-ri, e-rm]
+
+  - title: Router redundancy is the routers' own
+    narration: >-
+      HSRP or VRRP between the routers is router redundancy. It is a feature of the routers, and (in the Edge HA design with L2
+      and L3 switches) of the L3 switch pair, not something the Edge does for them.
+    highlight: [rinet, rmpls, r-r]
+    callouts:
+      - { target: r-r, text: "First-hop redundancy between routers." }
+
+  - title: Add an Edge HA pair (documented feature)
+    narration: >-
+      An Active/Standby pair of **identical Edge models** joined by a failover link is the Edge's own redundancy. The
+      Orchestrator talks to the Active Edge and mirrors its configuration to the Standby. The vendor text does not show a pair in
+      this variant, so the placement here is illustrative.
+    show: [edge2, ha]
+    highlight: [edge, edge2, ha]
+
+  - title: The Active Edge becomes unresponsive
+    narration: >-
+      The Standby stops receiving heartbeat messages (default failover threshold 700 ms), takes over the Active role with
+      minimal traffic impact, and the Orchestrator raises the **High Availability Going Active** event.
+    hide: [lan-e, e-ri, e-rm]
+    show: [lan-e2, e2-ri, e2-rm]
+    highlight: [edge2, lan-e2, e2-ri]
+    packets:
+      - { path: [users, lan-e2, edge2, e2-ri, rinet, ri-net, net], label: after failover, color_style: lan }
+    callouts:
+      - { target: edge, text: "No heartbeat." }
+      - { target: edge2, text: "Standby takes over." }

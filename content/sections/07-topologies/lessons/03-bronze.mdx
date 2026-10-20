@@ -1,0 +1,84 @@
+---
+id: top-bronze
+title: Bronze, the small single-Edge site
+summary: "The vendor's Bronze branch design: one or two Internet links and the Edge as the LAN's gateway. What it gives, what it lacks, and when it fits."
+estimated_minutes: 8
+topics: [topo-bronze]
+prerequisites: [top-overview]
+---
+
+**By the end of this lesson you will be able to:**
+
+- describe the vendor's Bronze topology and its dual-Internet worked example;
+- explain what the Edge does for the LAN in a Bronze site;
+- list what a Bronze site gives and what it lacks;
+- say when Bronze fits and what to add when it does not.
+
+## What the vendor says
+
+The <Term id="bronze-topology">Bronze topology</Term> is "a typical small site deployment" with **one or two WAN links to the public Internet**. In it there is **no MPLS connection** and **no L3 switch on the LAN side** of the Edge. Its worked example in the older guide is a dual-Internet site where one link is behind a NAT router; the 7.0 Site Configurations page shows a similar site, with one direct Internet link and one broadband link, both on DHCP.
+
+<Diagram id="top-bronze" />
+
+## What the Edge does for the LAN
+
+- The Edge is designed to act as a gateway router between the LAN and the WAN (documented). On a routed interface it can run a DHCP server and hand out its own virtual IP address as the clients' <Term id="default-gateway">default gateway</Term> (documented).
+- With nothing between the LAN and the Edge (no L3 switch), the LAN's default gateway is naturally the Edge. That is the usual reading of the description, not a sentence the vendor writes (design practice).
+- The Edge builds its tunnels over each Internet link to the Gateway (and to a <Term id="hub">Hub</Term>, if the Profile designates one); <Term id="dmpo">DMPO</Term> measures the links and steers between them (Sections 2 and 3).
+- The Edge has its own firewall (Section 4: inbound traffic is blocked by default, Stateful Firewall is off by default), and the datasheet says its Enhanced Firewall Service, which is an add-on or Premium feature, is built in "eliminating the need for legacy firewalls at branch locations".
+
+## What Bronze gives, what it lacks
+
+| | Bronze |
+|---|---|
+| Gives | a low equipment count (design practice); overlay tunnels over one or two Internet links; with two links, DMPO can steer and fail over between them (documented in Section 3) |
+| Lacks (by definition) | a private transport such as MPLS |
+| Lacks (design practice) | with one link, nothing to steer or fail over to; with one Edge, a single point of failure; no L3 switch to route on the LAN side |
+
+The vendor's text for the in-path design (Hybrid Site-2) says an Edge that is the only default gateway "makes the Edge a single point of failure and may require HA". Bronze does not repeat that sentence, but the same reasoning applies to a single Edge. Lesson 5 covers the HA pair.
+
+<Callout variant="tip" title="When Bronze fits (design practice)">
+  Small offices with modest traffic whose applications are mostly on the Internet or in the cloud and that can accept a short outage if the Edge fails. Add a second Internet link first, because a second link is the cheapest improvement the description allows.
+</Callout>
+
+<Predict
+  prompt="Which of these is part of the vendor's description of the Bronze topology?"
+  choices={["One or two Internet links and no MPLS", "Active/active L3 switches", "A pair of HSRP routers", "A mandatory Edge HA pair"]}
+  answer={0}
+>
+  Bronze is one or two WAN links to the public Internet with no MPLS and no L3 switch on the LAN side. The other options belong to Gold, Silver variant 2 and the HA lesson.
+</Predict>
+
+## Failure scenarios
+
+| Failure | Who responds | Status |
+|---|---|---|
+| One of two Internet links fails | DMPO moves traffic to the other link | documented for outages in Section 3 |
+| The only Internet link fails | the site is cut off from the overlay; nothing in the description provides another path | design practice |
+| The Edge fails | the site is offline; the description has no second Edge | design practice |
+
+## What you would see in the VCO
+
+- **Configure > Edges** > the Edge > **Device** > **Interface Settings**: one or two WAN interfaces with **Enable WAN Overlay**, and LAN interfaces or VLANs.
+- **Monitor > Edges** > the Edge: the **Links** tab shows the Internet links and their quality (Section 3).
+- The Edge's DHCP settings, if it serves the LAN.
+
+<Callout variant="tip" title="Check this in your own VCO or site">
+  - **[observation candidate]** Open: Monitor > Edges, a small site, the Links tab. Expect: one or two links, both Internet (no private or MPLS link). Docs may differ: the pages do not say how the VCO labels a link type.
+  - **[observation candidate]** Open: Configure > Edges, that Edge, Device tab, a LAN interface's DHCP settings. Expect: the Edge's DHCP server is enabled and its own address is the default gateway given to clients. Docs may differ: DHCP may be a separate server or relay on your network.
+  - **[observation candidate]** Open: Configure > Edges, that Edge, Device tab, High Availability. Expect: None, meaning a single Edge. Docs may differ: the site could have an HA pair or a cluster.
+  - **[observation candidate]** Open: that site's Firewall tab and its Stateful Firewall setting. Expect: inbound traffic blocked unless Port Forwarding or 1:1 NAT exists; Stateful Firewall off unless enabled for the Enterprise. Docs may differ: your Enterprise may have changed the default.
+</Callout>
+
+## Key takeaways
+
+- Bronze is one or two Internet links, no MPLS, no L3 switch on the LAN side.
+- The Edge is the gateway between the LAN and the WAN; with two links DMPO steers between them.
+- It lacks a private transport by definition, and a single Edge is a single point of failure by reasoning.
+- The first improvement is usually a second link.
+
+## What would you look for in the VCO
+
+- How many WAN links does the Edge have, and are they all Internet?
+- Is the Edge the LAN's default gateway?
+- Is the High Availability setting None?

@@ -1,0 +1,52 @@
+# Section 9, lesson 4: building a business policy rule field by field. Illustrative values; the fields and allowed values are documented. Facts: reference/config/config-business-policy-rules.md.
+id: prof-bp-rule-build
+title: Building a business policy rule (illustrative values)
+alt: >-
+  A rule is built in the Add Rule window: a name, then the Match tab with Application set to Define, then the Action tab with Priority
+  High, Network Service Multi-Path and Link Steering by Transport Group Public Wired, Preferred. Create adds it to the Business Policy
+  Rules and the Profile pushes it to its Edges.
+width: 900
+height: 540
+
+nodes:
+  - { id: name, label: "Rule Name + IP version", kind: generic, x: 110, y: 270, sublabel: "IPv4 and IPv6 by default" }
+  - { id: match, label: "Match tab", kind: generic, x: 340, y: 270, sublabel: "Application = Define" }
+  - { id: action, label: "Action tab", kind: generic, x: 570, y: 270, sublabel: "Priority, Network Service, Link Steering" }
+  - { id: create, label: "Create", kind: generic, x: 790, y: 270, sublabel: "rule is listed" }
+  - { id: edge, label: "Edges", kind: vce, x: 790, y: 440, sublabel: "Rules From Profile" }
+
+links:
+  - { id: n-m, from: name, to: match, style: control }
+  - { id: m-a, from: match, to: action, style: control }
+  - { id: a-c, from: action, to: create, style: control }
+  - { id: c-e, from: create, to: edge, style: control }
+
+steps:
+  - title: Open the Add Rule window
+    narration: >-
+      On the Profile's **Business Policy** tab select **+ ADD**, enter a **Rule Name** and leave the IP version at IPv4 and IPv6.
+    highlight: [name]
+    show: [name]
+
+  - title: Match tab
+    narration: >-
+      Source and Destination stay **Any**. Set **Application** to **Define** and choose the application (the choice is illustrative).
+    show: [match, n-m]
+    highlight: [name, n-m, match]
+
+  - title: Action tab
+    narration: >-
+      **Priority** High, **Network Service** Multi-Path, **Link Steering** Transport Group with Public Wired and the strictness **Preferred**.
+    show: [action, m-a]
+    highlight: [match, m-a, action]
+    callouts:
+      - { target: action, text: "Auto is the default steering." }
+
+  - title: Create, and where it appears
+    narration: >-
+      **Create** lists the rule under Business Policy Rules. The Profile pushes it to its Edges, where it appears under **Rules From
+      Profile**; an Edge can supersede it only by creating an identical rule with new parameters.
+    show: [create, edge, a-c, c-e]
+    highlight: [action, a-c, create, c-e, edge]
+    packets:
+      - { path: [create, c-e, edge], label: rule, color_style: control }

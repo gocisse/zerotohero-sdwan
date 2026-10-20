@@ -1,0 +1,50 @@
+# Section 9, lesson 2: Profile to Edge, with an override. Illustrative where it shows a Profile change reaching an Edge that overrides (not documented). Facts: reference/config/config-profiles.md.
+id: prof-profile-edge
+title: A Profile, its Edges and an override (illustrative)
+alt: >-
+  A Profile holds a setting. Edge A inherits it. Edge B ticks Override and keeps its own value. When the Profile changes, an Edge
+  without an override receives the change; what happens to an Edge that overrides that setting is not documented.
+width: 900
+height: 540
+
+nodes:
+  - { id: prof, label: "Profile", kind: generic, x: 450, y: 110, sublabel: "template for many Edges" }
+  - { id: a, label: "Edge A", kind: vce, x: 220, y: 400, sublabel: "inherits" }
+  - { id: b, label: "Edge B", kind: vce, x: 680, y: 400, sublabel: "Override ticked" }
+
+links:
+  - { id: p-a, from: prof, to: a, style: control }
+  - { id: p-b, from: prof, to: b, style: control }
+
+steps:
+  - title: A Profile is a template
+    narration: >-
+      A Profile defines a template configuration and applies it to many Edges. The **Used By** column counts them.
+    highlight: [prof]
+    show: [prof]
+
+  - title: Edges inherit by default
+    narration: >-
+      Edges inherit the Profile's settings. Interface settings of a Profile are applied automatically to the Edges associated with it.
+    show: [a, b, p-a, p-b]
+    highlight: [prof, a, b, p-a, p-b]
+    packets:
+      - { path: [prof, p-a, a], label: setting, color_style: control }
+      - { path: [prof, p-b, b], label: setting, color_style: control }
+
+  - title: An Edge overrides one setting
+    narration: >-
+      On Edge B's Device tab the **Override** checkbox lets that Edge use its own value for an inherited setting.
+    highlight: [b]
+    callouts:
+      - { target: b, text: "Override: its own value." }
+
+  - title: The Profile changes (illustrative)
+    narration: >-
+      Edge A has no override, so it follows the Profile. Whether a later Profile edit reaches an Edge that overrides that setting is
+      not stated in the pages we read, so Edge B is shown unchanged only as an illustration.
+    highlight: [prof, a, p-a]
+    packets:
+      - { path: [prof, p-a, a], label: change, color_style: control }
+    callouts:
+      - { target: b, text: "Not documented." }

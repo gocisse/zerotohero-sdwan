@@ -84,9 +84,47 @@ export function labelRect(cx: number, baselineY: number, text: string, fontSize:
   return { x: cx - width / 2, y: baselineY - fontSize, width, height: fontSize + 5 }
 }
 
+/**
+ * Pixels per viewBox unit of the diagram's SVG. The viewBox is wider than the diagram (it carries the side padding), so this is
+ * `width / viewBoxWidth`, not `width / diagramWidth`; using the latter made bubbles look narrower than they are and let them hang
+ * over the edge of the scroll box.
+ */
+export const pxPerUnit = (wrapperWidth: number, viewBoxWidth: number): number =>
+  wrapperWidth > 0 ? wrapperWidth / viewBoxWidth : 1
+
 /** Rough size of a callout bubble (max 200px wide, 12px text) converted to viewBox units. */
 export function bubbleSize(text: string, scale: number): { width: number; height: number } {
   const px = Math.min(200, text.length * 6.6 + 22)
   const lines = Math.max(1, Math.ceil((text.length * 6.6) / (px - 22)))
   return { width: px / scale, height: (lines * 16 + 14) / scale }
+}
+
+/** Positions along a link (fraction of its length) a label may take, best first. */
+const LABEL_STOPS = [0.5, 0.42, 0.58, 0.35, 0.65, 0.28, 0.72, 0.22, 0.78]
+
+/**
+ * Where a link label goes. The label starts at the middle of its link and slides along the link to the first position where
+ * its text box covers no node disc and no node label (`nodes`, in viewBox units); when every position is blocked the one with the
+ * least overlap wins. `pointAt(t)` gives the point at fraction t of the link. The text is drawn centred on the returned x with
+ * its baseline 8 units above the returned y, like every label.
+ */
+export function placeLinkLabel(
+  pointAt: (t: number) => { x: number; y: number },
+  text: string,
+  fontSize: number,
+  nodes: Rect[],
+): { x: number; y: number } {
+  let best = pointAt(0.5)
+  let bestCost = Infinity
+  for (const t of LABEL_STOPS) {
+    const p = pointAt(t)
+    const r = labelRect(p.x, p.y - 8, text, fontSize)
+    const cost = nodes.reduce((sum, n) => sum + overlapArea(r, n), 0)
+    if (cost === 0) return p
+    if (cost < bestCost) {
+      best = p
+      bestCost = cost
+    }
+  }
+  return best
 }

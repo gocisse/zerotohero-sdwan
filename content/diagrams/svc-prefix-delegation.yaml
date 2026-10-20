@@ -1,0 +1,46 @@
+# Section 8, lesson 6: prefix delegation. Facts: reference/config/config-prefix-delegation.md. No addresses are shown; only the documented /64 LAN prefix length.
+id: svc-prefix-delegation
+title: Prefix delegation tags connect WAN and LAN interfaces
+alt: >-
+  An ISP delegates an IPv6 prefix to a WAN interface of the Edge that has a Prefix Delegation tag. LAN interfaces that use the
+  same tag receive prefixes from that WAN interface, with a prefix length that shows as 64.
+width: 900
+height: 540
+
+nodes:
+  - { id: isp, label: ISP DHCPv6 server, kind: internet, x: 110, y: 270 }
+  - { id: wan, label: "WAN interface", kind: vce, x: 360, y: 270, sublabel: "unique tag" }
+  - { id: lan1, label: "LAN interface 1", kind: l3switch, x: 650, y: 140, sublabel: "same tag" }
+  - { id: lan2, label: "LAN interface 2", kind: l3switch, x: 650, y: 400, sublabel: "same tag" }
+
+links:
+  - { id: isp-wan, from: isp, to: wan, style: underlay-internet }
+  - { id: wan-l1, from: wan, to: lan1, style: lan }
+  - { id: wan-l2, from: wan, to: lan2, style: lan }
+
+steps:
+  - title: Create a tag
+    narration: >-
+      **Network Management > Prefix Delegation Tags > New** with a unique name. A LAN interface receives prefixes from its associated WAN
+      interface only if both share a common tag.
+    highlight: [wan]
+    show: [wan]
+
+  - title: Tag the WAN interface
+    narration: >-
+      On a routed WAN interface (Enable WAN Link), IPv6 Settings > **DHCPv6 Client Prefix Delegation** = Enabled and pick the tag. Each
+      WAN interface must have a unique tag.
+    show: [isp, isp-wan]
+    highlight: [isp, wan, isp-wan]
+    packets:
+      - { path: [isp, isp-wan, wan], label: prefix, color_style: underlay-internet }
+
+  - title: Tag the LAN interfaces
+    narration: >-
+      On a LAN interface or VLAN set the Addressing Type to **DHCPv6 Prefix Delegation**, select the same tag and enter an Interface
+      Address. The Prefix Length auto-populates as 64. Multiple LAN interfaces can use the same tag.
+    show: [lan1, lan2, wan-l1, wan-l2]
+    highlight: [wan, lan1, lan2, wan-l1, wan-l2]
+    packets:
+      - { path: [wan, wan-l1, lan1], label: /64 prefix, color_style: lan }
+      - { path: [wan, wan-l2, lan2], label: /64 prefix, color_style: lan }

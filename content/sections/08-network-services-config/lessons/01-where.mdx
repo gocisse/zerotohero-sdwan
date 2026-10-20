@@ -1,0 +1,97 @@
+---
+id: svc-where
+title: Where network services live
+summary: "The Configure > Network Services area, how a service is created once and assigned to Profiles or Edges, the two meanings of network service, and a create, assign, verify workflow."
+estimated_minutes: 9
+topics: [svcfg-where]
+prerequisites: [ov-services]
+---
+
+**By the end of this lesson you will be able to:**
+
+- name the services in the Configure > Network Services area and say where each is assigned;
+- explain the two meanings of <Term id="network-services">network service</Term> in the documentation;
+- say which services can be overridden at the Edge and which cannot;
+- use the create, assign, verify workflow on any service.
+
+## Two meanings of "network service"
+
+The documentation uses the words for two different things. One is the **Configure > Network Services** area of the Orchestrator, which holds the services in this section. The other is the **network service** choice in a business policy rule (Direct, Multi-Path or Internet Backhaul, Section 4). When a document says "network service", check which one it means.
+
+## The area and the rule: create once, assign where it is used
+
+The area lists NSD via Gateway, NSD via Edge, API Credentials, Clusters and Hubs, NetFlow, DNS Services, Private Network Names, Prefix Delegation Tags, Authentication Services, TACACS Services and Edge Services (VNFs). The guide says configuring network services "is optional and can be configured in any order". A service is created once in the area and then **assigned** in a Profile or an Edge, where the settings that use it live.
+
+| Service | Created at (Configure > Network Services) | Assigned at |
+|---|---|---|
+| <Term id="nsd-via-gateway">NSD via Gateway</Term> | Non SD-WAN Destinations via Gateway | Profile only: Device tab > VPN Services > Cloud VPN; it cannot be overridden at the Edge |
+| <Term id="nsd-via-edge">NSD via Edge</Term> | Non SD-WAN Destinations via Edge | Profile: the same VPN Services section; Edge: VPN Services > Non SD-WAN Destination via Edge (Override) |
+| API Credentials | API Credentials | used by Azure NSDs through their subscription; not assigned to a Profile |
+| Clusters and Hubs | SD-WAN Destinations > Clusters and Hubs | Profile: Cloud VPN > Enable Branch to Hubs > Edit Hubs; Edge: High Availability > Cluster |
+| <Term id="netflow">NetFlow</Term> | Network Management > NetFlow | Profile and Edge: Telemetry > NetFlow Settings (the Edge overrides) |
+| DNS Services | Network Management > DNS Services | Profile: Routing and NAT > DNS; Edge: DNS (Override, Source Interface) |
+| Private Network Names | Network Management > Private Network Names | private WAN overlays (the screen is not confirmed) |
+| Prefix Delegation Tags | Network Management > Prefix Delegation Tags | interface IPv6 settings, Profile and Edge |
+| Authentication Services | Network Management > Authentication Services | Profile: Edge Services > Authentication; Edge: Authentication (Override, Source Interface) |
+| TACACS Services | Network Management > TACACS Services (hidden until the Operator enables it) | Edge: Edge Services > TACACS Services |
+| Edge Services (VNFs) | Edge Services > VNFs | Edge: Device tab > Security VNF > Configure Security VNF |
+
+<Diagram id="svc-workflow" />
+
+## Create, assign, verify
+
+This is **our teaching method**, built from the documented steps: the documentation gives the create and assign steps for each service, and says little about what to check afterwards.
+
+1. **Create** the service in the Network Services area and save it.
+2. **Assign** it where it is used: the Profile for settings shared by many Edges, the Edge only where the documentation offers Override.
+3. **Verify** on the screens that show the result: the service lists, the Profile or Edge settings that name it, **Monitor > Events** and, for some services, a Monitor screen. Later lessons name the documented ones.
+
+<Predict
+  prompt="An NSD via Gateway is created under Network Services. Where do you assign it, and can an Edge override that assignment?"
+  choices={["In the Profile, and no: it is defined exclusively at the Profile level", "On each Edge, which can always override it", "On the Gateway, with no Profile involved", "In the business policy, as a network service action"]}
+  answer={0}
+>
+  An NSD via Gateway is defined exclusively at the Profile level and cannot be overridden at the Edge level. The business policy "network service" is a different thing.
+</Predict>
+
+## Settings reference
+
+The options below are the ones the documentation names for assigning a service.
+
+| Field | What it does | Applied at |
+|---|---|---|
+| Cloud VPN | toggle in the Profile's VPN Services; must be on before the branch tunnel options below can be set | Profile |
+| Enable Edge to Non SD-WAN via Gateway | makes the Profile use NSD via Gateway destinations | Profile |
+| Enable Non SD-WAN via Edge | makes the Profile use NSD via Edge services | Profile (the Edge can override) |
+| Enable Branch to Hubs | turns on permanent tunnels to the Hubs you designate with Edit Hubs | Profile |
+| Source Interface | the Edge interface whose IP is the source of the service's traffic (NetFlow, DNS, RADIUS, TACACS) | Edge |
+
+<Callout variant="warning" title="What we could not confirm">
+  The pages we read do not describe a status screen for most services, and they give no default for most of the fields. Where a later lesson says "not stated", look at your own release. The 7.0 and 6.4 pages agree on the services and menu paths we compared.
+</Callout>
+
+## What you would see in the VCO
+
+- **Configure > Network Services**: the area, with a section per service and **New** buttons ("New ..." appears only when a table is empty).
+- **Configure > Profiles > (Profile) > Device** and **Configure > Edges > (Edge) > Device**: the settings that name a service.
+- **Monitor > Events**: events some services raise.
+
+<Callout variant="tip" title="Check this in your own VCO">
+  - **[observation candidate]** Open: Configure > Network Services. Expect: the list of services named above, with TACACS Services missing unless the Operator enabled it. Docs may differ: a 6.x release or your customer's features may show a different list.
+  - **[observation candidate]** Open: Configure > Profiles, a Profile, Device tab, VPN Services. Expect: Cloud VPN with Edge to Non SD-WAN via Gateway and Non SD-WAN Destinations via Edge options. Docs may differ: the names may be labelled slightly differently on the Profile page.
+  - **[observation candidate]** Open: Configure > Edges, an Edge, Device tab, VPN Services, Non SD-WAN Destination via Edge. Expect: an Override checkbox, and no override for NSD via Gateway. Docs may differ: the Edge page may word it differently.
+  - **[observation candidate]** Open: any empty service list in Network Services. Expect: a "New ..." button that appears only when the table is empty. Docs may differ: your release may always show it.
+</Callout>
+
+## Key takeaways
+
+- Network Services is an area of shared definitions; assignment happens in the Profile or the Edge.
+- The word network service has a second meaning in business policy rules.
+- NSD via Gateway is Profile only; several other services let the Edge override.
+- Create, assign, verify is our method, built on the documented steps.
+
+## What would you look for in the VCO
+
+- Which services exist, and which Profiles or Edges name them?
+- Is this setting a Profile setting or an Edge override?
+- Which screen shows that the service is in use?

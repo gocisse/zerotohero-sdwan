@@ -59,6 +59,8 @@ func NewRouter(d Deps) http.Handler {
 		r.Put("/lessons/{id}/progress", h.putLessonProgress)
 		r.Get("/progress", h.progress)
 		r.Get("/progress/topics", h.topics)
+		r.Get("/study-guide", h.studyGuide)
+		r.Get("/activity", h.activity)
 		r.Get("/review/queue", h.reviewQueue)
 		r.Post("/review/answers", h.reviewAnswers)
 
