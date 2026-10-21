@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from 'react'
+import AddedBadge from '../studyguide/AddedBadge'
 import { Link, useLocation } from 'react-router-dom'
 import type { GlossaryTerm, StudyGuide } from '../api'
 import ErrorPanel from '../components/ErrorPanel'
@@ -279,7 +280,7 @@ export default function GlossaryPage() {
           {visible.map((s) => (
             <section key={s.key} id={`guide-${s.key}`} data-guide-section={s.key} className="mb-8 scroll-mt-4">
               <h2 className="text-lg font-semibold">
-                {sectionLabel(s)}{' '}
+                {sectionLabel(s)} {s.added && <AddedBadge />}{' '}
                 <span className="text-sm font-normal text-slate-500 dark:text-slate-400">
                   ({sectionCount(s)} terms)
                 </span>

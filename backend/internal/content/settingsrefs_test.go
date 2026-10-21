@@ -102,3 +102,101 @@ func TestSection8SettingsFieldsExistInVerifiedSheetRows(t *testing.T) {
 		t.Errorf("checked %d fields in %d lessons, want 15 lessons", checked, lessons)
 	}
 }
+
+// ts-prefixed fact sheets are the troubleshooting sheets (content/reference/troubleshooting/).
+func verifiedTroubleshootingRows(t *testing.T, c *Course) []string {
+	t.Helper()
+	fsys := os.DirFS("../../../content")
+	var rows []string
+	for _, r := range SheetRows(ReadReferences(fsys)) {
+		if strings.HasPrefix(r.Sheet, "ts-") && (r.Status == "VERIFIED" || r.Status == "OBSERVED") {
+			rows = append(rows, strings.ToLower(r.Claim))
+		}
+	}
+	if len(rows) < 80 {
+		t.Fatalf("only %d verified troubleshooting rows found", len(rows))
+	}
+	return rows
+}
+
+// Every name in a "Settings reference" table of a Section 10 lesson (a test, an option, an event, a threshold) must appear in a VERIFIED
+// or OBSERVED row of a ts- fact sheet. Four lessons have such a table.
+func TestSection10TablesExistInVerifiedSheetRows(t *testing.T) {
+	c, err := Load(os.DirFS("../../../content"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	rows := verifiedTroubleshootingRows(t, c)
+	s, ok := c.Section("troubleshooting")
+	if !ok {
+		t.Fatal("section troubleshooting is missing")
+	}
+	withTable, checked := 0, 0
+	for _, l := range s.Lessons {
+		fields := settingsFields(l.Body)
+		if len(fields) == 0 {
+			continue
+		}
+		withTable++
+		for _, f := range fields {
+			checked++
+			found := false
+			for _, r := range rows {
+				if strings.Contains(r, strings.ToLower(f)) {
+					found = true
+					break
+				}
+			}
+			if !found {
+				t.Errorf("%s: %q is in no VERIFIED or OBSERVED row of reference/troubleshooting/", l.Meta.ID, f)
+			}
+		}
+	}
+	if withTable != 4 || checked < 35 {
+		t.Errorf("checked %d names in %d lessons, want 4 lessons and at least 35 names", checked, withTable)
+	}
+}
+
+// The debug.py reference runbook lists options in its documented tables only if a VERIFIED or OBSERVED row of ts-edge-cli names them;
+// everything else is under "Unconfirmed, fill from observation".
+func TestDebugReferenceRunbookListsOnlyVerifiedOptions(t *testing.T) {
+	c, err := Load(os.DirFS("../../../content"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	rb, ok := c.Runbook("debug-script-reference")
+	if !ok {
+		t.Fatal("runbook debug-script-reference is missing")
+	}
+	rows := verifiedTroubleshootingRows(t, c)
+	documented, unconfirmed := false, false
+	inUnconfirmed := false
+	for _, line := range strings.Split(rb.Body, "\n") {
+		trim := strings.TrimSpace(line)
+		switch {
+		case strings.HasPrefix(trim, "## "):
+			inUnconfirmed = strings.Contains(trim, "Unconfirmed")
+			unconfirmed = unconfirmed || inUnconfirmed
+		case !inUnconfirmed && strings.HasPrefix(trim, "| `--"):
+			documented = true
+			cells := strings.Split(strings.Trim(trim, "|"), "|")
+			opt := strings.Trim(strings.TrimSpace(cells[0]), "`")
+			found := false
+			for _, r := range rows {
+				if strings.Contains(r, strings.ToLower(opt)) {
+					found = true
+					break
+				}
+			}
+			if !found {
+				t.Errorf("debug-script-reference lists %q as documented but no VERIFIED or OBSERVED row of a ts- sheet names it", opt)
+			}
+			if !strings.Contains(trim, "VERIFIED") && !strings.Contains(trim, "OBSERVED") {
+				t.Errorf("debug-script-reference row for %q has no VERIFIED or OBSERVED status", opt)
+			}
+		}
+	}
+	if !documented || !unconfirmed {
+		t.Errorf("the runbook needs documented option rows and an Unconfirmed section (documented=%v unconfirmed=%v)", documented, unconfirmed)
+	}
+}

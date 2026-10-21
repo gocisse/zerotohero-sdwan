@@ -1,0 +1,456 @@
+# Section 10 quiz. Correct answers use only VERIFIED rows in content/reference/troubleshooting/*.md, or this course's own method where the
+# prompt says "according to this course's method". No answer rests on a VERIFY row.
+
+- id: ts-q-method-order
+  topic: ts-method
+  difficulty: 1
+  type: ordering
+  prompt: "According to this course's method, put the steps of a troubleshooting session in order."
+  options:
+    - { id: a, text: "Write the symptom" }
+    - { id: b, text: "Fix the scope" }
+    - { id: c, text: "Choose the layer" }
+    - { id: d, text: "Collect read-only evidence" }
+    - { id: e, text: "State one hypothesis" }
+    - { id: f, text: "Test it, then change one thing" }
+  correct: [a, b, c, d, e, f]
+  explanation: "The course's method runs symptom, scope, layer, evidence, hypothesis, test and fix, then verify and document. The method is the course's own, built on the documented tools."
+  lesson_ref: trb-method
+
+- id: ts-q-method-symptom
+  topic: ts-method
+  difficulty: 1
+  type: single_choice
+  prompt: "Scenario: a user phones in. According to this course's method, which statement is a symptom?"
+  options:
+    - id: a
+      text: "The file server cannot be reached since 09:00"
+    - id: b
+      text: "The MPLS link has packet loss"
+      explanation: "That already names a cause. It is a hypothesis or a piece of evidence."
+    - id: c
+      text: "The firewall rule is wrong"
+      explanation: "That is a hypothesis."
+    - id: d
+      text: "The tunnel to the Hub is Unstable"
+      explanation: "That is a reading from a tool, so it is evidence, not what the user sees."
+  correct: a
+  explanation: "A symptom is what the user observes, written without a cause."
+  lesson_ref: trb-method
+
+- id: ts-q-method-doc
+  topic: ts-method
+  difficulty: 2
+  type: true_false
+  prompt: "The 7.0 Troubleshooting Guide gives a stepwise method that runs across all layers, from the Edge's link to the application."
+  correct: false
+  explanation: "The guide documents the tests, each with a purpose, when to run it and what to check, plus one worked procedure; a cross-layer order is not in it. The nine steps in this course are the course's own."
+  lesson_ref: trb-method
+
+- id: ts-q-layers-shared
+  topic: ts-layers
+  difficulty: 1
+  type: single_choice
+  prompt: "Scenario: twenty Edges attached to the same Gateway lose their tunnels at the same minute. According to this course's method, where do you look first?"
+  options:
+    - id: a
+      text: "The Gateway's status and its Monitor tab"
+    - id: b
+      text: "Each branch's LAN switch"
+      explanation: "Twenty branches at once is unlikely to be twenty LAN faults."
+    - id: c
+      text: "The business policy of one Edge"
+      explanation: "A policy rule does not remove tunnels from twenty Edges."
+    - id: d
+      text: "The MTU of one WAN link"
+      explanation: "One link cannot explain twenty Edges."
+  correct: a
+  explanation: "Many Edges at once points to the shared component. The Gateway list shows status, service state and connected Edges, and its Monitor tab shows usage."
+  lesson_ref: trb-layers
+
+- id: ts-q-layers-link
+  topic: ts-layers
+  difficulty: 1
+  type: single_choice
+  prompt: "Scenario: the Interface Status test on a branch Edge shows link detected false on the Internet interface. Which layer is the first suspect, and what does the guide say to check?"
+  options:
+    - id: a
+      text: "The WAN link: check the physical cabling and the peer end"
+    - id: b
+      text: "Routing: check the OSPF database"
+      explanation: "A link that is not detected cannot carry routes. The guide points to cabling."
+    - id: c
+      text: "Policy: check the business policy rules"
+      explanation: "Policy does not decide whether a link is detected."
+    - id: d
+      text: "Network services: run the DNS Test"
+      explanation: "DNS needs a working link first."
+  correct: a
+  explanation: "The guide says that link detected must be true, and that if it is false you check the physical cabling and the peer-end configuration."
+  lesson_ref: trb-layers
+
+- id: ts-q-tools-vpn
+  topic: ts-vco-tools
+  difficulty: 1
+  type: single_choice
+  prompt: "Which Remote Diagnostics test does the guide name for traffic between branches, or between a Hub and a spoke, that is not bi-directional?"
+  options:
+    - id: a
+      text: "VPN Test"
+    - id: b
+      text: "Flush NAT"
+      explanation: "Flush NAT changes state and addresses NAT entries."
+    - id: c
+      text: "NTP Dump"
+      explanation: "NTP Dump checks the time."
+    - id: d
+      text: "DNS Test"
+      explanation: "DNS Test checks name resolution on the Edge."
+  correct: a
+  explanation: "The guide says to run the VPN Test if data traffic between the branches or between the Hub and spoke is not bi-directional. It shows a Pass or Fail per peer Edge."
+  lesson_ref: trb-tools
+
+- id: ts-q-tools-states
+  topic: ts-vco-tools
+  difficulty: 2
+  type: multi_choice
+  prompt: "Which of these are tunnel states documented for the List Paths test?"
+  options:
+    - { id: a, text: "Stable" }
+    - { id: b, text: "Unstable" }
+    - { id: c, text: "BW_Measurement" }
+    - { id: d, text: "Quiet" }
+    - id: e
+      text: "Alive"
+      explanation: "Alive is an ARP cache status, not a List Paths state."
+    - id: f
+      text: "Refresh"
+      explanation: "Refresh is an ARP cache status."
+  correct: [a, b, c, d]
+  explanation: "List Paths states are Stable, Unstable, BW_Measurement and Quiet. The guide says anything other than Stable indicates an issue with the WAN link."
+  lesson_ref: trb-tools
+
+- id: ts-q-tools-state-change
+  topic: ts-vco-tools
+  difficulty: 2
+  type: multi_choice
+  prompt: "Which of these tests change state on the Edge, and are therefore out of scope for this course?"
+  options:
+    - { id: a, text: "Flush NAT" }
+    - { id: b, text: "Flush Flows" }
+    - { id: c, text: "Clear ARP Cache" }
+    - id: d
+      text: "List Paths"
+      explanation: "List Paths only reads the tunnel paths."
+    - id: e
+      text: "Route Table Dump"
+      explanation: "Route Table Dump only reads the forwarding table."
+  correct: [a, b, c]
+  explanation: "Flush NAT, Flush Flows and Clear ARP Cache change state. The guide says flushing NAT immediately clears all active translation entries, which disrupts current traffic flows."
+  lesson_ref: trb-tools
+
+- id: ts-q-tools-order
+  topic: ts-vco-tools
+  difficulty: 2
+  type: ordering
+  prompt: "According to this course's method, put the investigation tools in the order to use them."
+  options:
+    - { id: a, text: "Status and events: is the Edge Connected, and what changed?" }
+    - { id: b, text: "The Monitor tab for the layer" }
+    - { id: c, text: "The one read-only Remote Diagnostics test that answers what is left" }
+    - { id: d, text: "A diagnostic bundle for Support, if it stays unexplained" }
+  correct: [a, b, c, d]
+  explanation: "This is the course's own order. It starts with the cheapest evidence and ends with the bundle for Support."
+  lesson_ref: trb-tools
+
+- id: ts-q-cli-ike
+  topic: ts-edge-cli
+  difficulty: 2
+  type: single_choice
+  prompt: "Which debug.py option does the Orchestrator Guide describe as showing the details of current security associations?"
+  options:
+    - id: a
+      text: "--ike_sa"
+    - id: b
+      text: "--pki"
+      explanation: "--pki shows PKI settings, the trusted CA list and the certificate."
+    - id: c
+      text: "--ike_spd"
+      explanation: "--ike_spd shows the security protocols and encryption methods used per peer."
+    - id: d
+      text: "--flows"
+      explanation: "No --flows option is documented for an Edge in the sources read."
+  correct: a
+  explanation: "--ike_sa shows the details of current security associations; --pki and --ike_spd are described differently."
+  lesson_ref: trb-edge-cli
+
+- id: ts-q-cli-gateway
+  topic: ts-edge-cli
+  difficulty: 2
+  type: true_false
+  prompt: "The long list of debug.py options in the Gateway Monitoring Guide (such as --icmp_monitor and --stale_nat_dump) is documented for use on an Edge."
+  correct: false
+  explanation: "Those options are used on the Gateway as the user vcadmin, and the guide warns that some commands and outputs may only be relevant to Release 5.0.0. Do not assume they exist on an Edge."
+  lesson_ref: trb-edge-cli
+
+- id: ts-q-cli-colleague
+  topic: ts-edge-cli
+  difficulty: 2
+  type: single_choice
+  prompt: "Scenario: a colleague says 'just run debug.py with the flows option on the branch Edge'. According to the sources read for this course, what is the right response?"
+  options:
+    - id: a
+      text: "That option is not documented for an Edge in the sources read; use List Active Flows in Remote Diagnostics, or ask Support"
+    - id: b
+      text: "Run it; every Edge has it"
+      explanation: "No such option is documented for an Edge."
+    - id: c
+      text: "Run it on the Gateway instead; the Gateway always has it"
+      explanation: "A flows option is not among the Gateway options the guide lists either."
+    - id: d
+      text: "Run Flush Flows first"
+      explanation: "Flush Flows changes state and is out of scope."
+  correct: a
+  explanation: "The public sources name only --pki, --ike_sa, --ike_spd and a reference to --routes for an Edge. Remote Diagnostics has a read-only List Active Flows test."
+  lesson_ref: trb-edge-cli
+
+- id: ts-q-gw-memory
+  topic: ts-gw-orch
+  difficulty: 2
+  type: single_choice
+  prompt: "Scenario: a Gateway's memory use is 75 percent. The recommended values are a warning at 70 and a critical at 80. What does the guide recommend at a warning?"
+  options:
+    - id: a
+      text: "Review the current device scale configuration and add resources if required"
+    - id: b
+      text: "Open a support case at once, because it is critical"
+      explanation: "75 is above the warning of 70 but below the critical of 80."
+    - id: c
+      text: "Ignore it until 100 percent"
+      explanation: "The guide gives thresholds so that you act at a warning."
+    - id: d
+      text: "Reboot the Gateway"
+      explanation: "Rebooting is state-changing and not the recommended action."
+  correct: a
+  explanation: "The guide says that on a warning you review the scale configuration and add resources if required, and that at a critical alarm you contact Arista Support."
+  lesson_ref: trb-gw-orch
+
+- id: ts-q-events-down
+  topic: ts-events
+  difficulty: 1
+  type: single_choice
+  prompt: "According to the events appendix, when is the Edge Down event generated?"
+  options:
+    - id: a
+      text: "When the Edge loses connectivity with the Orchestrator and fails two or more consecutive heartbeats"
+    - id: b
+      text: "When any one WAN link goes down"
+      explanation: "That is Link Down."
+    - id: c
+      text: "When an HA Edge fails over"
+      explanation: "That is Edge HA Failover."
+    - id: d
+      text: "When the certificate is renewed"
+      explanation: "That is the certificate renewal request event."
+  correct: a
+  explanation: "EDGE_DOWN is displayed as Edge Down and is generated by the Orchestrator after two or more consecutive failed heartbeats."
+  lesson_ref: trb-events
+
+- id: ts-q-events-who
+  topic: ts-events
+  difficulty: 2
+  type: single_choice
+  prompt: "Scenario: the Events list shows 'Link dead' for a branch. Which component generated that event?"
+  options:
+    - id: a
+      text: "The Edge (EDGED)"
+    - id: b
+      text: "The Orchestrator"
+      explanation: "The Orchestrator generates Link Down; 'Link dead' is the Edge's own link state event."
+    - id: c
+      text: "The Gateway"
+      explanation: "Not for this event."
+    - id: d
+      text: "The Hub"
+      explanation: "Hubs are Edges and do not generate this on behalf of another Edge."
+  correct: a
+  explanation: "Link dead (LINK_DEAD) is generated by the Edge when its link state becomes dead. Link Down (LINK_DOWN) is generated by the Orchestrator."
+  lesson_ref: trb-events
+
+- id: ts-q-events-activation
+  topic: ts-events
+  difficulty: 2
+  type: multi_choice
+  prompt: "Which of these events are about Edge activation?"
+  options:
+    - { id: a, text: "MGD_ACTIVATION_SUCCESS (Activated)" }
+    - { id: b, text: "MGD_ACTIVATION_ERROR (Activation failed)" }
+    - { id: c, text: "MGD_ACTIVATION_PARTIAL (Activation incomplete)" }
+    - id: d
+      text: "EDGE_DOWN (Edge Down)"
+      explanation: "Edge Down is about missed heartbeats."
+    - id: e
+      text: "LINK_UP (Link Up)"
+      explanation: "Link Up is about a WAN link."
+  correct: [a, b, c]
+  explanation: "The three MGD_ACTIVATION events cover success, failure (for example an incorrect activation link) and incomplete activation (a software update failed)."
+  lesson_ref: trb-events
+
+- id: ts-q-scen1-errors
+  topic: ts-scen-1
+  difficulty: 2
+  type: single_choice
+  prompt: "Scenario: Interface Status on a flapping branch link shows RX errors of 1204, and a minute later 1873. What does the guide's reading suggest?"
+  options:
+    - id: a
+      text: "The errors keep increasing, so replace the cable or SFP"
+    - id: b
+      text: "Run Flush NAT"
+      explanation: "NAT is unrelated to physical errors and flushing changes state."
+    - id: c
+      text: "Errors are normal; ignore them"
+      explanation: "The guide says RX and TX should ideally be 0."
+    - id: d
+      text: "Reset the USB modem"
+      explanation: "That test is for a USB or cellular device and changes state."
+  correct: a
+  explanation: "The guide says RX and TX should ideally be 0 and that incrementing errors suggest replacing the cables or SFPs. Running the test twice shows whether they increase."
+  lesson_ref: trb-scen-1
+
+- id: ts-q-scen1-activation-order
+  topic: ts-scen-1
+  difficulty: 2
+  type: ordering
+  prompt: "Scenario: a new Edge never activated. According to this course's method, put the evidence in order."
+  options:
+    - { id: a, text: "Read the Edge's entry in Configure > Edges" }
+    - { id: b, text: "Read the activation event in Monitor > Events" }
+    - { id: c, text: "Ask someone on site for the link state and address" }
+    - { id: d, text: "State one hypothesis and what would disprove it" }
+  correct: [a, b, c, d]
+  explanation: "The course starts with what the VCO already holds, then asks site for what the VCO cannot see, then states a hypothesis. Remote Diagnostics is not available before activation."
+  lesson_ref: trb-scen-1
+
+- id: ts-q-scen2-mode
+  topic: ts-scen-2
+  difficulty: 2
+  type: single_choice
+  prompt: "Scenario: in List Paths on Leeds you want to see whether a direct branch-to-branch tunnel to York exists. Which Mode value does the guide describe for tunnels built on a need basis for branch-to-branch communication?"
+  options:
+    - id: a
+      text: "Dynamic"
+    - id: b
+      text: "Static"
+      explanation: "The guide says static tunnels are always UP."
+    - id: c
+      text: "Quiet"
+      explanation: "Quiet is a State value, not a Mode."
+    - id: d
+      text: "Stable"
+      explanation: "Stable is a State value."
+  correct: a
+  explanation: "Dynamic tunnels facilitate branch-to-branch communication by establishing connections on a need basis; static tunnels are always UP."
+  lesson_ref: trb-scen-2
+
+- id: ts-q-scen2-prefix
+  topic: ts-scen-2
+  difficulty: 2
+  type: single_choice
+  prompt: "Scenario: Leeds cannot reach one prefix behind York, but York reaches everything and the tunnels are Stable. According to this course's method, what is the first question?"
+  options:
+    - id: a
+      text: "Does York hold the prefix and advertise it into the overlay?"
+    - id: b
+      text: "Is the MTU 1500?"
+      explanation: "Small flows would still work with an MTU problem and the symptom is a missing prefix."
+    - id: c
+      text: "Is the Gateway out of CPU?"
+      explanation: "Everything else works."
+    - id: d
+      text: "Is NTP synchronised?"
+      explanation: "Time does not remove a single prefix."
+  correct: a
+  explanation: "With tunnels fine and one prefix missing, the question is where the prefix stops in its life as a route, and the owner must first know it and advertise it."
+  lesson_ref: trb-scen-2
+
+- id: ts-q-scen3-mtu
+  topic: ts-scen-3
+  difficulty: 2
+  type: single_choice
+  prompt: "Scenario: small web pages load, but a 50 MB copy to the data center stalls. According to this course's method, which test gives the most direct evidence for an MTU cause?"
+  options:
+    - id: a
+      text: "A Ping Test with a large packet size and Do not fragment, then smaller sizes"
+    - id: b
+      text: "Flush NAT"
+      explanation: "It changes state and does not measure size."
+    - id: c
+      text: "NTP Dump"
+      explanation: "It checks the time."
+    - id: d
+      text: "VPN Test"
+      explanation: "It shows connectivity, not packet size."
+  correct: a
+  explanation: "The Ping Test accepts a packet size from 36 to 1500 and a Do not fragment option, so a size sweep shows the largest packet that passes."
+  lesson_ref: trb-scen-3
+
+- id: ts-q-scen3-rule
+  topic: ts-scen-3
+  difficulty: 2
+  type: single_choice
+  prompt: "Scenario: the nightly backup from York uses the MPLS link. The Edge has a rule with the same match as the Profile's rule. Which one applies, and where do you look?"
+  options:
+    - id: a
+      text: "The Edge's rule supersedes the Profile's; look at Edge Overrides on the Business Policy tab"
+    - id: b
+      text: "The Profile's rule always wins; look at the Gateway"
+      explanation: "An Edge-level rule with the same match supersedes the Profile rule."
+    - id: c
+      text: "Both are applied at the same time"
+      explanation: "The Edge rule supersedes."
+    - id: d
+      text: "Neither; the firewall decides the link"
+      explanation: "The business policy steers links; the firewall allows or blocks."
+  correct: a
+  explanation: "An Edge-level rule with the same match supersedes the Profile rule, and the Edge Overrides section on the Edge's Business Policy tab shows the Edge's own rules."
+  lesson_ref: trb-scen-3
+
+- id: ts-q-esc-who
+  topic: ts-escalation
+  difficulty: 1
+  type: single_choice
+  prompt: "According to the Troubleshooting Guide, who can request an Edge diagnostic bundle?"
+  options:
+    - id: a
+      text: "Operators"
+    - id: b
+      text: "Every read-only user"
+      explanation: "The guide lists Operators for the diagnostic bundle."
+    - id: c
+      text: "Only Partners"
+      explanation: "Not stated."
+    - id: d
+      text: "Only Customer Support"
+      explanation: "Customer Support can request a packet capture bundle, not the diagnostic bundle."
+  correct: a
+  explanation: "Request Diagnostic Bundle is available to Operators. Request PCAP Bundle is available to Operators, Standard Admins and Customer Support."
+  lesson_ref: trb-escalate
+
+- id: ts-q-esc-filters
+  topic: ts-escalation
+  difficulty: 2
+  type: multi_choice
+  prompt: "Which of these are PCAP filters documented for a packet capture bundle?"
+  options:
+    - { id: a, text: "IP1" }
+    - { id: b, text: "IP1:Port1" }
+    - { id: c, text: "Protocol" }
+    - id: d
+      text: "MAC address"
+      explanation: "Not listed among the PCAP filters."
+    - id: e
+      text: "VLAN priority"
+      explanation: "Not listed among the PCAP filters."
+  correct: [a, b, c]
+  explanation: "The PCAP Filters are IP1, IP2, IP1:Port1, IP2:Port2 and Protocol, and at least one filter is needed to use filtering. Advanced Filters are a separate free-form option."
+  lesson_ref: trb-escalate

@@ -24,9 +24,11 @@ type GuideBeyond struct {
 
 // GuideSection is one section (G1..G5) of the study guide.
 type GuideSection struct {
-	ID     string       `yaml:"id" json:"id"`
-	Title  string       `yaml:"title" json:"title"`
-	Topics []GuideTopic `yaml:"topics" json:"topics"`
+	ID    string `yaml:"id" json:"id"`
+	Title string `yaml:"title" json:"title"`
+	// AddedByCourse marks a section the course added beyond the learner's original outline (G6, step 20).
+	AddedByCourse bool         `yaml:"added_by_course" json:"added_by_course"`
+	Topics        []GuideTopic `yaml:"topics" json:"topics"`
 }
 
 // GuideTopic is one topic of the study guide and what the course offers for it.

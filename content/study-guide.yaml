@@ -545,3 +545,108 @@ sections:
         diagrams: [top-gold]
         labs: []
         sim_screens: []
+
+  - id: G6
+    title: Troubleshooting (added to the study guide)
+    added_by_course: true
+    topics:
+      - id: ts-method
+        title: A troubleshooting method
+        kind: concept
+        coverage: partial
+        note: "Taught: a nine-step method from symptom to documented fix, the scope questions, an evidence checklist and the vendor's per-test structure; the method itself is the course's own because the sources read give no cross-layer procedure."
+        lessons: [trb-method]
+        quiz_topics: [ts-method]
+        diagrams: [ts-method-flow]
+        labs: [ts-exam-1-quiet-monday, ts-exam-3-change-window]
+        sim_screens: []
+      - id: ts-layers
+        title: The layers where things break
+        kind: concept
+        coverage: partial
+        note: "Taught: eight layers with first questions, the first evidence in the VCO for each and the earlier lessons that explain them; the layer model and its order are the course's own."
+        lessons: [trb-layers]
+        quiz_topics: [ts-layers]
+        diagrams: [ts-layer-model]
+        labs: []
+        sim_screens: []
+      - id: ts-vco-tools
+        title: VCO investigation tools
+        kind: concept
+        coverage: full
+        note: "Taught: running Remote Diagnostics, the read-only tests that answer tunnel, route, flow, NAT, time and interface questions, how to read List Paths, VPN Test and the route dump, and which tests change state; the long tail of BGP and OSPF tests is covered only by Section 6 and the state-changing tests are deliberately not taught."
+        lessons: [trb-tools]
+        quiz_topics: [ts-vco-tools]
+        diagrams: [ts-which-tool]
+        labs: []
+        sim_screens: [monitor, paths, routes, trace]
+      - id: ts-edge-cli
+        title: The Edge command line and debug.py
+        kind: concept
+        coverage: partial
+        note: "Taught: which debug.py options the public documents name for an Edge (--pki, --ike_sa, --ike_spd and a reference to --routes), that the long option list is for the Gateway, and what is out of scope; not covered because it is not documented: shell access, the Edge option list, the script's location and the output formats."
+        lessons: [trb-edge-cli]
+        quiz_topics: [ts-edge-cli]
+        diagrams: []
+        labs: []
+        sim_screens: []
+      - id: ts-gw-orch
+        title: Gateway and Orchestrator checks
+        kind: concept
+        coverage: partial
+        note: "Taught: the Gateway status and usage screens, the documented thresholds, Orchestrator diagnostics, disaster recovery failure states, time and certificate checks; not covered: a full list of services and log files, which the sources read do not give."
+        lessons: [trb-gw-orch]
+        quiz_topics: [ts-gw-orch]
+        diagrams: []
+        labs: []
+        sim_screens: []
+      - id: ts-events-logs
+        title: Events and logs
+        kind: concept
+        coverage: partial
+        note: "Taught: reading an event, the documented events for Edge, link, tunnel, HA, routing, firewall, certificate and activation, and a timeline method; not covered: Hub, NTP and license events and event retention (not confirmed), and Edge log files beyond mgd.log."
+        lessons: [trb-events]
+        quiz_topics: [ts-events]
+        diagrams: []
+        labs: []
+        sim_screens: [timeline]
+      - id: ts-scen-activation
+        title: "Scenarios: activation and underlay"
+        kind: topology
+        coverage: partial
+        note: "Taught: three worked tickets (a new Edge that will not activate, an offline branch, a flapping link) with evidence in order and readings; not covered: documented causes and fixes for flapping and activation beyond the events and the Interface Status checks, because the sources read give none."
+        lessons: [trb-scen-1]
+        quiz_topics: [ts-scen-1]
+        diagrams: [ts-scen-activation]
+        labs: [ts-link-down-failover]
+        sim_screens: [monitor]
+      - id: ts-scen-overlay
+        title: "Scenarios: overlay and routing"
+        kind: topology
+        coverage: partial
+        note: "Taught: three worked tickets (no direct tunnel, a prefix missing at a remote site, a Hub that stopped answering) linked to simulator labs; not covered: what flows do after a Hub returns and what an Edge does without the Orchestrator, which are not modelled."
+        lessons: [trb-scen-2]
+        quiz_topics: [ts-scen-2]
+        diagrams: [ts-scen-overlay]
+        labs: [no-direct-tunnel, branch-b-cannot-reach, hub-down, ts-printer-vlan, ts-test-prefix-missing, ts-spoke-behind-nat, ts-exam-2-hub-trouble]
+        sim_screens: [reachability, routes]
+      - id: ts-scen-policy
+        title: "Scenarios: policy, DMPO and MTU"
+        kind: topology
+        coverage: partial
+        note: "Taught: three worked tickets (choppy voice, an application on the wrong link, stalled large transfers) linked to simulator labs; not covered: whether remediation is active for a flow, the firewall versus policy order and Non SD-WAN MTU, which are not modelled."
+        lessons: [trb-scen-3]
+        quiz_topics: [ts-scen-3]
+        diagrams: [ts-scen-policy]
+        labs: [video-wrong-link, mtu-ipsec, ts-backup-wrong-link, ts-large-transfer-stall]
+        sim_screens: [trace]
+      - id: ts-escalation
+        title: Escalation and documentation
+        kind: concept
+        coverage: full
+        note: "Taught: when to escalate, how to request the Edge diagnostic bundle and packet capture bundle with their fields and roles, a case summary and a post-incident note; the two templates are the course's own."
+        lessons: [trb-escalate]
+        quiz_topics: [ts-escalation]
+        diagrams: []
+        labs: []
+        sim_screens: []

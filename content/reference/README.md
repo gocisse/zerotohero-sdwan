@@ -526,3 +526,65 @@ Sentences making a technical claim without a VERIFIED row, per lesson; each is l
 
 Consistency across Sections 1 to 9 and the glossary: "override" means the Edge Override checkbox for Device settings and a superseding identical rule for business policy and firewall rules, as in Section 4; "business policy" and "firewall" keep their separate roles and the unknown order is stated in both; "application" means a DPI-identified application (default or custom) and is separate from a destination domain name; "Edge-level" settings are the Override checkboxes, Source Interface and Edge-only items (loopbacks, LAN interfaces and SSID of a VLAN); the Section 5 and Section 8 statements about segments and Cloud VPN agree. The OSPF override conflict (Profile page versus Edge page) is reported in Sections 4 and 9 and remains unresolved, not hidden. No contradiction was found.
 
+## Step 20: troubleshooting verification pass
+
+Six sheets in `reference/troubleshooting/`. There is no `reference-sources/` folder, so the PDFs were downloaded by the author from the URLs in the rows and read as text; "local PDF page N" is the PDF page index (the printed number is about 4 lower).
+
+| source | how it was read | rows resting on it |
+|---|---|---|
+| 7.0 Troubleshooting Guide (104 pages, DOC-08770-01) | local PDF, read in full as text | 55 |
+| 7.0 Orchestrator Guide (144 pages) | local PDF, searched and the relevant chapters read (1.4 DR, 1.6 diagnostics, 1.7 operations, certificates and PKI pages 141 to 143) | 21 |
+| 7.0 Gateway Monitoring Guide (47 pages, DOC-08768-01) | local PDF, read in full as text | 12 |
+| 7.0 Design Guide (29 pages) | local PDF, searched for debug.py and the CLI (no hit) | 0 |
+| 7.0 Administration Guide appendix (events) | summarising tool (WebFetch, verbatim quotes requested); the first 100000 of about 127000 characters read, the rest not | 13 |
+| 6.4 Administration Guide appendix (events) and 6.4 Remote Diagnostic Tests on Edges | summarising tool; the events page the same way (first 100000 of about 129000 characters), the tests page in both halves (titles and two limit sentences) | 4 |
+| Broadcom knowledge-base article on Partner Gateway commands; Remote Diagnostics WebSocket API reference | search-tool summaries only; both pages unreadable (HTTP 404 and 503) | 2 (SECONDARY) |
+| (no source found) | rows marked VERIFY | 19 |
+
+Counts: 106 VERIFIED, 2 SECONDARY, 19 VERIFY, 0 OBSERVED (127 rows). Counted directly: 4 PDFs (88 rows). Through a summarising tool: 3 page reads (17 rows). Arista's pages returned HTTP 406 to a plain fetch (not circumvented).
+
+### Verification of the engineer-tool claims
+
+| claim | result |
+|---|---|
+| a script called debug.py on the Edge | **confirmed in part**: named in the Orchestrator Guide (pages 141 to 143) for the "Edge or Gateway command line", and referenced as "the debug.py--routes output" in the Troubleshooting Guide (page 88); the Gateway Monitoring Guide uses it at /opt/vc/bin/debug.py on the Gateway; its location on an Edge is unconfirmed |
+| it can dump flows, paths, routes, ARP/NDP, VPN state, bandwidth and link statistics | **unconfirmed for an Edge**: only `--pki`, `--ike_sa`, `--ike_spd` (documented) and `--routes` (referred to) are named; the Gateway options (`--path`, `--handoff`, `--vrf`, `--list_edges`, `--icmp_monitor`, `--bgp_view_summary`, `--stale_nat_dump`, `--dpdk_ports_dump`) are not Edge options; the equivalent read-only reads exist as Remote Diagnostics tests (List Active Flows, List Paths, Route Table Dump, ARP Table Dump, IPv6 ND Table Dump, VPN Test, WAN Link Bandwidth Test, Interface Status) |
+| it is run from the Edge shell | **unconfirmed**: the documents say "Edge or Gateway command line interface" but not how to reach the Edge's shell |
+| Edge-side log files | **confirmed in part**: only `/var/log/mgd.log` is named for the Edge (certificate mismatch case); the Gateway's vc_procmon, mgd, gwd and natd logs are listed in the Gateway guide; there is no Edge log list |
+| an Edge diagnostic bundle | **confirmed**: Diagnostics tab > Diagnostic Bundles > Request Diagnostic Bundle (Operators), "collection of all the configuration and logs from a specific Edge", with Core Limit; and Request PCAP Bundle (Operators, Standard Admins, Customer Support) |
+| the Remote Diagnostics tests List Paths, VPN Test, MTR, route and flow dumps | **confirmed** in 7.0 (PDF pages 79, 91, 33, 84, 36); **corrected for 6.4**: the 6.4 test list has no "MY Traceroute" (MTR), only "Traceroute"; the other tests exist in 6.4 |
+| packet capture | **confirmed**: the PCAP bundle above (filters IP1, IP2, IP1:Port1, IP2:Port2, Protocol; the HA standby interface from 5.2.0) |
+
+### Open VERIFY items (step 20)
+
+1. How to get a shell on an Edge, as which user, and where debug.py lives on an Edge; its full option list; the output formats of every option (observation candidates; see the capture list in `docs/OBSERVATION-PRIORITIES.md`).
+2. Edge log files other than `/var/log/mgd.log`, and the Orchestrator's service and log list.
+3. Hub, NTP and license events (the unread tail of the events appendix), event retention, the Events screen's filters.
+4. Whether a branch raises an event when a Hub tunnel is lost (`VPN_TUNNEL_DOWN` is documented only for the tunnel between the Edge service and a VPN gateway).
+5. Documented causes and fixes for link flapping, activation failures beyond a wrong link, NAT or firewall blocks of tunnels, license problems and DMPO symptoms.
+6. The control that sends a new activation from an Edge's entry in Configure > Edges, and where the activation state is shown.
+7. Whether a single "connected Edges" health figure exists in the VCO.
+8. Whether Remote Diagnostics tests and debug.py share an implementation.
+
+## Section 10 claim audit (self-review, step 20)
+
+Sentences that make a technical claim without a VERIFIED or OBSERVED row, per lesson. Each one is labelled "our method", marked illustrative or hedged ("to confirm in your VCO"); none is a quiz correct answer except the questions whose prompt says "according to this course's method". Every name in a lesson's Settings reference table is in a VERIFIED row (automated: `TestSection10TablesExistInVerifiedSheetRows`), and the debug.py runbook lists an option as documented only with such a row (`TestDebugReferenceRunbookListsOnlyVerifiedOptions`).
+
+| lesson | count | sentences and resolution |
+|---|---|---|
+| 1 Method | 2 | the nine steps and the scope-to-layer hint (our method, labelled) |
+| 2 Layers | 4 | the eight-layer model, its order, the rules of thumb, "a missing route can look like a tunnel problem" (labelled as our model and reasoning) |
+| 3 Tools | 1 | the order we suggest (our method) |
+| 4 Edge CLI | 1 | the safe-capture habit (our method); the lesson says plainly what is not documented |
+| 5 Gateway and Orchestrator | 2 | "many Edges at once: shared component first" (our method); restarting services is named as state-changing and out of scope |
+| 6 Events | 2 | the timeline method (ours); time order does not prove cause (reasoning) |
+| 7 Scenarios 1 | 4 | hypothesis trees (ours); the "no event at all" reading (marked not a documented event); the activation control location (hedged) |
+| 8 Scenarios 2 | 4 | hypothesis trees (ours); the NAT cause rests on the documented unconfigured-NAT effect and a simulator assumption; fix locations hedged "for example" |
+| 9 Scenarios 3 | 5 | hypothesis trees (ours); the MTU shape "small works, large stalls" labelled our reading and tested with sizes; remediation noted as not readable per flow; the interface MTU location hedged |
+| 10 Escalation | 2 | the two templates and "when to escalate" (ours, labelled) |
+| **Total** | **27** | |
+
+Every command, option or output that appears in a lesson or runbook, with its source: `sudo tail -f /var/log/mgd.log`, `/etc/vc_private`, `/etc/vc_public` (Orchestrator Guide page 141); `--pki`, `--ike_sa`, `--ike_spd` (Orchestrator Guide pages 142 and 143); `--routes` (Troubleshooting Guide page 88); the Gateway options in the debug.py runbook (Gateway Monitoring Guide pages 17 to 34, labelled Gateway only); the Remote Diagnostics test names and fields (Troubleshooting Guide); event names (events appendix, summarising tool). No output format of debug.py is shown. The `text` blocks in the scenario lessons and the support-case template are labelled "schematic (illustrative, not real output)" and use only field names the documents print (Route Table Dump Table 8, List Paths Table 7, the events table columns); no command output is invented.
+
+Consistency across Sections 1 to 10 and the glossary: the Monitor > Edges tab names, the Remote Diagnostics test names (List Paths, VPN Test, Route Table Dump, List Active Flows, MY Traceroute/MTR) and the event names are spelled as in Sections 5 and 6 and in the glossary ("Remote Diagnostics", "List Paths", "MTR (My Traceroute)", "Event"); the Diagnostics tab is the entry point everywhere. One difference is deliberate: MTR is documented from 7.0 in the pages read and is not in the 6.4 list, which the lesson and the glossary entry say. No contradiction was found.
+

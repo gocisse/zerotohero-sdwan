@@ -1,0 +1,62 @@
+# Section 10, lesson 3: which tool first. Illustrative decision tree: the tools are documented, the order is this course's.
+id: ts-which-tool
+title: Which tool first? (illustrative decision tree)
+alt: >-
+  A decision tree. If the Edge is not Connected, read the events and the Edge status, because Remote Diagnostics and Remote
+  Actions need a Connected Edge. If it is Connected and the question is about tunnels, use List Paths and VPN Test. If it is
+  about a route, use Route Table Dump. If it is about one flow, use List Active Flows. Otherwise read the Monitor tabs, and if
+  the problem stays unexplained, request a diagnostic bundle.
+width: 960
+height: 560
+
+nodes:
+  - { id: start, label: "Ticket", kind: generic, x: 80, y: 280 }
+  - { id: q-conn, label: "Is the Edge Connected?", kind: generic, x: 290, y: 280 }
+  - { id: events, label: "Events and Edge status", kind: generic, x: 290, y: 80, sublabel: "Remote Diagnostics need Connected" }
+  - { id: q-kind, label: "What is the question about?", kind: generic, x: 540, y: 280 }
+  - { id: paths, label: "List Paths, VPN Test", kind: generic, x: 820, y: 80, sublabel: "tunnels, peers" }
+  - { id: routes, label: "Route Table Dump", kind: generic, x: 820, y: 210, sublabel: "routes, reason codes" }
+  - { id: flows, label: "List Active Flows", kind: generic, x: 820, y: 340, sublabel: "one flow, its rule" }
+  - { id: monitor, label: "Monitor tabs", kind: generic, x: 820, y: 470, sublabel: "links, quality" }
+  - { id: bundle, label: "Diagnostic bundle", kind: generic, x: 540, y: 480, sublabel: "unexplained: for Support" }
+
+links:
+  - { id: s-c, from: start, to: q-conn, style: control }
+  - { id: c-e, from: q-conn, to: events, style: control, label: "no" }
+  - { id: c-k, from: q-conn, to: q-kind, style: control, label: "yes" }
+  - { id: k-p, from: q-kind, to: paths, style: control }
+  - { id: k-r, from: q-kind, to: routes, style: control }
+  - { id: k-f, from: q-kind, to: flows, style: control }
+  - { id: k-m, from: q-kind, to: monitor, style: control }
+  - { id: m-b, from: monitor, to: bundle, style: ipsec, curve: 40, label: "still unexplained" }
+
+steps:
+  - title: Is the Edge Connected?
+    narration: >-
+      Remote Diagnostics and Remote Actions run over the connection between the Orchestrator and the Edge, and Remote Actions
+      are available only for Edges in the Connected state. If the Edge is not Connected, the events and the status are your
+      evidence.
+    highlight: [start, s-c, q-conn, c-e, events]
+    show: [q-conn, s-c, events, c-e]
+
+  - title: "A Connected Edge, and what the question is about"
+    narration: >-
+      Choose the tool by the object of the question: a tunnel or a peer, a route, a single flow, or the quality of a link.
+    highlight: [q-conn, c-k, q-kind]
+    show: [q-kind, c-k]
+
+  - title: Tunnels, routes and flows
+    narration: >-
+      List Paths and VPN Test answer tunnel and peer questions. Route Table Dump answers where a prefix goes and why a route
+      lost. List Active Flows answers which rule and path a flow got.
+    highlight: [q-kind, k-p, paths, k-r, routes, k-f, flows]
+    show: [paths, k-p, routes, k-r, flows, k-f]
+
+  - title: Quality, and when nothing explains it
+    narration: >-
+      The Monitor tabs show link quality over time. If the read-only evidence does not explain the symptom, a diagnostic
+      bundle is what Support asks for.
+    highlight: [q-kind, k-m, monitor, m-b, bundle]
+    show: [monitor, k-m, bundle, m-b]
+    callouts:
+      - { target: bundle, text: "Operators request the Edge diagnostic bundle." }

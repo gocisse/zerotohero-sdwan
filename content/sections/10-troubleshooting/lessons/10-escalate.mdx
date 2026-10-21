@@ -1,0 +1,83 @@
+---
+id: trb-escalate
+title: Escalation and documentation
+summary: "What to collect before a support case (diagnostic bundle, packet capture bundle, evidence), a case summary and a post-incident note template that are this course's own, and what a bundle request needs."
+estimated_minutes: 8
+topics: [ts-escalation]
+prerequisites: [trb-scen-3]
+---
+
+**By the end of this lesson you will be able to:**
+
+- decide when to stop investigating and escalate;
+- request a <Term id="diagnostic-bundle">diagnostic bundle</Term> and a <Term id="packet-capture-bundle">packet capture bundle</Term> and say who can;
+- write a case summary that a stranger can act on;
+- write a short post-incident note.
+
+## When to escalate
+
+Escalate when the read-only <Term id="evidence">evidence</Term> does not explain the symptom, when the next step is state-changing, or when a documented threshold says to. The ARP Table Dump procedure ends with "collect the Diagnostic bundle and the Packet Capture bundle and contact Arista Customer Support"; the Gateway thresholds say to contact Support at a critical alarm. Anything beyond those statements is **our method**.
+
+## What a bundle needs
+
+| Item | Edge | Gateway |
+|---|---|---|
+| Where | Diagnostics tab > Diagnostic Bundles | Operator portal > Gateway Management > Diagnostic Bundles |
+| Packet capture bundle | Target, Interface (or VLAN), Duration in seconds, Reason for Generation (optional), PCAP Filters, Advanced Filters | Target, Connectivity (interface or Edge ID), Duration (default 5 seconds), Reason, filters |
+| Diagnostic bundle | Target, Reason for Generation, Core Limit | Target, Reason, Core Limit |
+| Who | PCAP bundle: Operators, Standard Admins, Customer Support; diagnostic bundle: Operators only | Operator Superuser or Admin; a Partner with Gateway management access |
+| After | More > Download CSV, then send the bundle to Support | Download Bundle as ZIP; bundles are deleted on their Cleanup Date |
+
+The Edge's diagnostic bundle is the "collection of all the configuration and logs from a specific Edge"; the Core Limit option reduces the size when Internet connectivity has issues. PCAP filters take IP1, IP2, IP1:Port1, IP2:Port2 or Protocol, and at least one filter is needed to use filtering. Capturing the HA interface of a standby Edge is documented from release 5.2.0.
+
+<Callout variant="info" title="Capture only what you need">
+  A packet capture can hold customer traffic. Use a filter and a short duration, and share the bundle only with Support through the documented route.
+</Callout>
+
+## A case summary (our template)
+
+The page [support case template](/troubleshooting/support-case-template) has the full text. In short:
+
+1. One-line symptom and start time (UTC).
+2. Scope: who is affected and who is not.
+3. What changed recently.
+4. The evidence collected, with times and the tests read.
+5. Hypotheses tried and refuted.
+6. Bundles attached, and the Edge release.
+7. What you need from Support.
+
+## A post-incident note (our template)
+
+After the fix, write: what happened, the root cause with the evidence that shows it, what was changed and where, how it was verified, and what to watch for. Keep it factual; it is the first thing the next engineer reads.
+
+<Predict
+  prompt="Who can request an Edge diagnostic bundle, according to the guide?"
+  choices={["Operators only", "Any read-only user", "Only Partners", "Anyone with a packet capture role"]}
+  answer={0}
+>
+  The guide lists Request Diagnostic Bundle for Operators; the PCAP bundle is available to Operators, Standard Admins and Customer Support.
+</Predict>
+
+## What you would see in the VCO
+
+- **Diagnostics > Diagnostic Bundles** with Request PCAP Bundle and Request Diagnostic Bundle, and the status of each request.
+- **More > Download CSV** on the bundles list.
+
+<Callout variant="tip" title="Check this in your own VCO">
+  - **[observation candidate]** Open: Diagnostics > Diagnostic Bundles for an Edge. Expect: Request PCAP Bundle and Request Diagnostic Bundle buttons according to your role. Docs may differ: your role.
+  - **[observation candidate]** Open: a PCAP request dialog (do not submit). Expect: Target, Interface or VLAN, Duration, Reason and PCAP Filters fields. Docs may differ: field labels.
+  - **[observation candidate]** Open: the diagnostic bundle list after a request in a lab. Expect: a status that goes to complete and a Cleanup Date. Docs may differ: the status names.
+</Callout>
+
+## Key takeaways
+
+- Escalate when evidence does not explain it, when the next step is state-changing, or when a threshold says so.
+- Bundles: Edge diagnostic bundle (Operators), PCAP bundle (Operators, Standard Admins, Customer Support), with filters and short durations.
+- A good case summary lists scope, changes, evidence, refuted hypotheses and the release.
+- The templates are ours, not Arista's.
+
+## What would you look for in the VCO
+
+- Which role do I have, and can I request the bundle?
+- What filter and duration will capture the problem and no more?
+- Does my case summary let a stranger act on it?

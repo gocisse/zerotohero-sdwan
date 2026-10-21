@@ -1,0 +1,24 @@
+---
+id: layer-cheat-sheet
+title: Layer-by-layer first questions
+summary: The eight layers of this course's troubleshooting model with two first questions, the first VCO evidence and the lesson for each.
+kind: cheatsheet
+estimated_minutes: 3
+---
+
+The layers and their order are the course's own model (lesson [The layers where things break](/course/troubleshooting/trb-layers)). The screens and tests named are documented.
+
+| Layer | Question 1 | Question 2 | First evidence | Lesson |
+|---|---|---|---|---|
+| Activation and management | Is the Edge Connected? | What do the events say, and when? | Monitor > Events, Edge status | Section 2 |
+| WAN link (underlay) | Is the link detected, with an address? | Do RX and TX errors increase between two runs? | Links tab, Interface Status | Section 2 |
+| Tunnels (overlay) | Is each path Stable and VPN UP? | Does VPN Test pass to the peer? | Paths tab, <Term id="list-paths">List Paths</Term>, VPN Test | Section 5 |
+| Routing | Is the prefix in the table? | Which route is preferred and why did the others lose? | Route Table Dump | Section 6 |
+| Policy and firewall | Which rule did the flow meet? | Which link did it get? | List Active Flows, Business Policy tab | Sections 4 and 9 |
+| Quality (DMPO) | What are loss, latency and jitter per link? | Is the flow on the link you expect? | Links and QoE tabs, List Paths | Section 3 |
+| MTU | Which packet size passes with Do not fragment? | What is the overhead on this path? | Ping Test, <Term id="mtr">MTR</Term> | Section 2 |
+| Network services | Does the Edge resolve names? | Is the time right in UTC? | DNS Test, NTP Dump | Sections 5 and 8 |
+
+<Callout variant="info" title="Many Edges at once">
+  Count the affected Edges first. Many at once means a shared component (a Hub, a Gateway, the Orchestrator): see lesson [Gateway and Orchestrator side checks](/course/troubleshooting/trb-gw-orch).
+</Callout>

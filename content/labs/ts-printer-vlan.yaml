@@ -1,0 +1,79 @@
+# LAB, not a real network. Everything below happens on the teaching topology routing-demo (invented names and numbers).
+id: ts-printer-vlan
+title: "Ticket: the printer VLAN at Branch C is unreachable"
+summary: Branch A cannot reach the printer VLAN behind Branch C, though Branch C itself can. Work the ticket in order - scope, layer, evidence - and fix the one setting that stops the route.
+difficulty: 2
+estimated_minutes: 15
+topology: routing-demo
+goals: [trb-scen-2, rt-diagnosis, rt-static]
+screens:
+  - { label: Reachability explainer (start here), path: reachability }
+  - { label: Remote Diagnostics > Route Table Dump (mock), path: routes }
+  - { label: Flow tracer, path: trace }
+fault:
+  patches:
+    - op: set
+      path: edges[c-edge]/routing/static_routes[printers]/advertise
+      value: false
+flow:
+  source: a-edge
+  destination: 172.16.50.0/24
+symptom: >-
+  Ticket: "Branch A cannot print to the printer VLAN 172.16.50.0/24 at Branch C. Branch C staff print fine." One pair of
+  sites, one prefix, one direction. The tunnels are not in doubt, so the layer is routing. Everything here uses explicitly
+  configured settings, so no assumption decides the answer.
+tasks:
+  - id: scope
+    type: inspect
+    prompt: Run the reachability explainer from Branch A to 172.16.50.0/24. What is the outcome?
+    probe: { kind: reach_outcome }
+    choices:
+      - { id: reachable, text: "reachable", value: reachable }
+      - { id: unreachable, text: "unreachable", value: unreachable }
+      - { id: notmodelled, text: "not modelled", value: not-modelled }
+    explanation: The tunnels are fine, so the flow is not blocked there; the prefix is unreachable because the route does not complete its life as a route. The next task asks where it stops. Branch C itself prints fine because the route is local to it.
+  - id: stage
+    type: diagnose
+    prompt: Which stage of the route's life fails first?
+    probe: { kind: reach_first_failing }
+    choices:
+      - { id: known, text: "The owning Edge never learned the prefix", value: known }
+      - { id: advertised, text: "The owning Edge does not advertise it into the overlay", value: advertised }
+      - { id: filtered, text: "A filter or the overlap rule holds it back", value: filtered }
+      - { id: redistributed, text: "Branch A does not hand it to its LAN routers", value: redistributed }
+      - { id: winner, text: "No route reaches Branch A, or another route wins", value: winner }
+      - { id: path, text: "The route exists but its path is not built", value: path }
+    explanation: Branch C knows its static route (it is configured), but it does not advertise it into the overlay, so no other Edge can learn it.
+  - id: fix-it
+    type: fix
+    prompt: Choose the change that makes the prefix reachable from Branch A, then check the result.
+    probe: { kind: reach_outcome }
+    equals: reachable
+    explanation: The Advertise check box of a static route advertises the route over the VPN so that other Edges can reach it. Preferred only controls the local path selection.
+hints:
+  - { task: stage, text: "The reachability explainer lists six stages in order. The first one marked Failed is the answer." }
+  - { task: stage, text: "Branch C has the route in its own table. Ask who else is told about it." }
+  - { task: fix-it, text: "A static route has two switches with different jobs: one for local selection, one for global reachability." }
+fixes:
+  - id: advertise-on
+    title: Tick Advertise on Branch C's printers static route
+    description: Share the route over the VPN so other Edges can reach it.
+    patches:
+      - { op: set, path: "edges[c-edge]/routing/static_routes[printers]/advertise", value: true }
+  - id: preferred-off
+    title: Untick Preferred on the printers static route
+    description: Stop preferring the route in local path selection.
+    patches:
+      - { op: set, path: "edges[c-edge]/routing/static_routes[printers]/preferred", value: false }
+  - id: overlay-prefix
+    title: Tick Overlay Prefix in Branch B's BGP settings
+    description: Redistribute the prefixes learned from the overlay to Branch B's BGP neighbors.
+    patches:
+      - { op: set, path: "edges[b-edge]/routing/bgp/redistribute/overlay_prefix", value: true }
+debrief:
+  - finding: "The printers static route was not advertised, so no other Edge could learn it."
+    where: "advertises the route over the VPN so other Edges can reach it"
+  - finding: "You proved it by listing the routes the Edge holds."
+    where: "Route Table Dump"
+  - finding: "A live engineer would also run List Paths and VPN Test between the two Edges before blaming routing, and read the events around the time of the change; those need a real VCO and are not simulated."
+    where: "List Paths"

@@ -1,0 +1,39 @@
+---
+id: evidence-checklist
+title: One-page evidence checklist
+summary: A checklist to copy into every ticket before you change anything, with the read-only evidence to collect in order.
+kind: checklist
+estimated_minutes: 3
+---
+
+Copy this into the ticket. It is the course's own aid (lesson [A troubleshooting method](/course/troubleshooting/trb-method)). Tick items as you collect them; write the **time** next to every observation.
+
+## Before you look
+
+- [ ] Ticket text in the user's words, the time it started and who reported it.
+- [ ] <Term id="symptom">Symptom</Term> written without a cause.
+- [ ] <Term id="ts-scope">Scope</Term>: one user, one Edge, one pair of sites, or all. Who is not affected?
+- [ ] What changed recently, and when?
+
+## Read-only evidence, in order
+
+- [ ] Edge status (Connected or not) and its Profile and release.
+- [ ] **Monitor > Events** around the start time: names, times, which component generated them.
+- [ ] The **Monitor > Edges** tab for the layer: Links, Paths, QoE or Flows.
+- [ ] The one read-only <Term id="remote-diagnostics">Remote Diagnostics</Term> test that answers the question left (List Paths, VPN Test, Route Table Dump, List Active Flows, Interface Status, NTP Dump).
+- [ ] The same evidence from the other side of the problem (the other Edge, the Hub, the Gateway).
+
+## Reasoning
+
+- [ ] One hypothesis, and the observation that would disprove it.
+- [ ] The test you ran and its result.
+
+<Callout variant="warning" title="Do not change state to explore">
+  Flush, clear, restart, reboot and failover actions change state. Do them only under a documented procedure or Support's direction.
+</Callout>
+
+## After the change
+
+- [ ] The one change you made, and where in the VCO.
+- [ ] The same evidence read again, and the time.
+- [ ] A note for the next engineer (see the [support case template](/troubleshooting/support-case-template)).

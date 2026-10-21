@@ -1,0 +1,138 @@
+---
+id: trb-scen-3
+title: "Scenarios 3: policy, DMPO and MTU"
+summary: "Three original tickets worked from symptom to fix: voice that is choppy at one branch, an application on the wrong link, and large transfers that stall. Each ends with the simulator lab that reproduces the modelled part and says what is not modelled."
+estimated_minutes: 12
+topics: [ts-scen-3]
+prerequisites: [trb-scen-2]
+---
+
+**By the end of this lesson you will be able to:**
+
+- separate a link quality problem from a policy problem from an MTU problem;
+- use the Links tab, List Active Flows and the Ping Test with a packet size in the right order;
+- find the business policy rule that decided a flow and say where it comes from;
+- say what the course cannot model for these tickets.
+
+All tickets are invented; **schematic** boxes are **illustrative** and use documented field names with made-up values.
+
+<Diagram id="ts-scen-policy" />
+
+## Ticket 1: calls are choppy at Leeds
+
+**Ticket.** "Since Monday, calls from Leeds sound robotic, other branches are fine."
+
+**Known.** One branch, one kind of traffic. **Not known.** Whether a link is degraded or the calls use the wrong link.
+
+**Layer decision.** Quality (<Term id="dmpo">DMPO</Term>) first, then policy (<Term id="business-policy">business policy</Term>). Scope is one branch, so the Edge's links come before the Hub or Gateway.
+
+**Evidence, in order.**
+
+1. **Monitor > Edges > Links** and **QoE** for the time of the complaint: <Term id="loss">loss</Term>, <Term id="latency">latency</Term> and <Term id="jitter">jitter</Term> per link.
+2. **List Paths**: the same measures per tunnel path, with the State.
+3. **List Active Flows** with the phone's address as filter: which business policy rule and which link the flow got.
+
+```text
+schematic (illustrative, not real output)
+Link       Loss   Latency   Jitter
+Internet   0.1%   18 ms     2 ms
+MPLS       4.5%   35 ms     21 ms
+flow 10.1.1.20 -> data center   link: MPLS   rule: voice
+```
+
+**Hypothesis tree.** (a) Voice is steered to a link that is lossy; test by reading which link the flow got against the link measures. (b) Both links are fine and the rule is wrong; test by comparing with the intended rule. (c) The link is degraded and DMPO is correcting it, so the call is better than the raw numbers; whether remediation is active is not something the Orchestrator screens document reading for a given flow.
+
+**Fix and where.** If the rule steers voice to a bad link, change the rule's link steering under **Business Policy** in the Profile or on the Edge (an Edge rule with the same match supersedes the Profile rule). If the link itself is bad, fix the circuit.
+
+**Verification.** The Links tab shows lower loss for the voice link, or List Active Flows shows the new link, and the users agree.
+
+**Lesson learned.** Read the link measures and the rule that picked the link together.
+
+Reproduce the steering part: [Video is sent over the wrong link](/sim/labs/video-wrong-link) and the [Tunnel map and Monitor](/sim/hub-and-spoke-demo/monitor) with a degraded link. **Not modelled:** whether on-demand remediation (FEC, jitter buffer, NACK) is active for a flow.
+
+## Ticket 2: the backup job uses the expensive link
+
+**Ticket.** "The nightly backup from York is eating the MPLS link and the invoice shows it."
+
+**Known.** One application, one Edge. **Not known.** Which rule decided.
+
+**Layer decision.** Policy. The traffic is fine; it is on the wrong link.
+
+**Evidence, in order.**
+
+1. **List Active Flows** filtered on the backup server: the link and rule shown.
+2. The Edge's **Business Policy** tab: **Rules From Profile** and **Edge Overrides**; an Edge override supersedes a Profile rule with the same match.
+3. The rule's link steering: Mandatory, Preferred or Available (Section 4).
+
+**Hypothesis tree.** (a) A Profile rule says Preferred MPLS and nothing overrides it; (b) an Edge override pins it to MPLS; (c) the application is not identified and a more general rule matches first (the first packets of a flow can match a more general rule while DPI identifies the application).
+
+**Fix and where.** Change the rule in the Edge's **Edge Overrides** or the Profile's **Business Policy** to the link you want, with the right strictness.
+
+**Verification.** A new backup flow in List Active Flows shows the intended link.
+
+**Lesson learned.** Policy questions are answered by the rule list and the flow list, not by link graphs.
+
+Reproduce it: the lab [Video is sent over the wrong link](/sim/labs/video-wrong-link) and the [Flow tracer](/sim/hub-and-spoke-demo/trace). **Not modelled:** the order of the firewall and business policy evaluation, and what happens when no rule matches.
+
+## Ticket 3: big file transfers stall at Cardiff
+
+**Ticket.** "Browsing is fine, but copying a large file to the data center hangs after a few seconds."
+
+**Known.** Small flows work, large ones stall. **Not known.** Whether a link has a lower MTU.
+
+**Layer decision.** <Term id="mtu">MTU</Term>. Small packets pass and large ones do not is the classic MTU shape. This is our reading; confirm it with a test.
+
+**Evidence, in order.**
+
+1. **Ping Test** to a destination across the overlay with a packet size near 1500 and **Do not fragment** on, then smaller sizes; the packet size range is 36 to 1500.
+2. **MTR** (7.0) for the path and loss per hop with the same protocol.
+3. The overhead numbers (Section 2): on a 1500-byte path, VPN traffic leaves 1388 to 1403 bytes. If a link's MTU is below 1300 the MTU must be configured manually; the interface setting is **L2 MTU** (default 1500 for routed interfaces).
+
+```text
+schematic (illustrative, not real output)
+size 1472, Do not fragment   result: fails
+size 1372, Do not fragment   result: replies
+```
+
+**Hypothesis tree.** (a) The WAN link has a smaller MTU than the Edge assumes; (b) a device on the path drops fragments or ICMP so discovery fails; (c) the problem is loss, not size (check the quality evidence).
+
+**Fix and where.** Set the right MTU for the interface or link under **Device** (interface settings), or ask the provider to fix the path.
+
+**Verification.** The Ping Test passes at the larger size and the transfer completes.
+
+**Lesson learned.** Test with sizes, not just a default ping.
+
+Reproduce the arithmetic: [MTU, a large packet on an IPsec path](/sim/labs/mtu-ipsec) (diagnose-only). **Not modelled:** return traffic from outside and Non SD-WAN MTU.
+
+<Predict
+  prompt="Small web pages load but a 50 MB copy stalls. Which test gives the most direct evidence for an MTU cause?"
+  choices={["A Ping Test with a large packet size and Do not fragment", "A Flush NAT", "A VPN Test Pass", "NTP Dump"]}
+  answer={0}
+>
+  A size sweep with Do not fragment shows the largest packet that passes. Flushing NAT changes state, VPN Test shows connectivity but not size, and NTP Dump checks the time.
+</Predict>
+
+## What you would see in the VCO
+
+- **Monitor > Edges** Links, QoE and Flows; **Business Policy** tab on the Edge and Profile.
+- **Diagnostics**: List Active Flows, Ping Test, MY Traceroute.
+
+<Callout variant="tip" title="Check this in your own VCO">
+  - **[observation candidate]** Open: Monitor > Edges > Links for an Edge at a busy time. Expect: loss, latency and jitter per link over a time range. Docs may differ: column names.
+  - **[observation candidate]** Open: Diagnostics, List Active Flows with a source filter. Expect: the flow with its rule and link. Docs may differ: which fields are shown.
+  - **[observation candidate]** Open: Diagnostics, Ping Test with size 1500 and Do not fragment. Expect: failure across an overlay path. Docs may differ: the exact maximum that passes.
+  - **[observation candidate]** Open: an Edge's Business Policy tab. Expect: Rules From Profile and Edge Overrides. Docs may differ: the heading wording.
+</Callout>
+
+## Key takeaways
+
+- Quality: Links and QoE; policy: List Active Flows and rules; MTU: sized pings.
+- Read the measures and the rule that picked the link together.
+- Edge rules supersede Profile rules with the same match.
+- Sweep packet sizes with Do not fragment before you call it MTU.
+
+## What would you look for in the VCO
+
+- Which link and which rule did the flow get?
+- What are loss, latency and jitter on that link at that time?
+- What is the largest packet that passes?

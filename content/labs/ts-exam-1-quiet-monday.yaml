@@ -1,0 +1,122 @@
+# LAB, not a real network. Everything below happens on the teaching topology ts-exam-network (invented names and numbers).
+id: ts-exam-1-quiet-monday
+title: "Troubleshooting exam, ticket 1: a quiet Monday"
+summary: Two tickets arrive together. The Cardiff printers cannot be reached from Leeds, and York's voice calls take the Internet link. Several settings are wrong; work the tickets in a sensible order and fix them.
+difficulty: 2
+estimated_minutes: 20
+topology: ts-exam-network
+goals: [trb-method, trb-scen-2, trb-scen-3]
+screens:
+  - { label: Flow tracer (start here), path: trace }
+  - { label: Reachability explainer, path: reachability }
+  - { label: Remote Diagnostics > Route Table Dump (mock), path: routes }
+  - { label: Configure > Edges > York Edge > Business Policy, path: "edges/york-edge?tab=business-policy" }
+fault:
+  patches:
+    - op: set
+      path: edges[cardiff-edge]/routing/static_routes[printers]/advertise
+      value: false
+    - op: append
+      path: edges[york-edge]/overrides/business_rules
+      value:
+        id: york-voice-inet
+        name: Voice pinned to the Internet link (old ticket)
+        segment: global
+        match: { application: voice }
+        action:
+          priority: high
+          network_service: multipath
+          steering: { mode: wan_link, link: y-inet, strictness: mandatory }
+flow:
+  source: leeds-edge
+  destination: 172.16.60.0/24
+symptom: >-
+  Ticket A: "Leeds cannot reach the Cardiff printer VLAN 172.16.60.0/24." Ticket B: "Voice calls from York sound bad; the
+  Profile says voice should prefer the private link." The two tickets may or may not share a cause. This lab relies on
+  assumptions 1 and 3 (first match wins, Edge rules above Profile rules), 62 (link steering applies to the first leg),
+  67 (the current link states are used) and 90 (how a rule matches a flow); the simulator shows each as a badge.
+relies_on_assumptions: [1, 3, 62, 67, 90]
+tasks:
+  - id: stage
+    type: diagnose
+    prompt: Ticket A. Which stage of the route's life fails first?
+    probe: { kind: reach_first_failing }
+    choices:
+      - { id: known, text: "The owning Edge never learned the prefix", value: known }
+      - { id: advertised, text: "The owning Edge does not advertise it into the overlay", value: advertised }
+      - { id: filtered, text: "A filter or the overlap rule holds it back", value: filtered }
+      - { id: redistributed, text: "Leeds does not hand it to its LAN routers", value: redistributed }
+      - { id: winner, text: "No route reaches Leeds, or another route wins", value: winner }
+      - { id: path, text: "The route exists but its path is not built", value: path }
+    explanation: Cardiff knows its static route but does not advertise it, so Leeds cannot learn it.
+  - id: voice-link
+    type: inspect
+    prompt: Ticket B. Trace York's voice traffic to the Primary Hub. Which WAN link does the first leg use?
+    probe:
+      kind: trace_steered_link
+      flow: { source: york-edge, destination: "edge:hub-a", application: voice }
+    choices:
+      - { id: inet, text: "y-inet (public, wired)", value: y-inet }
+      - { id: mpls, text: "y-mpls (private, wired)", value: y-mpls }
+      - { id: none, text: "No link, the flow is dropped", value: none }
+    explanation: A rule that matches voice pins it to the Internet link as Mandatory.
+  - id: voice-owner
+    type: diagnose
+    prompt: Where does the rule that decides for voice traffic come from?
+    probe:
+      kind: trace_matched_owner
+      flow: { source: york-edge, destination: "edge:hub-a", application: voice }
+    choices:
+      - { id: edge, text: "An override on York Edge", value: York Edge }
+      - { id: profile, text: "The Branch Profile", value: Branch Profile }
+      - { id: customer, text: "A customer-wide setting", value: customer }
+    explanation: The Branch Profile asks for the private group; York's own rule supersedes it. The two tickets have different causes.
+  - id: fix-a
+    type: fix
+    prompt: Choose the change that makes the printer VLAN reachable from Leeds, then check the result.
+    probe: { kind: reach_outcome }
+    equals: reachable
+    explanation: Ticking Advertise on the static route shares it over the VPN so other Edges can reach it.
+  - id: fix-b
+    type: fix
+    prompt: Choose the change that puts York's voice back on the private link, then check the result.
+    probe:
+      kind: trace_steered_link
+      flow: { source: york-edge, destination: "edge:hub-a", application: voice }
+    equals: y-mpls
+    explanation: An Edge rule with the same match supersedes the Profile's. Removing York's rule lets the Profile's rule decide again.
+hints:
+  - { task: stage, text: "Read the six stages in the reachability explainer; the first one marked Failed is the answer." }
+  - { task: voice-owner, text: "Open York Edge's Business Policy tab and read both sections." }
+  - { task: fix-a, text: "A static route has one switch for local selection and one for global reachability." }
+  - { task: fix-b, text: "Changing the Profile will not help while another rule supersedes it." }
+fixes:
+  - id: advertise-on
+    title: Tick Advertise on Cardiff's printers static route
+    description: Share the route over the VPN so other Edges can reach it.
+    patches:
+      - { op: set, path: "edges[cardiff-edge]/routing/static_routes[printers]/advertise", value: true }
+  - id: preferred-off
+    title: Untick Preferred on Cardiff's printers static route
+    description: Stop preferring the route in local path selection.
+    patches:
+      - { op: set, path: "edges[cardiff-edge]/routing/static_routes[printers]/preferred", value: false }
+  - id: remove-voice-override
+    title: Remove York's voice override
+    description: Delete the voice rule from York Edge's overrides so the Profile's rule applies.
+    patches:
+      - { op: remove, path: "edges[york-edge]/overrides/business_rules[york-voice-inet]" }
+  - id: voice-available
+    title: Change York's voice override to Available
+    description: Keep the Edge rule but make its link steering Available instead of Mandatory.
+    patches:
+      - { op: set, path: "edges[york-edge]/overrides/business_rules[york-voice-inet]/action/steering/strictness", value: available }
+debrief:
+  - finding: "Cardiff's printers static route was not advertised, so Leeds never learned the prefix."
+    where: "advertises the route over the VPN so other Edges can reach it"
+  - finding: "York's voice traffic was pinned to the Internet link by an Edge rule that superseded the Profile's."
+    where: "Edge Business Policy tab: sections \"Rules From Profile\" and \"Edge Overrides\""
+  - finding: "You listed the routes the Edge holds for the prefix."
+    where: "Route Table Dump"
+  - finding: "A live engineer would also run List Paths and VPN Test between Leeds and Cardiff before blaming routing, read List Active Flows for a voice call and check the Links tab for loss and jitter; none of that is simulated here."
+    where: "List Active Flows"

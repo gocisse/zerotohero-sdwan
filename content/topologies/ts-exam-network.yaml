@@ -1,0 +1,166 @@
+# TEACHING TOPOLOGY, not a real network. Every name, prefix and number is invented. It is the practice network of the troubleshooting exam (step 20).
+#   - one Data center site with a Primary Hub and a Secondary Hub
+#   - three branch sites on ONE Profile: Leeds runs OSPF to its LAN router, York runs BGP (two LAN prefixes, one denied by an inbound filter),
+#     Cardiff has a static route for its printer VLAN and an Internet link with a 1400 byte MTU
+#   - every branch has an Internet and an MPLS link; the Profile has a business rule per application; no override is present until a ticket adds one
+#   - Cloud VPN is on: Branch to Hub with both Hubs, Branch to Branch via the Hubs, dynamic tunnels allowed
+# Only optional schema keys are used. York's inbound filter denies its new building's prefix 10.30.8.0/24 (a left-over from a test); each exam ticket adds its own faults.
+version: 1
+meta:
+  id: ts-exam-network
+  title: Troubleshooting exam network (teaching topology)
+  summary: A data center with a Primary and a Secondary Hub and three branches (OSPF, BGP, a static route) on one Profile, two WAN links each, Cloud VPN and a business rule per application. The practice network of the troubleshooting exam.
+  teaching: true
+  notes: Invented for practice. Where the guides leave a default open, the simulator shows an assumption badge.
+
+customer:
+  id: exam-co
+  name: Exam Co (invented)
+
+segments:
+  - { id: global, name: Global Segment, type: regular }
+
+gateways:
+  - { id: gw-1, region: exam-r1, roles: [data_plane, secure_vpn] }
+
+links:
+  - { id: ha-inet, type: public, medium: wired, up_mbps: 500, down_mbps: 500 }
+  - { id: ha-mpls, type: private, medium: wired, up_mbps: 200, down_mbps: 200 }
+  - { id: hb-inet, type: public, medium: wired, up_mbps: 500, down_mbps: 500 }
+  - { id: hb-mpls, type: private, medium: wired, up_mbps: 200, down_mbps: 200 }
+  - { id: l-inet, type: public, medium: wired, up_mbps: 100, down_mbps: 100 }
+  - { id: l-mpls, type: private, medium: wired, up_mbps: 50, down_mbps: 50 }
+  - { id: y-inet, type: public, medium: wired, up_mbps: 100, down_mbps: 100 }
+  - { id: y-mpls, type: private, medium: wired, up_mbps: 50, down_mbps: 50 }
+  - { id: c-inet, type: public, medium: wired, up_mbps: 100, down_mbps: 100, mtu: 1400 }
+  - { id: c-mpls, type: private, medium: wired, up_mbps: 50, down_mbps: 50 }
+
+profiles:
+  - id: branch
+    name: Branch Profile
+    segments: [global]
+    cloud_vpn:
+      segments: [global]
+      branch_to_hub: { enabled: true, hubs: [hub-a, hub-b] }
+      branch_to_branch: { enabled: true, via: hubs_for_vpn, dynamic: true }
+    routing:
+      ospf:
+        enabled: true
+        areas: [{ id: "0" }]
+        redistribute:
+          overlay_prefixes: true
+          default_route: none
+    business_rules:
+      - id: branch-voice
+        name: Voice prefers the private wired group
+        segment: global
+        match: { application: voice }
+        action:
+          priority: high
+          network_service: multipath
+          steering: { mode: transport_group, group: private_wired, strictness: preferred }
+      - id: branch-video
+        name: Video on public wired, Available
+        segment: global
+        match: { application: video }
+        action:
+          priority: normal
+          network_service: multipath
+          steering: { mode: transport_group, group: public_wired, strictness: available }
+      - id: branch-bulk
+        name: Bulk over the Internet link, Mandatory
+        segment: global
+        match: { application: bulk }
+        action:
+          priority: low
+          network_service: multipath
+          steering: { mode: transport_group, group: public_wired, strictness: mandatory }
+  - id: hub
+    name: Hub Profile
+    segments: [global]
+
+sites:
+  - id: dc-site
+    name: Data center
+    region: exam-r1
+    edges:
+      - id: hub-a
+        name: Primary Hub
+        role: hub
+        model: vc-hub
+        profile: hub
+        interfaces:
+          - { id: ge1, kind: wan, link: ha-inet }
+          - { id: ge2, kind: wan, link: ha-mpls }
+      - id: hub-b
+        name: Secondary Hub
+        role: hub
+        model: vc-hub
+        profile: hub
+        interfaces:
+          - { id: ge1, kind: wan, link: hb-inet }
+          - { id: ge2, kind: wan, link: hb-mpls }
+
+  - id: leeds-site
+    name: Leeds branch
+    region: exam-r1
+    edges:
+      - id: leeds-edge
+        name: Leeds Edge
+        role: branch
+        profile: branch
+        logical_id: 1
+        interfaces:
+          - { id: ge1, kind: wan, link: l-inet }
+          - { id: ge2, kind: wan, link: l-mpls }
+          - { id: ge3, kind: routed, address: 10.20.255.1/30 }
+        routing:
+          ospf:
+            interfaces: [{ id: ge3, mode: active, area: "0" }]
+          lan_routes:
+            - { id: leeds-lan, prefix: 10.20.0.0/24, protocol: ospf, via: ge3, ospf_type: intra, metric: 10 }
+
+  - id: york-site
+    name: York branch
+    region: exam-r1
+    edges:
+      - id: york-edge
+        name: York Edge
+        role: branch
+        profile: branch
+        logical_id: 2
+        interfaces:
+          - { id: ge1, kind: wan, link: y-inet }
+          - { id: ge2, kind: wan, link: y-mpls }
+          - { id: ge3, kind: routed, address: 10.30.255.1/30 }
+        routing:
+          bgp:
+            local_asn: 65010
+            redistribute: { overlay_prefix: true }
+            neighbors:
+              - { id: lan-r1, ip: 10.30.255.2, asn: 65002, inbound_filter: from-lan }
+            filters:
+              - id: from-lan
+                rules:
+                  - { id: deny-newlan, match: { prefix: 10.30.8.0/24 }, action: deny }
+                  - { id: deny-unused, match: { prefix: 10.99.0.0/24 }, action: deny }
+          lan_routes:
+            - { id: york-lan, prefix: 10.30.0.0/24, protocol: bgp, via: lan-r1, bgp: { as_path: [65002] } }
+            - { id: york-newlan, prefix: 10.30.8.0/24, protocol: bgp, via: lan-r1, bgp: { as_path: [65002] } }
+
+  - id: cardiff-site
+    name: Cardiff branch
+    region: exam-r1
+    edges:
+      - id: cardiff-edge
+        name: Cardiff Edge
+        role: branch
+        profile: branch
+        logical_id: 3
+        interfaces:
+          - { id: ge1, kind: wan, link: c-inet }
+          - { id: ge2, kind: wan, link: c-mpls }
+          - { id: ge3, kind: routed, address: 10.60.0.1/24 }
+        routing:
+          static_routes:
+            - { id: printers, subnet: 172.16.60.0/24, next_hop: 10.60.0.2, cost: 0, preferred: true, advertise: true, icmp_probe: true, description: Printer VLAN behind a LAN router }

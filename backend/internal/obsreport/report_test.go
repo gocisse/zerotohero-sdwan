@@ -11,6 +11,8 @@ func TestEverySheetIsMapped(t *testing.T) {
 	files, _ := filepath.Glob("../../../content/reference/*.md")
 	cfg, _ := filepath.Glob("../../../content/reference/config/*.md")
 	files = append(files, cfg...)
+	ts, _ := filepath.Glob("../../../content/reference/troubleshooting/*.md")
+	files = append(files, ts...)
 	for _, f := range files {
 		name := strings.TrimSuffix(filepath.Base(f), ".md")
 		if name == "README" {
@@ -87,6 +89,28 @@ func TestCourseMapBuilds(t *testing.T) {
 	for _, want := range []string{"## Goals and their coverage", "## Weak coverage and what would fix it", "Introduction", "capstone-2-hub-incident"} {
 		if !strings.Contains(md, want) {
 			t.Errorf("course map lacks %q", want)
+		}
+	}
+}
+
+// Every command in the debug capture list must be written in the ts-edge-cli fact sheet, so the report never lists a command no source gave.
+func TestDebugItemsAreInTheFactSheet(t *testing.T) {
+	sheet := ""
+	for _, f := range []string{"ts-edge-cli", "ts-gateway-orchestrator-checks"} {
+		data, err := os.ReadFile("../../../content/reference/troubleshooting/" + f + ".md")
+		if err != nil {
+			t.Fatal(err)
+		}
+		sheet += string(data)
+	}
+	for _, d := range DebugItems {
+		key := strings.TrimPrefix(strings.TrimPrefix(d.Command, "sudo "), "debug.py ")
+		key = strings.Fields(key)[0]
+		if d.Command == "sudo tail -f /var/log/mgd.log" {
+			key = "tail -f /var/log/mgd.log"
+		}
+		if !strings.Contains(sheet, key) {
+			t.Errorf("%q is not in ts-edge-cli.md or ts-gateway-orchestrator-checks.md (looked for %q)", d.Command, key)
 		}
 	}
 }

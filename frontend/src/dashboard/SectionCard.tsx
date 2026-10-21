@@ -1,4 +1,5 @@
 import type { GuideSection } from '../api'
+import AddedBadge from '../studyguide/AddedBadge'
 import { pct } from '../lib/course'
 import { sectionStats } from '../studyguide/derive'
 import TopicRow from './TopicRow'
@@ -37,6 +38,7 @@ export default function SectionCard({
             </span>
             <span className="rounded bg-slate-200 px-1.5 py-0.5 text-xs dark:bg-slate-700">{s.id}</span>
             <span className="flex-1">{s.title}</span>
+            {s.added_by_course && <AddedBadge />}
           </span>
           <span className="text-sm text-slate-700 dark:text-slate-300" data-section-summary>
             {st.covered === 0

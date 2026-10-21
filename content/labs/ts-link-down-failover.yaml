@@ -1,0 +1,48 @@
+# LAB, not a real network. Everything below happens on the teaching topology hub-and-spoke-demo (invented names and numbers).
+id: ts-link-down-failover
+title: "Ticket: Mesh Edge 1 lost its Internet link"
+summary: The wired Internet link of Mesh Edge 1 went down. Work out what the Edge still has, which link the traffic uses now, and what the VCO can and cannot fix. This lab is diagnose-only.
+difficulty: 1
+estimated_minutes: 10
+topology: hub-and-spoke-demo
+goals: [trb-scen-1, arch-underlay-overlay]
+screens:
+  - { label: Monitor > Edges > Links of Mesh Edge 1 (mock), path: "monitor?edge=mesh-1-edge&tab=links" }
+  - { label: Map (tunnels), path: map }
+fault:
+  conditions:
+    links_down: [m1-inet]
+flow:
+  source: mesh-1-edge
+  destination: "edge:mesh-2-edge"
+symptom: >-
+  Ticket: "Mesh site 1 is slow since 08:10." One branch with a wired Internet link and an LTE link; the wired link has gone
+  down. This lab relies on assumptions 55 and 56 (how the simulator picks among the links still usable) and 61 (the standing path uses the Cloud Gateway); the simulator shows each as a badge. Restoring the circuit is
+  outside the VCO, so the lab asks only what the evidence says.
+relies_on_assumptions: [55, 56, 61]
+tasks:
+  - id: link
+    type: inspect
+    prompt: Which WAN link does the first leg of a flow from Mesh Edge 1 to Mesh Edge 2 use now?
+    probe: { kind: trace_steered_link }
+    choices:
+      - { id: inet, text: "m1-inet (public, wired)", value: m1-inet }
+      - { id: lte, text: "m1-lte (public, wireless)", value: m1-lte }
+      - { id: none, text: "No link, the flow is dropped", value: none }
+    explanation: The wired link is down, so the flow uses the one link that is still usable, the LTE link.
+  - id: path
+    type: diagnose
+    prompt: Which path does the flow take?
+    probe: { kind: trace_path_kind }
+    choices:
+      - { id: direct, text: "A direct dynamic tunnel between the two Edges", value: direct-dynamic }
+      - { id: gateway, text: "The standing path through the Gateway", value: via-gateway }
+      - { id: hub, text: "A path through a Hub", value: via-hub }
+    explanation: This Profile has no Hub and sends branch-to-branch through the Cloud Gateways, so the standing path is the Gateway path.
+hints:
+  - { task: link, text: "The Links tab lists the Edge's links with a state." }
+debrief:
+  - finding: "The wired Internet link went down and the Edge kept working over the LTE link."
+    where: "Interface Status"
+  - finding: "A live engineer would read the events around 08:10, run Interface Status on the Edge if it is still Connected, and ask the provider about the circuit; none of that is simulated."
+    where: "Link Down"

@@ -1,0 +1,77 @@
+---
+id: trb-layers
+title: The layers where things break
+summary: "Eight layers from activation to MTU, the first two questions for each, where each shows in the VCO and which earlier lesson explains it. The layer list is our model; the tools are documented."
+estimated_minutes: 10
+topics: [ts-layers]
+prerequisites: [trb-method]
+---
+
+**By the end of this lesson you will be able to:**
+
+- name eight layers where an SD-WAN problem can sit and the first two questions for each;
+- map a symptom and its scope to the most likely layer;
+- say which VCO screen or test gives the first evidence for each layer;
+- find the earlier lesson that explains each layer.
+
+## Eight layers (our model)
+
+The layers are **this course's model**; the screens and tests named are documented in the Troubleshooting Guide and the Administration Guide. A problem often sits in one layer and shows up in another: a missing route can look like a tunnel problem.
+
+<Diagram id="ts-layer-model" />
+
+| Layer | First two questions | First evidence in the VCO | Lessons |
+|---|---|---|---|
+| Activation and management | Is the Edge Connected? When did events last report it? | Monitor > Events, the Edge's status | Section 2, Orchestrator |
+| WAN link (underlay) | Is the link up with an address? Do errors increase? | Links tab, <Term id="remote-diagnostics">Remote Diagnostics</Term> Interface Status | Section 2, underlay |
+| Tunnels (overlay) | Is each tunnel Stable? Does the peer answer? | Paths tab, <Term id="list-paths">List Paths</Term>, VPN Test | Section 5 |
+| Routing | Is the prefix in the table? Which route is preferred and why? | Route Table Dump, the BGP and OSPF tests | Section 6 |
+| Policy and firewall | Which rule did the flow meet? Which link did it get? | List Active Flows, firewall logs | Sections 4 and 9 |
+| Quality (DMPO) | What are loss, latency and jitter on each link? Is it steered? | Links and QoE tabs, List Paths | Section 3 |
+| MTU | What size of packet passes? What is the overhead? | Ping Test with size and Do not fragment, <Term id="mtr">MTR</Term> | Section 2 |
+| Network services | Does DNS resolve? Is the time right? | DNS Test, NTP Dump | Sections 5 and 8 |
+
+## From scope to layer (our rules of thumb)
+
+- **One user affected, others fine:** start at the user's side: LAN, address, DNS, the user's rule.
+- **One Edge affected:** link, tunnel, the Edge's own overrides and routes.
+- **One pair of sites:** the tunnels between them, then routes in both directions.
+- **Many Edges at once:** look at the shared component (a Hub, a Gateway, the Orchestrator) before any single branch.
+- **Started at a known time:** read the events around that time before anything else.
+
+<Callout variant="warning" title="Layers are not a documented order">
+  Arista does not document an order such as underlay before overlay. The order here is common sense: a higher layer cannot work if a lower one does not. Where the documentation is silent, such as the exact order of the firewall versus business policy evaluation, this course says so and does not guess.
+</Callout>
+
+<Predict
+  prompt="Only the Leeds Edge lost its tunnels, and the Interface Status test shows link detected false on its Internet interface. Which layer is the first suspect?"
+  choices={["The WAN link (underlay)", "Routing", "Policy and firewall", "MTU"]}
+  answer={0}
+>
+  The guide says that a false link-detected value means checking the physical cabling and the peer end. A dead link explains the missing tunnels, so the underlay comes first.
+</Predict>
+
+## What you would see in the VCO
+
+- **Monitor > Edges** tabs **Links**, **Paths**, **QoE** and **Flows** for one Edge.
+- **Diagnostics** tests named in the table, and **Monitor > Events**.
+
+<Callout variant="tip" title="Check this in your own VCO">
+  - **[observation candidate]** Open: Monitor > Edges, one Edge, the Links tab. Expect: each WAN link with its state. Docs may differ: the column names.
+  - **[observation candidate]** Open: Diagnostics for that Edge and run Interface Status. Expect: a link-detected value and RX and TX error counts. Docs may differ: the layout of the output.
+  - **[observation candidate]** Open: the Paths tab and then List Paths. Expect: the same tunnels in both. Docs may differ: the Paths tab may name states differently from List Paths.
+  - **[observation candidate]** Open: Route Table Dump for a prefix you know. Expect: the route with its source and preference. Docs may differ: the columns of the output.
+</Callout>
+
+## Key takeaways
+
+- Eight layers: activation, underlay, overlay, routing, policy, quality, MTU, services.
+- Scope narrows the layer: one user, one Edge, one pair, many Edges.
+- A symptom in one layer can have its cause in another; read lower layers first.
+- The order is our model; the tools are documented.
+
+## What would you look for in the VCO
+
+- Which layer does the scope point to, and which screen answers its first question?
+- Does a lower layer already explain the symptom?
+- Which earlier lesson explains the layer I am reading?

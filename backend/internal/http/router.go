@@ -36,6 +36,8 @@ func NewRouter(d Deps) http.Handler {
 		r.Get("/sections/{id}/quiz", QuizHandler(d.Content, d.Log))
 		r.Get("/diagrams/{id}", DiagramHandler(d.Content, d.Log))
 		r.Get("/glossary", GlossaryHandler(d.Content, d.Log))
+		r.Get("/runbooks", RunbooksHandler(d.Content, d.Log))
+		r.Get("/runbooks/{id}", RunbookHandler(d.Content, d.Log))
 
 		r.Get("/topologies", TopologiesHandler(d.Content, d.Log))
 		r.Get("/topologies/{id}", TopologyHandler(d.Content, d.Log))

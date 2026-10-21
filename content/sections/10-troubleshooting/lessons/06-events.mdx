@@ -1,0 +1,94 @@
+---
+id: trb-events
+title: Reading events and logs
+summary: "The documented event names for Edges, links, tunnels, high availability, BGP and OSPF, the firewall, certificates and activation, how to read them as a timeline, and where logs and bundles are."
+estimated_minutes: 10
+topics: [ts-events]
+prerequisites: [trb-gw-orch]
+---
+
+**By the end of this lesson you will be able to:**
+
+- read an <Term id="vco-event">event</Term> by name, severity and the component that generated it;
+- build a timeline of a problem from events;
+- name the documented events for Edge, link, tunnel, HA, routing, firewall, certificate and activation problems;
+- say which logs are named in the documentation and which are not.
+
+## Reading an event
+
+Each event has a name (for example `EDGE_DOWN`), the text the VCO displays (for example "Edge Down"), a severity (INFO, ALERT or ERROR) and the component that generated it (Orchestrator, Edge, Gateway). The Orchestrator generates the events about reachability, such as an Edge that misses two or more consecutive <Term id="heartbeat">heartbeats</Term>; the Edge generates events about what it sees locally, such as a link state.
+
+## Settings reference
+
+| Event | Displayed as | Meaning |
+|---|---|---|
+| EDGE_DOWN | Edge Down | the Edge loses connectivity with the Orchestrator and fails two or more consecutive heartbeats |
+| EDGE_UP | Edge Up | the Edge comes back after losing connectivity |
+| EDGE_SERVICE_DOWN | Edge Service Down | the Edge service may be down |
+| LINK_DOWN | Link Down | a WAN link drops its connection to the Edge, or cannot communicate with the Edge service |
+| LINK_UP | Link Up | a WAN link returns to a normal state |
+| LINK_ALIVE | Link alive | the Edge's link state becomes alive |
+| LINK_DEAD | Link dead | the Edge's link state becomes dead |
+| LINK_USABLE | Link usable | the Edge's link state becomes usable |
+| LINK_UNUSABLE | Link unusable | the Edge's link state becomes unusable |
+| VPN_TUNNEL_DOWN | VPN Tunnel Down | the IPsec tunnel between the Edge service and the VPN gateway fails to establish or stays down |
+| EDGE_HA_FAILOVER | Edge HA Failover | an HA Edge fails over to its standby |
+| EDGE_BGP_NEIGHBOR_DOWN | Edge BGP neighbor unavailable | the Edge's BGP peer loses its tunnel |
+| EDGE_OSPF_NSM | Edge OSPF NSM Event | an OSPF neighbor state changes |
+| PORT_SCAN_DETECTED | Port scan detected | the stateful firewall detects host scanning and logs the address and port |
+| CERTIFICATE_RENEWAL | Certificate renewal request | an Edge certificate renews |
+| MGD_ACTIVATION_ERROR | Activation failed | activation failed, for example because the activation link was incorrect |
+| MGD_ACTIVATION_PARTIAL | Activation incomplete | activation completed but a software update failed |
+
+The same core events exist in 6.4. Hub-specific "down" events, NTP events and license events were not in the part of the appendix read, so this course does not claim they exist.
+
+## A timeline from events (our method)
+
+An <Term id="outage">outage</Term> in the <Term id="underlay">underlay</Term> usually shows first as a link event.
+
+1. Pick a window that starts before the first complaint.
+2. List the events of the Edge, its Gateway and its Hub in that window, oldest first.
+3. Note which component generated each: Orchestrator events say what the Orchestrator saw; Edge events say what the Edge saw.
+4. Look for the first event that is not explained by a planned change.
+5. Check whether the later events are consequences: a link that goes down, then tunnels, then routes.
+
+## Logs and bundles
+
+The only Edge log file named in the documentation read is /var/log/mgd.log, in the certificate-mismatch case. The Gateway's logs (vc_procmon, mgd, gwd and natd) are listed in the Gateway Monitoring Guide. For everything else the documented route is a **diagnostic bundle** (Lesson 10): it holds the configuration and logs of an Edge.
+
+<Callout variant="warning" title="Time and retention">
+  The sources read do not say how long events are kept or what filters the Events screen offers. Remote Diagnostics tests such as NTP Dump report UTC; compare times in the same zone before you line events up.
+</Callout>
+
+<Predict
+  prompt="An Edge shows Link Down at 09:02 and, a minute later, VPN Tunnel Down for the same Edge. How do you read the pair?"
+  choices={["The tunnel event may be a consequence of the link event, so the link is the first thing to explain", "The tunnel event proves the Hub failed", "The two events are unrelated", "The firewall dropped the tunnel"]}
+  answer={0}
+>
+  Time order alone does not prove cause, but a tunnel cannot stay up over a dead link, so the link event is the first thing to explain. Confirm with Interface Status and the Links tab.
+</Predict>
+
+## What you would see in the VCO
+
+- **Monitor > Events** for the list, with the name, time and component.
+- **Diagnostics > Diagnostic Bundles** for bundles, and the Edge's **Monitor** tabs for the current state.
+
+<Callout variant="tip" title="Check this in your own VCO">
+  - **[observation candidate]** Open: Monitor > Events, filtered to one Edge and the last day. Expect: events with names such as Link Up or Edge Down. Docs may differ: the displayed names.
+  - **[observation candidate]** Open: an event row for a link change. Expect: the link and the time. Docs may differ: which fields are shown.
+  - **[observation candidate]** Open: Monitor > Events after an Edge reboot you planned. Expect: Edge Down then Edge Up. Docs may differ: the delay between them.
+  - **[observation candidate]** Open: the Events screen filter options. Expect: filters by event and severity. Docs may differ: the filters were not read.
+</Callout>
+
+## Key takeaways
+
+- An event has a name, a display text, a severity and a generator.
+- Orchestrator events are about reachability, Edge events about local state.
+- Build a timeline oldest first and find the first unexplained event.
+- Logs are barely documented; bundles are the documented route.
+
+## What would you look for in the VCO
+
+- What is the first event in the window that nobody planned?
+- Which component generated it?
+- Which later events are probably consequences?

@@ -1,6 +1,7 @@
 import { useEffect, useId, useMemo, useRef, useState } from 'react'
 import type { Diagram, DiagramStep } from '../../api'
 import { bubbleSize, labelRect, placeCallout, placeLinkLabel, pxPerUnit, type Rect } from './calloutPlacement'
+import { boostFor, nodeHalfWidth } from './nodeExtent'
 import { nodeDisc } from './packetLabel'
 import { groupBox, groupMembers, linkGeometry } from './geometry'
 import NodeIcon from './icons'
@@ -69,7 +70,7 @@ export default function DiagramCanvas({
     if (width > 0) onLayout?.(width)
   }, [width, onLayout])
   const scale = width > 0 ? width / d.width : 1
-  const boost = Math.min(Math.max(1, 0.66 / scale), 2.2)
+  const boost = boostFor(scale)
   const showSub = scale >= 0.55
   const showLinkLabels = scale >= 0.55
   // Side padding so wide labels near the edges are not clipped.
@@ -89,7 +90,7 @@ export default function DiagramCanvas({
   // The disc and label of every node, in viewBox units. Link labels slide along their link to stay clear of these, and
   // callouts avoid both (see calloutPlacement.ts).
   const nodeRect = (n: (typeof d.nodes)[number]): Rect => {
-    const half = Math.max(41, (n.label.length * 17 * boost * 0.56) / 2)
+    const half = nodeHalfWidth(n.label, boost)
     return {
       x: n.x - half,
       y: n.y - 41,

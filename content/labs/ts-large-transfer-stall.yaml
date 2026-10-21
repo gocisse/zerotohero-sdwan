@@ -1,0 +1,68 @@
+# LAB, not a real network. Everything below happens on the teaching topology hub-and-spoke-demo (invented names and numbers).
+id: ts-large-transfer-stall
+title: "Ticket: large transfers from Spoke 3 stall"
+summary: Large transfers from Spoke Edge 3 to Spoke Edge 1 are slow or stall, while small ones work. Work out the effective packet MTU of the path and decide whether a 1350-byte packet fits.
+difficulty: 3
+estimated_minutes: 15
+topology: hub-and-spoke-demo
+goals: [trb-scen-3, arch-mtu-overhead]
+screens:
+  - { label: Path explainer (MTU line), path: paths }
+  - { label: Monitor > Edges > Links of Spoke Edge 3, path: "monitor?edge=spoke-3-edge&tab=links" }
+fault: {}
+flow:
+  source: spoke-3-edge
+  destination: "edge:spoke-1-edge"
+  packet_size: 1350
+symptom: >-
+  Ticket: "Browsing is fine from Spoke 3, but copying a large file to Spoke 1 hangs." Spoke Edge 3's Internet link has an MTU
+  of 1400 bytes and VPN (IPsec) traffic adds 97 to 112 bytes of overhead. This lab relies on assumptions 64 (a link's MTU is
+  its authored value) and 66 (flows between Edges are VPN traffic); the simulator shows each as a badge. The fix is the real
+  MTU of the path, which is not a setting the guides name for this link, so the lab asks you to read the evidence and then
+  correct the link's recorded MTU.
+relies_on_assumptions: [64, 66]
+tasks:
+  - id: effective-min
+    type: inspect
+    prompt: What is the smallest effective packet MTU, in bytes, of the first leg of this flow?
+    probe: { kind: trace_mtu_min }
+    choices:
+      - { id: a, text: "1388", value: "1388" }
+      - { id: b, text: "1288", value: "1288" }
+      - { id: c, text: "1341", value: "1341" }
+      - { id: d, text: "1400", value: "1400" }
+    explanation: The path MTU is 1400. VPN overhead is up to 112 bytes, so the smallest effective MTU is 1400 - 112 = 1288 bytes.
+  - id: predict-fit
+    type: predict
+    prompt: Decide first - what happens to a 1350-byte packet on this path?
+    probe: { kind: trace_mtu_fit, size: 1350 }
+    choices:
+      - { id: fits, text: "It fits in every case", value: fits }
+      - { id: depends, text: "It fits or not depending on the padding of that packet", value: depends_on_padding }
+      - { id: frag, text: "It is larger than the effective MTU, so the Edge fragments it", value: fragments }
+    explanation: The effective MTU is between 1288 and 1303 bytes. 1350 is larger than both, so the Edge fragments the packet.
+  - id: fix-it
+    type: fix
+    prompt: Choose the change that lets a 1350-byte packet pass without fragmentation, then check the result.
+    probe: { kind: trace_mtu_fit, size: 1350 }
+    equals: fits
+    explanation: With the link's real MTU of 1500 bytes, the effective MTU is between 1388 and 1403 bytes, so 1350 fits.
+hints:
+  - { task: effective-min, text: Subtract the larger overhead from the path MTU to get the smaller effective MTU. }
+  - { task: fix-it, text: "A link's MTU is the value recorded for it; the packet size cannot be changed here." }
+fixes:
+  - id: link-mtu-1500
+    title: Record the link's real MTU of 1500 bytes
+    description: Set the Internet link of Spoke Edge 3 to 1500 bytes after the provider confirms the path MTU.
+    patches:
+      - { op: set, path: "links[s3-inet]/mtu", value: 1500 }
+  - id: link-mtu-1300
+    title: Record an MTU of 1300 bytes
+    description: Lower the recorded MTU of the link to 1300 bytes.
+    patches:
+      - { op: set, path: "links[s3-inet]/mtu", value: 1300 }
+debrief:
+  - finding: "The link's MTU was 1400 bytes; with the tunnel overhead a 1350-byte packet did not fit, so it was fragmented."
+    where: "Ping Test"
+  - finding: "A live engineer would run a Ping Test with a packet size and Do not fragment, then MTR, across the path; the sweep shows the largest packet that passes."
+    where: "MY Traceroute"

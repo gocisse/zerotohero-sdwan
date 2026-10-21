@@ -94,6 +94,7 @@ func (v *validator) run() {
 	validateTopologies(&v.errs, b.Topologies)
 	validateLabs(&v.errs, b.Labs, b.Topologies, b.References, v.lessonPath, anyBrokenLesson)
 	v.componentRefs(anyBrokenDiagram, b.GlossaryBad)
+	v.runbooks(anyBrokenDiagram, b.GlossaryBad)
 	ge, _ := checkGuide(b)
 	v.errs = append(v.errs, ge...)
 

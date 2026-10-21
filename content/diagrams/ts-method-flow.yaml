@@ -1,0 +1,72 @@
+# Section 10, lesson 1: the troubleshooting method. Illustrative: it is this course's own method, built on the documented tools.
+id: ts-method-flow
+title: The troubleshooting method (illustrative, this course's own)
+alt: >-
+  A flow of nine steps from a ticket to a note. Symptom, scope, layer, evidence, hypothesis, test, fix, verify and document,
+  in that order. A failed test sends you back from the test to the hypothesis. A failed verification sends you back to the
+  evidence.
+width: 1000
+height: 520
+
+nodes:
+  - { id: symptom, label: "1 Symptom", kind: generic, x: 90, y: 140, sublabel: "what the user sees" }
+  - { id: scope, label: "2 Scope", kind: generic, x: 290, y: 140, sublabel: "one user, one Edge, a pair, all" }
+  - { id: layer, label: "3 Layer", kind: generic, x: 490, y: 140, sublabel: "where could it break" }
+  - { id: evidence, label: "4 Evidence", kind: generic, x: 690, y: 140, sublabel: "read-only, in order" }
+  - { id: hypothesis, label: "5 Hypothesis", kind: generic, x: 890, y: 140, sublabel: "one cause at a time" }
+  - { id: test, label: "6 Test", kind: generic, x: 890, y: 380, sublabel: "can it be proven wrong" }
+  - { id: fix, label: "7 Fix", kind: generic, x: 690, y: 380, sublabel: "one change, in the VCO" }
+  - { id: verify, label: "8 Verify", kind: generic, x: 490, y: 380, sublabel: "same evidence again" }
+  - { id: document, label: "9 Document", kind: generic, x: 290, y: 380, sublabel: "what, why, how" }
+
+links:
+  - { id: l1, from: symptom, to: scope, style: control }
+  - { id: l2, from: scope, to: layer, style: control }
+  - { id: l3, from: layer, to: evidence, style: control }
+  - { id: l4, from: evidence, to: hypothesis, style: control }
+  - { id: l5, from: hypothesis, to: test, style: control }
+  - { id: l6, from: test, to: fix, style: control, label: "holds" }
+  - { id: l7, from: fix, to: verify, style: control }
+  - { id: l8, from: verify, to: document, style: control, label: "fixed" }
+  - { id: back1, from: test, to: evidence, style: ipsec, curve: 60, label: "refuted: new evidence" }
+  - { id: back2, from: verify, to: evidence, style: ipsec, curve: -40, label: "not fixed" }
+
+steps:
+  - title: Start from the user's words
+    narration: >-
+      Write the symptom as the user states it, without a cause in it. "Voice is choppy at the Leeds branch" is a symptom;
+      "the MPLS link is lossy" is already a hypothesis.
+    highlight: [symptom, scope, l1]
+    show: [scope, l1]
+
+  - title: Scope, then layer
+    narration: >-
+      Ask who is affected: one user, one Edge, one pair of sites, or everybody. The scope narrows the layer. Many Edges
+      affected points away from one branch's LAN; one user points toward that user's side.
+    highlight: [scope, l2, layer]
+    show: [layer, l2]
+    callouts:
+      - { target: scope, text: "The scope decides which layer to look at first." }
+
+  - title: Evidence before opinions
+    narration: >-
+      Collect read-only evidence in a fixed order and write down what each piece says. Only then state one hypothesis that the
+      evidence supports, and say what would prove it wrong.
+    highlight: [evidence, l3, l4, hypothesis]
+    show: [evidence, l3, hypothesis, l4]
+
+  - title: Test the hypothesis, then fix
+    narration: >-
+      Try to refute the hypothesis with one more read-only observation. If it survives, make one change in the VCO. If it is
+      refuted, go back to the evidence with what you learned.
+    highlight: [hypothesis, l5, test, l6, fix, back1]
+    show: [test, l5, fix, l6, back1]
+    callouts:
+      - { target: test, text: "A refuted hypothesis is progress, not failure." }
+
+  - title: Verify and document
+    narration: >-
+      Re-read the same evidence you started from. If it is not fixed, return to the evidence. If it is, write down what you
+      saw, what you changed and why, so the next engineer starts from facts.
+    highlight: [fix, l7, verify, l8, document, back2]
+    show: [verify, l7, document, l8, back2]

@@ -1,0 +1,76 @@
+# Section 10, lesson 2: the layers of a problem and the VCO tools that answer each one. Illustrative mapping: the tools are documented, the mapping is this course's.
+id: ts-layer-model
+title: Layers of a problem and the VCO tool for each (illustrative mapping)
+alt: >-
+  Eight layers on the left: activation and management, WAN link underlay, tunnels, routing, policy and firewall, quality,
+  MTU and network services. Four groups of VCO tools on the right: Monitor and Events, Remote Diagnostics, and the diagnostic
+  bundles. Lines connect each layer to the tools that answer its first questions.
+width: 960
+height: 890
+
+nodes:
+  - { id: l-mgmt, label: "Activation and management", kind: generic, x: 170, y: 60 }
+  - { id: l-under, label: "WAN link (underlay)", kind: generic, x: 170, y: 165 }
+  - { id: l-tunnel, label: "Tunnels (overlay)", kind: generic, x: 170, y: 270 }
+  - { id: l-route, label: "Routing", kind: generic, x: 170, y: 375 }
+  - { id: l-policy, label: "Policy and firewall", kind: generic, x: 170, y: 480 }
+  - { id: l-qual, label: "Quality (DMPO)", kind: generic, x: 170, y: 585 }
+  - { id: l-mtu, label: "MTU", kind: generic, x: 170, y: 690 }
+  - { id: l-svc, label: "Network services", kind: generic, x: 170, y: 795 }
+  - { id: t-events, label: "Monitor > Events", kind: generic, x: 780, y: 110, sublabel: "what changed, when" }
+  - { id: t-monitor, label: "Monitor > Edges", kind: generic, x: 780, y: 290, sublabel: "Links, Paths, QoE, Flows" }
+  - { id: t-diag, label: "Remote Diagnostics", kind: generic, x: 780, y: 480, sublabel: "read-only tests" }
+  - { id: t-bundle, label: "Diagnostic bundles", kind: generic, x: 780, y: 720, sublabel: "for Support" }
+
+links:
+  - { id: m-ev, from: l-mgmt, to: t-events, style: control }
+  - { id: u-mon, from: l-under, to: t-monitor, style: control }
+  - { id: u-diag, from: l-under, to: t-diag, style: control }
+  - { id: t-mon, from: l-tunnel, to: t-monitor, style: control }
+  - { id: t-diag-l, from: l-tunnel, to: t-diag, style: control }
+  - { id: r-diag, from: l-route, to: t-diag, style: control }
+  - { id: p-diag, from: l-policy, to: t-diag, style: control }
+  - { id: q-mon, from: l-qual, to: t-monitor, style: control }
+  - { id: x-diag, from: l-mtu, to: t-diag, style: control }
+  - { id: v-diag, from: l-svc, to: t-diag, style: control }
+  - { id: any-bundle, from: l-svc, to: t-bundle, style: ipsec, label: "when it stays unexplained" }
+
+steps:
+  - title: Eight layers, from the outside in
+    narration: >-
+      A symptom can sit in any layer. The list runs from "does the Edge talk to the Orchestrator" to "does the packet fit".
+      The names of the layers are this course's; the tools on the right are the VCO's own.
+    highlight: [l-mgmt, l-under, l-tunnel, l-route, l-policy, l-qual, l-mtu, l-svc]
+    show: []
+
+  - title: Activation and management
+    narration: >-
+      Start with the events: they record activation, certificate and heartbeat problems, and say when the Edge was last
+      seen.
+    highlight: [l-mgmt, m-ev, t-events]
+    callouts:
+      - { target: t-events, text: "Edge Down, Edge Up, Activation failed." }
+
+  - title: Underlay and tunnels
+    narration: >-
+      The Links and Paths tabs and the Interface Status, Ping, Traceroute, List Paths and VPN Test tests say whether the
+      physical link and the tunnels are up.
+    highlight: [l-under, l-tunnel, u-mon, u-diag, t-mon, t-diag-l, t-monitor, t-diag]
+
+  - title: Routing, policy and firewall
+    narration: >-
+      Route Table Dump and the BGP and OSPF tests answer routing questions. List Active Flows and the firewall session list
+      answer which rule a flow met.
+    highlight: [l-route, l-policy, r-diag, p-diag, t-diag]
+
+  - title: Quality and MTU
+    narration: >-
+      Link quality is read on the Links and QoE tabs and in List Paths (loss, latency, jitter). The Ping Test with a packet size
+      and Do not fragment, and MTR, test whether a packet of a given size fits.
+    highlight: [l-qual, l-mtu, q-mon, x-diag, t-monitor, t-diag]
+
+  - title: Network services, and when it stays unexplained
+    narration: >-
+      Network services such as DNS and NTP are read with their own tests in Remote Diagnostics. If the read-only tools do not
+      explain the problem, a diagnostic bundle or a packet capture bundle is what you hand to Support.
+    highlight: [l-svc, v-diag, t-diag, any-bundle, t-bundle]

@@ -1,7 +1,7 @@
 import type { Progress, TopicMastery } from '../api'
 
 /**
- * The four things the course is for. Goal coverage is INFORMATIONAL: it is derived from lesson progress, quiz scores,
+ * The things the course is for: four at first, and a fifth (troubleshooting) added in step 20. Goal coverage is INFORMATIONAL: it is derived from lesson progress, quiz scores,
  * weak topics, labs and the last self-check (kept in this browser only), and nothing in the app reads it to restrict
  * anything. Section ids, quiz topic tags and lab ids come from the content; e2e/tests/self-check.spec.ts fails if one
  * of them no longer exists.
@@ -88,6 +88,34 @@ export const GOALS: Goal[] = [
     find: [
       { id: 'rt-find-dump', text: 'the Route Table Dump and List Routes per Prefix tests under Remote Diagnostics' },
       { id: 'rt-find-ofc', text: 'Configure > Overlay Flow Control and its Routes List' },
+    ],
+  },
+  {
+    id: 'troubleshoot',
+    title: 'I can troubleshoot a real case step by step',
+    blurb:
+      'Take a ticket from symptom to documented fix: scope, layer, read-only evidence, one hypothesis, one change and a note. A goal added by the course (study guide section G6).',
+    sections: ['troubleshooting'],
+    topics: ['ts-'],
+    labs: [
+      'ts-printer-vlan',
+      'ts-test-prefix-missing',
+      'ts-spoke-behind-nat',
+      'ts-backup-wrong-link',
+      'ts-link-down-failover',
+      'ts-large-transfer-stall',
+      'ts-exam-1-quiet-monday',
+      'ts-exam-2-hub-trouble',
+      'ts-exam-3-change-window',
+    ],
+    explain: [
+      { id: 'ts-steps', text: 'the nine steps of the method and which parts of it are the course’s own' },
+      { id: 'ts-layers', text: 'the eight layers where a problem can sit and the first evidence for each' },
+      { id: 'ts-readonly', text: 'which Remote Diagnostics tests are read-only and which change state' },
+    ],
+    find: [
+      { id: 'ts-find-diag', text: 'the Diagnostics tab, and the List Paths, VPN Test and Route Table Dump tests' },
+      { id: 'ts-find-events', text: 'Monitor > Events and the Diagnostic Bundles tab' },
     ],
   },
 ]

@@ -1,0 +1,15 @@
+id: troubleshooting
+title: "Troubleshooting: from ticket to fix"
+summary: A method for working a ticket from symptom to documented fix, the layers where problems sit, the VCO's read-only investigation tools, what is and is not documented about the Edge command line, events and logs, nine worked scenarios, and how to escalate and write up.
+estimated_minutes: 105
+lessons:
+  - trb-method
+  - trb-layers
+  - trb-tools
+  - trb-edge-cli
+  - trb-gw-orch
+  - trb-events
+  - trb-scen-1
+  - trb-scen-2
+  - trb-scen-3
+  - trb-escalate

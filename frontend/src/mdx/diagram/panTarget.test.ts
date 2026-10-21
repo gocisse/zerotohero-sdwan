@@ -48,3 +48,20 @@ test('a bubble beyond the scroll range is clamped, never negative', () => {
     0,
   )
 })
+
+test('nodes that fit stay whole when a scroll also keeps the bubble whole (the Edge A case at 390 px)', () => {
+  // Nodes 100..300, bubble 330..450: together 350 wide, a little under the 358 box, so they are centred together.
+  const nodes = { left: 100, right: 300 }
+  const left = panTarget({ nodes, bubbles: [{ left: 330, right: 450 }], view, maxScroll: 800 })
+  assert.ok(visible(left, nodes) && visible(left, { left: 330, right: 450 }))
+  // Bubble 380..500 does not fit beside them (400 wide): it is kept whole, and nodes whole only if that is possible.
+  const bubble = { left: 360, right: 480 }
+  const l2 = panTarget({ nodes: { left: 150, right: 330 }, bubbles: [bubble], view, maxScroll: 800 })
+  assert.ok(visible(l2, bubble))
+})
+
+test('nodes wider than the box keep the earlier rule: a bubble that fits is not cut off', () => {
+  const bubbles = [{ left: 560, right: 700 }]
+  const left = panTarget({ nodes: { left: 50, right: 650 }, bubbles, view, maxScroll: 900 })
+  assert.ok(visible(left, bubbles[0]!))
+})

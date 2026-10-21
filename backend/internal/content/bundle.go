@@ -12,6 +12,7 @@ type Bundle struct {
 	References   []ReferenceDoc
 	Topologies   []TopologyDoc
 	Labs         []LabDoc
+	Runbooks     []RunbookDoc
 	GlossaryPath string
 	HasGlossary  bool
 	Glossary     []GlossaryTerm

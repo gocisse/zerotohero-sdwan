@@ -9,8 +9,8 @@ height: 540
 
 nodes:
   - { id: prof, label: "Profile", kind: generic, x: 450, y: 110, sublabel: "template for many Edges" }
-  - { id: a, label: "Edge A", kind: vce, x: 220, y: 400, sublabel: "inherits" }
-  - { id: b, label: "Edge B", kind: vce, x: 680, y: 400, sublabel: "Override ticked" }
+  - { id: a, label: "Edge A", kind: vce, x: 270, y: 400, sublabel: "inherits" }
+  - { id: b, label: "Edge B", kind: vce, x: 630, y: 400, sublabel: "Override ticked" }
 
 links:
   - { id: p-a, from: prof, to: a, style: control }

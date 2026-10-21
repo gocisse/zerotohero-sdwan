@@ -73,6 +73,7 @@ var (
 func SheetName(path string) string {
 	n := strings.TrimPrefix(path, "reference/")
 	n = strings.TrimPrefix(n, "config/")
+	n = strings.TrimPrefix(n, "troubleshooting/")
 	return strings.TrimSuffix(n, ".md")
 }
 

@@ -61,6 +61,8 @@ export interface GuideTopic {
 export interface GuideSection {
   id: string
   title: string
+  /** True for a section the course added beyond the learner's original outline (G6). */
+  added_by_course: boolean
   topics: GuideTopic[]
 }
 

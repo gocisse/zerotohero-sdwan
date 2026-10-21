@@ -289,6 +289,9 @@ export default function SidebarNav({ onNavigate }: { onNavigate?: () => void }) 
       <NavLink to="/glossary" onClick={onNavigate} className={({ isActive }) => navLink(isActive)}>
         Glossary
       </NavLink>
+      <NavLink to="/troubleshooting" onClick={onNavigate} className={({ isActive }) => navLink(isActive)}>
+        Troubleshooting
+      </NavLink>
       <NavLink to="/sim" onClick={onNavigate} className={({ isActive }) => navLink(isActive)}>
         Simulator
       </NavLink>

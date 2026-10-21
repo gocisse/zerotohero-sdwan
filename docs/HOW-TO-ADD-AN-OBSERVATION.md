@@ -79,3 +79,8 @@ The observation is never edited to fit the course. The lesson, the labs and the 
 - Do not record something you did not see, or a guess about why it happens.
 - Do not edit an observation after the fact except to fix a typo; add a new dated observation for a new finding.
 - Do not paste vendor documentation into an observation; this folder is for what you saw.
+
+## Observing the Edge command line (step 20)
+
+`docs/OBSERVATION-PRIORITIES.md` has a part "debug.py and Edge command line: what I need you to run": one row per command or option found in a source, with exactly what to capture. Run only the read-only rows on a lab Edge you are allowed to log in to, record the Edge release and the time, copy the output unedited (no private keys), and write one observation block per item as above. An observation of a debug.py option resolves the matching VERIFY row of `content/reference/troubleshooting/ts-edge-cli.md`; then update the `debug-script-reference` runbook and the Section 10 Edge command line lesson (and its study guide rating) from the observed text only.
+

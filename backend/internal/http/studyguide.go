@@ -66,9 +66,10 @@ type guideTopicDTO struct {
 }
 
 type guideSectionDTO struct {
-	ID     string          `json:"id"`
-	Title  string          `json:"title"`
-	Topics []guideTopicDTO `json:"topics"`
+	ID            string          `json:"id"`
+	Title         string          `json:"title"`
+	AddedByCourse bool            `json:"added_by_course"`
+	Topics        []guideTopicDTO `json:"topics"`
 }
 
 type guideDTO struct {
@@ -164,7 +165,7 @@ func (h *progressHandlers) studyGuide(w http.ResponseWriter, r *http.Request) {
 			out.UnmappedLessons = append(out.UnmappedLessons, lessonDTO(id))
 		}
 		for _, s := range g.Sections {
-			sd := guideSectionDTO{ID: s.ID, Title: s.Title, Topics: []guideTopicDTO{}}
+			sd := guideSectionDTO{ID: s.ID, Title: s.Title, AddedByCourse: s.AddedByCourse, Topics: []guideTopicDTO{}}
 			for _, t := range s.Topics {
 				td := guideTopicDTO{
 					ID: t.ID, Title: t.Title, Kind: t.Kind, Coverage: t.Coverage, Note: t.Note,

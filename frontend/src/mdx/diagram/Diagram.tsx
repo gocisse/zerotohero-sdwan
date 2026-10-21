@@ -15,6 +15,7 @@ import Markdown from '../../components/Markdown'
 import DiagramCanvas from './DiagramCanvas'
 import { hiddenAt } from './geometry'
 import { LINK_STYLES } from './linkStyles'
+import { boostFor, nodeHalfWidth } from './nodeExtent'
 import { packetDurationMs } from './packets'
 import { panTarget } from './panTarget'
 
@@ -128,9 +129,11 @@ function DiagramPlayer({ diagram: d }: { diagram: DiagramDef }) {
       step.packets.forEach((p) => p.route?.nodes.forEach((n) => focusIds.add(n)))
     }
     const nodes = d.nodes.filter((n) => focusIds.has(n.id))
-    const xs = (nodes.length > 0 ? nodes : d.nodes).map((n) => n.x)
+    const focus = nodes.length > 0 ? nodes : d.nodes
     const vb = svg.viewBox.baseVal
     const ratio = svg.clientWidth / vb.width
+    // A node is as wide as its label when that is wider than the disc (the labels grow on phones), so a label is not cut off.
+    const boost = boostFor(svg.clientWidth / d.width)
     const boxRect = box.getBoundingClientRect()
     const bubbles = Array.from(box.querySelectorAll('[data-callout-bubble]')).map((el) => {
       const r = el.getBoundingClientRect()
@@ -138,8 +141,8 @@ function DiagramPlayer({ diagram: d }: { diagram: DiagramDef }) {
     })
     const left = panTarget({
       nodes: {
-        left: (Math.min(...xs) - vb.x) * ratio - 41 * ratio,
-        right: (Math.max(...xs) - vb.x) * ratio + 41 * ratio,
+        left: (Math.min(...focus.map((n) => n.x - nodeHalfWidth(n.label, boost))) - vb.x) * ratio,
+        right: (Math.max(...focus.map((n) => n.x + nodeHalfWidth(n.label, boost))) - vb.x) * ratio,
       },
       bubbles,
       view: box.clientWidth,

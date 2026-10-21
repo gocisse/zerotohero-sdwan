@@ -1,0 +1,50 @@
+---
+id: support-case-template
+title: Support case template
+summary: A fill-in template for a support case and a post-incident note, with the bundles the documentation names. The wording is the course's own.
+kind: template
+estimated_minutes: 4
+---
+
+The text below is **this course's own template**, not an Arista form. The bundles are the ones the Troubleshooting Guide documents (lesson [Escalation and documentation](/course/troubleshooting/trb-escalate)).
+
+## Case summary
+
+```text
+Symptom (user's words):
+Started (UTC):
+Scope (affected / not affected):
+Recent changes:
+Edge(s), Profile, release:
+
+Evidence (time, screen or test, result):
+  1.
+  2.
+  3.
+
+Hypotheses tried and refuted:
+Current hypothesis:
+
+Attached: <Term id="diagnostic-bundle">diagnostic bundle</Term> (Operators request it), <Term id="packet-capture-bundle">packet capture bundle</Term>
+What we need from Support:
+```
+
+## Packet capture bundle: before you submit
+
+- A target Edge and an interface (or VLAN), and a short duration in seconds.
+- At least one filter if you want filtering: IP1, IP2, IP1:Port1, IP2:Port2 or Protocol.
+- A reason for generation.
+
+## Post-incident note
+
+```text
+What happened (one paragraph):
+Root cause and the evidence that shows it:
+What was changed, where in the VCO, and by whom:
+How it was verified (same evidence, time):
+What to watch for:
+```
+
+<Callout variant="warning" title="Packet captures can hold customer traffic">
+  Use a filter and a short duration, and share the bundle only through the documented route.
+</Callout>

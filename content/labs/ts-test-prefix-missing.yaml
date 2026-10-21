@@ -1,0 +1,62 @@
+# LAB, not a real network. Everything below happens on the teaching topology routing-demo (invented names and numbers).
+id: ts-test-prefix-missing
+title: "Ticket: the new test LAN 10.99.0.0/24 is missing everywhere"
+summary: A new LAN behind Branch B is reachable from nowhere, and Branch B's own LAN router is healthy. Find where the prefix is dropped and remove the one rule that does it.
+difficulty: 2
+estimated_minutes: 15
+topology: routing-demo
+goals: [trb-scen-2, rt-diagnosis, rt-filters]
+screens:
+  - { label: Reachability explainer (start here), path: reachability }
+  - { label: Remote Diagnostics > Route Table Dump (mock), path: routes }
+fault: {}
+flow:
+  source: a-edge
+  destination: 10.99.0.0/24
+symptom: >-
+  Ticket: "The new test LAN 10.99.0.0/24 behind Branch B cannot be reached from Branch A, or from anywhere else. Its LAN
+  router says it is announcing the prefix." One prefix, every direction. Everything here uses explicitly configured settings, so no assumption
+  decides the answer.
+tasks:
+  - id: stage
+    type: diagnose
+    prompt: Which stage of the route's life fails first?
+    probe: { kind: reach_first_failing }
+    choices:
+      - { id: known, text: "The owning Edge never learned the prefix", value: known }
+      - { id: advertised, text: "The owning Edge does not advertise it into the overlay", value: advertised }
+      - { id: filtered, text: "A filter or the overlap rule holds it back", value: filtered }
+      - { id: redistributed, text: "Branch A does not hand it to its LAN routers", value: redistributed }
+      - { id: winner, text: "No route reaches Branch A, or another route wins", value: winner }
+      - { id: path, text: "The route exists but its path is not built", value: path }
+    explanation: Branch B's LAN router announces the prefix, but Branch B's inbound BGP filter denies it, so Branch B never learns it.
+  - id: fix-it
+    type: fix
+    prompt: Choose the change that makes the prefix reachable, then check the result.
+    probe: { kind: reach_outcome }
+    equals: reachable
+    explanation: Removing the deny rule from the inbound filter lets Branch B learn the prefix and advertise it into the overlay.
+hints:
+  - { task: stage, text: "The prefix is announced by the LAN router. Ask whether the Edge accepts what it is offered." }
+  - { task: fix-it, text: "An inbound filter on the BGP neighbor has a rule that names this prefix." }
+fixes:
+  - id: remove-deny
+    title: Remove the deny rule for 10.99.0.0/24 from the inbound filter
+    description: Delete the rule so the prefix passes the filter.
+    patches:
+      - { op: remove, path: "edges[b-edge]/routing/bgp/filters[from-lan]/rules[deny-test]" }
+  - id: overlay-prefix
+    title: Tick Overlay Prefix in Branch B's BGP settings
+    description: Redistribute the prefixes learned from the overlay to Branch B's BGP neighbors.
+    patches:
+      - { op: set, path: "edges[b-edge]/routing/bgp/redistribute/overlay_prefix", value: true }
+  - id: connected
+    title: Tick Connected Routes in Branch B's BGP settings
+    description: Redistribute Branch B's own interface subnets to its BGP neighbors.
+    patches:
+      - { op: set, path: "edges[b-edge]/routing/bgp/redistribute/connected", value: true }
+debrief:
+  - finding: "An inbound BGP filter on the neighbor denied the prefix, so the Edge never learned it."
+    where: "Route Table Dump"
+  - finding: "A live engineer would also compare the Edge's BGP neighbor details and the routes learned from the neighbor to see that the prefix is offered but not accepted, which needs a real VCO."
+    where: "Show BGP Neighbor Learned Routes"

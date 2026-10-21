@@ -96,6 +96,7 @@ type Course struct {
 	diagrams      map[string]*Diagram
 	topologies    []*Topology
 	labs          []*Lab
+	runbooks      []*Runbook
 	guide         *StudyGuide
 	guideWarnings ErrorList
 }

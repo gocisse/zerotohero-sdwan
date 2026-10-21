@@ -1,0 +1,52 @@
+# LAB, not a real network. Everything below happens on the teaching topology hub-and-spoke-demo (invented names and numbers).
+id: ts-spoke-behind-nat
+title: "Ticket: Spoke 3 never gets a direct tunnel"
+summary: Spoke Edge 3 and Spoke Edge 1 talk a lot, yet traffic always goes through the Hub. Read the tunnel's reason code and decide what is - and what is not - fixable in the VCO. This lab is diagnose-only.
+difficulty: 2
+estimated_minutes: 12
+topology: hub-and-spoke-demo
+goals: [trb-scen-2, ov-dynamic]
+screens:
+  - { label: Map (tunnels and reason codes), path: map }
+  - { label: Path explainer, path: paths }
+fault:
+  conditions:
+    traffic:
+      - { a: spoke-1-edge, b: spoke-3-edge, first_packet_ago_s: 60, last_packet_ago_s: 2 }
+flow:
+  source: spoke-3-edge
+  destination: "edge:spoke-1-edge"
+symptom: >-
+  Ticket: "Spoke 3 and Spoke 1 exchange a lot of traffic but it always goes via the Hub; we expected a direct path." Spoke
+  Edge 3 sits behind a NAT that does not let the peer's incoming connection through. This lab relies on assumption 54 (a direct tunnel needs Dynamic Branch to Branch on for both Edges), 9 (direct tunnels appear after the first flow), 59 (Hub order decides between Hubs) 61 (the standing path uses only Hubs with Hubs for VPN), 16 (a direct tunnel is possible unless a NAT blocks incoming UDP 2426 to the peer) and 51 (the initiating Edge builds the tunnel at the first packet); the simulator shows each as a badge. There is no fix in the VCO
+  for a NAT: the lab asks only what the evidence says.
+relies_on_assumptions: [9, 16, 51, 54, 59, 61]
+tasks:
+  - id: current-path
+    type: inspect
+    prompt: Which path does a flow from Spoke Edge 3 to Spoke Edge 1 take right now?
+    probe: { kind: trace_path_kind }
+    choices:
+      - { id: direct, text: "A direct dynamic tunnel between the two Edges", value: direct-dynamic }
+      - { id: hub, text: "The standing path through the Hub", value: via-hub }
+      - { id: gateway, text: "The standing path through the Gateway", value: via-gateway }
+      - { id: nsd, text: "A tunnel to a Non SD-WAN destination", value: nsd-via-gateway }
+    explanation: With no direct tunnel the branch-to-branch traffic uses the standing path, and this Profile builds branch-to-branch through the Hubs.
+  - id: reason
+    type: diagnose
+    prompt: What does the reason code of the dynamic tunnel say?
+    probe: { kind: tunnel_reason, tunnel: "dynamic:spoke-1-edge:spoke-3-edge" }
+    choices:
+      - { id: off, text: "Dynamic Branch to Branch is off for one of the Edges", value: dynamic_disabled }
+      - { id: quiet, text: "No traffic has flowed between them yet", value: no_traffic_yet }
+      - { id: silence, text: "180 seconds of silence tore the tunnel down", value: torn_down_after_silence }
+      - { id: nat, text: "A NAT blocks incoming UDP 2426 at the peer", value: nat_blocks_direct }
+    explanation: Traffic is flowing and Dynamic Branch to Branch is on, so neither of those is the cause. Spoke Edge 3 is behind a NAT that blocks the incoming connection, so the direct tunnel cannot be built.
+hints:
+  - { task: reason, text: "Look at the tunnel list on the map: the dynamic tunnel between the two Edges has a reason code." }
+  - { task: reason, text: "Rule out the settings first: is the feature on for both Edges, and has traffic flowed?" }
+debrief:
+  - finding: "The direct tunnel is not built because a NAT blocks the incoming connection; no VCO setting changes that, so the fix is on the NAT or firewall side."
+    where: "List Paths"
+  - finding: "A live engineer would run List Paths on both Edges and VPN Test between them to see the Gateway or Hub path and its state."
+    where: "VPN Test"

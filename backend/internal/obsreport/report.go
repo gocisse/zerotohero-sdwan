@@ -35,6 +35,8 @@ var SheetSections = map[string][]string{
 	"config-authentication": {"network-services-config"}, "config-vnf": {"network-services-config"},
 	"config-segments": {"profile-policy-config"}, "config-profiles": {"profile-policy-config"}, "config-business-policy-rules": {"profile-policy-config"},
 	"config-firewall-rules": {"profile-policy-config"}, "config-application-match": {"profile-policy-config"},
+	"ts-method": {"troubleshooting"}, "ts-vco-tools": {"troubleshooting"}, "ts-edge-cli": {"troubleshooting"}, "ts-gateway-orchestrator-checks": {"troubleshooting"},
+	"ts-events-logs": {"troubleshooting"}, "ts-common-issues": {"troubleshooting"},
 	"edge-models": {"topologies"}, "site-topologies": {"topologies"}, "bronze-silver-gold": {"topologies"}, "edge-ha": {"topologies"}, "vco-edge-models-ui": {"topologies"},
 }
 
@@ -49,6 +51,7 @@ var candidateGroups = []struct{ Section, Title string }{
 	{"topologies", "Candidates from topology lessons"},
 	{"network-services-config", "Candidates from network services config lessons"},
 	{"profile-policy-config", "Candidates from profile and policy config lessons"},
+	{"troubleshooting", "Candidates from troubleshooting lessons"},
 }
 
 // Item is one open question: a VERIFY row or an assumption.
@@ -322,6 +325,7 @@ func (r *Report) Markdown() string {
 	for _, g := range candidateGroups {
 		b.WriteString(r.candidatesMarkdown(g.Section, g.Title))
 	}
+	b.WriteString(debugCaptureMarkdown())
 	b.WriteString("## How the ranking works\n\n")
 	b.WriteString("Items that block the most content come first. `score` = for an **assumption**: 10 per lab that relies on it + 6 per engine rule + 2 per place in the engine that cites it + 3 per lesson (a lab's goal lessons, or a lesson that names the assumption) + 1 per quiz question tied to those lessons. For a **VERIFY row**: 6 per not-modelled engine rule built on it + 2 per engine citation + 1 per lesson of the section(s) the sheet backs (section-level, because lessons are not tagged with rows) + 1 per lab in those sections. Labs never depend on a VERIFY row (the lab validator rejects an answer that does), so a VERIFY row ranks by what the engine withholds.\n\n")
 	b.WriteString("Quiz questions never rest on a VERIFY row or an assumption (their answers use VERIFIED rows only); the count shows how many questions sit in the affected lessons and should be re-read if an observation corrects something.\n\n")

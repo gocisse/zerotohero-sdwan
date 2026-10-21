@@ -1,0 +1,60 @@
+# Section 10, lesson 9: scenario family 3, policy, DMPO and MTU. Illustrative: no real output is shown.
+id: ts-scen-policy
+title: Scenario family 3, policy, DMPO and MTU (illustrative)
+alt: >-
+  A branch Edge with an Internet link and an MPLS link to a Gateway. The steps show the order of evidence for a voice quality
+  complaint: the Links tab for loss, latency and jitter, List Active Flows for the rule the call matched, and a Ping Test with
+  a packet size and Do not fragment for the MTU.
+width: 900
+height: 460
+
+nodes:
+  - { id: phone, label: Phone, kind: host, x: 80, y: 230 }
+  - { id: edge, label: Branch Edge, kind: vce, x: 270, y: 230 }
+  - { id: inet, label: Internet, kind: internet, x: 520, y: 100 }
+  - { id: mpls, label: MPLS, kind: mpls, x: 520, y: 360 }
+  - { id: gw, label: Gateway, kind: vcg, x: 790, y: 230 }
+
+links:
+  - { id: lan, from: phone, to: edge, style: lan }
+  - { id: wan-i, from: edge, to: inet, style: underlay-internet }
+  - { id: wan-m, from: edge, to: mpls, style: underlay-mpls }
+  - { id: i-gw, from: inet, to: gw, style: overlay-tunnel }
+  - { id: m-gw, from: mpls, to: gw, style: overlay-tunnel }
+
+steps:
+  - title: The ticket
+    narration: >-
+      "Calls from the Leeds branch are choppy since Monday." Scope: one branch, one kind of traffic. Layers: quality, then policy,
+      then MTU.
+    highlight: [phone, edge]
+
+  - title: Evidence 1, link quality
+    narration: >-
+      Read the Links tab (and the QoE tab) for the time of the complaint: loss, latency and jitter per link. Compare with
+      List Paths, which shows the same measures per tunnel.
+    highlight: [edge, wan-i, wan-m]
+    callouts:
+      - { target: edge, text: "Loss, latency, jitter per link." }
+
+  - title: Evidence 2, which rule and which link
+    narration: >-
+      List Active Flows, filtered on the phone's address, shows the flow and how the Edge routes and egresses it. Check that
+      the flow hit the business policy rule you expect and the link policy you expect.
+    highlight: [phone, lan, edge, wan-i, i-gw, gw]
+    packets:
+      - { path: [phone, lan, edge, wan-i, inet, i-gw, gw], label: "voice flow", color_style: overlay-tunnel }
+
+  - title: Evidence 3, does the packet fit?
+    narration: >-
+      A Ping Test with a packet size and Do not fragment, or MTR, tests whether a packet of a given size passes. The overhead
+      of the tunnel lowers the size that fits (Section 2).
+    highlight: [edge, wan-m, mpls, m-gw, gw]
+    callouts:
+      - { target: edge, text: "Largest packet that passes?" }
+
+  - title: Hypothesis, test, fix
+    narration: >-
+      One hypothesis, for example "voice matched a general rule and went to the lossy link". Test it with the flow list, change
+      the one rule in the Profile or Edge, and verify with the same flow list and the Links tab.
+    highlight: [phone, edge, inet, mpls, gw]

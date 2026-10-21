@@ -1,0 +1,140 @@
+---
+id: trb-scen-2
+title: "Scenarios 2: overlay and routing"
+summary: "Three original tickets worked from symptom to fix: no direct tunnel between two branches, a prefix missing at a remote site, and a failed Hub. Each links to a simulator lab that reproduces the part the engine models and says what it does not."
+estimated_minutes: 12
+topics: [ts-scen-2]
+prerequisites: [trb-scen-1]
+---
+
+**By the end of this lesson you will be able to:**
+
+- work an overlay or routing ticket from symptom to fix with List Paths, VPN Test and Route Table Dump;
+- tell an overlay cause from a routing cause when both look like "cannot reach";
+- read a failed Hub from events, tunnel states and the secondary Hub;
+- say which parts the simulator reproduces and which it does not.
+
+All tickets are invented; **schematic** boxes are **illustrative** and use documented field names with made-up values.
+
+<Diagram id="ts-scen-overlay" />
+
+## Ticket 1: branches A and B always go through the Gateway
+
+**Ticket.** "Leeds and York send a lot of traffic to each other, but the latency looks like it goes via the Gateway, not direct. It used to be direct."
+
+**Known.** One pair of sites. **Not known.** Whether a direct tunnel ever existed or why not now.
+
+**Layer decision.** Tunnels (<Term id="overlay">overlay</Term>). Scope is a pair, so look at the tunnels between them and the setting that builds them.
+
+**Evidence, in order.**
+
+1. **List Paths** on Leeds: each path has a **Mode**, Static or Dynamic. <Term id="dynamic-branch-to-branch">Dynamic branch-to-branch</Term> tunnels are built on demand for branch-to-branch; an entry to York in Dynamic mode would show the direct tunnel.
+2. **VPN Test**: Pass or Fail with latency per peer Edge.
+3. The Profile and Edge Cloud VPN settings: **Configure > Profiles > Device tab > VPN Services > Cloud VPN > Branch to Branch VPN** with the option for Dynamic Branch To Branch, and the Edge's own override.
+
+```text
+schematic (illustrative, not real output)
+WAN Link   Remote IP      State   VPN  Mode
+Internet   198.51.100.7   Stable  UP   Static    (Gateway)
+(no Dynamic row for York)
+```
+
+**Hypothesis tree.** (a) Dynamic Branch to Branch is off for one of the two Edges, for example through an override; test by comparing both Edges' Cloud VPN settings. (b) No traffic yet, or the tunnel was removed after 180 seconds without traffic; test with a new flow and List Paths. (c) A NAT in front of one Edge blocks the incoming connection; test by asking whether the site is behind a NAT.
+
+**Fix and where.** Remove the Edge-level Cloud VPN override, or set the option in the Profile (Configure > Edges > the Edge > Device tab > VPN Services, with the Override box).
+
+**Verification.** After a new flow, List Paths shows a Dynamic path to York, VPN UP.
+
+**Lesson learned.** Compare the two Edges' settings before you blame the network.
+
+[Reproduce it: the lab "Why is there no direct tunnel between A and B?"](/sim/labs/no-direct-tunnel). Whether a real NAT blocks a direct tunnel depends on behaviour the simulator marks as an assumption.
+
+## Ticket 2: the finance subnet behind York is missing at Leeds
+
+**Ticket.** "Leeds can't reach 10.20.0.0/24 behind York. York can reach everything."
+
+**Known.** One prefix, one direction. **Not known.** Whether Leeds lacks the route or has a route that loses.
+
+**Layer decision.** Routing. The tunnels are fine (York works), so ask where the prefix stops.
+
+**Evidence, in order.**
+
+1. **Route Table Dump** on York for the prefix: is it known, and how was it learned?
+2. **Route Table Dump** on Leeds with Routes set to all: is the prefix there; if there are several, which has the better Preference, and what Lost Reason did the others lose with?
+3. The six checks of the routing diagnostic (Section 6): learned, advertised, filtered, redistributed, winner, path.
+
+```text
+schematic (illustrative, not real output)
+Edge    Address     Netmask        Type   Preference  Reachable  Lost Reason
+York    10.20.0.0   255.255.255.0  any    10          True       -
+Leeds   (no entry for the prefix)
+```
+
+**Hypothesis tree.** (a) York does not advertise it into the overlay (a static route with Advertise off, or a redistribution switch); (b) a filter holds it back; (c) Leeds has it but does not hand it to its LAN routers; (d) another route wins.
+
+**Fix and where.** The one setting the stage points to, for example the redistribution box in **Device > Routing & NAT** on the Edge, or **Advertise** on the static route.
+
+**Verification.** The prefix appears in Leeds's Route Table Dump and a host test works.
+
+**Lesson learned.** "Cannot reach" is six different questions; the routing diagnostic orders them.
+
+Reproduce it: [Branch B cannot reach 10.20.0.0/24](/sim/labs/branch-b-cannot-reach) and [Which route wins, and why?](/sim/labs/which-route-wins).
+
+## Ticket 3: the primary Hub is down
+
+(A <Term id="hub">Hub</Term> is an Edge that branches tunnel to.)
+
+**Ticket.** "The data center says the primary Hub went dark at 14:20. Half the branches say the ERP is slow."
+
+**Known.** One shared component, a start time. **Not known.** What changed for each branch.
+
+**Layer decision.** Tunnels and the shared component first: many branches at once points to the Hub (Lesson 5).
+
+**Evidence, in order.**
+
+1. **Monitor > Events**: **Edge Down** for the Hub Edge if it is cut off from the Orchestrator (two or more missed heartbeats). Whether branches raise an event for each lost Hub tunnel is not documented: **VPN Tunnel Down** is documented only for the tunnel between the Edge service and a VPN gateway, so do not rely on it here.
+2. **List Paths** on a branch: the tunnel to the primary Hub not Stable, the tunnel to the secondary Hub Stable.
+3. **Route Table Dump** on a branch: which Hub now carries the data center prefixes.
+
+**Hypothesis tree.** (a) The Hub site lost power or links; (b) the Hub Edge is up but its WAN is down; (c) only the tunnels to the primary failed, so the secondary carries traffic and "slow" is a longer path.
+
+**Fix and where.** Restore the Hub site. In the VCO nothing needs changing if a secondary Hub is configured in the Profile (Configure > Profiles > Device tab > VPN Services > Branch to Hubs).
+
+**Verification.** Edge Up for the Hub, List Paths Stable to both Hubs, routes prefer the primary again.
+
+**Lesson learned.** Count the affected Edges first: it tells you whether to look at one branch or at the shared component.
+
+Reproduce it: [A Hub is down](/sim/labs/hub-down) and [Capstone 2](/sim/labs/capstone-2-hub-incident). **Not modelled:** what flows do when the Hub returns, and what an Edge does without the Orchestrator.
+
+<Predict
+  prompt="In Ticket 2 York can reach everything and Leeds cannot reach one York prefix. Which stage of the routing diagnostic do you check first?"
+  choices={["Whether York advertises the prefix into the overlay", "Whether the Hub is up", "Whether the MTU is 1500", "Whether DNS resolves"]}
+  answer={0}
+>
+  The tunnels work, so the prefix stops somewhere in its life as a route. The owner has to know it, advertise it, and the other side has to install and pass it on.
+</Predict>
+
+## What you would see in the VCO
+
+- **Diagnostics**: List Paths, VPN Test and Route Table Dump; **Monitor > Events** for tunnel and Edge events.
+- **Configure > Profiles** and **Configure > Edges** Device tab for VPN Services and Routing & NAT.
+
+<Callout variant="tip" title="Check this in your own VCO">
+  - **[observation candidate]** Open: Diagnostics, List Paths on a branch with a Hub. Expect: a Static path to each Hub and Gateway. Docs may differ: the number of rows.
+  - **[observation candidate]** Open: Diagnostics, VPN Test on a branch. Expect: Pass for peers with live tunnels. Docs may differ: Hubs may be listed or not.
+  - **[observation candidate]** Open: Route Table Dump with a Prefix and Routes set to all. Expect: every route for that prefix with its type. Docs may differ: reason codes appear only for non-preferred routes.
+  - **[observation candidate]** Open: Monitor > Events during a lab Hub shutdown. Expect: Edge Down for the Hub Edge. Docs may differ: whether branches also raise any tunnel event for the lost Hub tunnel.
+</Callout>
+
+## Key takeaways
+
+- Compare two Edges' settings first; many overlay faults are an override.
+- A missing prefix is a routing question with six ordered checks.
+- Count the affected Edges: many at once means a shared component.
+- The simulator reproduces tunnels and routes, not events.
+
+## What would you look for in the VCO
+
+- Mode, State and VPN of each path in List Paths.
+- Where the prefix stops in Route Table Dump.
+- Which Hub the branches use now.

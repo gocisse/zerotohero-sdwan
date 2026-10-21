@@ -1,0 +1,91 @@
+---
+id: trb-method
+title: A troubleshooting method
+summary: "A nine-step method from symptom to documented fix, a one-page evidence checklist, and what the vendor documents about investigating a problem (a test structure and one procedure) versus what is this course's own method."
+estimated_minutes: 10
+topics: [ts-method]
+prerequisites: [prof-compare]
+---
+
+**By the end of this lesson you will be able to:**
+
+- write a <Term id="symptom">symptom</Term> without a cause in it, and state the <Term id="ts-scope">scope</Term> of a problem;
+- work a ticket through nine steps and say what each step produces;
+- keep a one-page list of <Term id="evidence">evidence</Term> and tell a hypothesis from a fact;
+- say which parts of the method are documented by the vendor and which are this course's own.
+
+## What is documented and what is ours
+
+The vendor documents **tools** and, for each tool, a small structure. The order in which to use them across the whole network is **not** documented in the sources read, so the method below is **our method**, built on the documented tools. Treat it as a discipline, not as Arista's procedure.
+
+| Documented | Our method |
+|---|---|
+| Every <Term id="remote-diagnostics">Remote Diagnostics</Term> test is described by three questions: what is its purpose, when can you run it, what to check in the output. | The nine steps, the scope questions, the evidence checklist and the write-up. |
+| One worked procedure for an unreachable device (ARP Table Dump): read the cache status, clear it if it is not Alive, run the test again, then collect bundles and contact Support if the problem remains. | Using that kind of loop on every layer, not just ARP. |
+| Documented scenarios per test, for example List Paths for site-to-site problems and VPN Test for traffic that is not bi-directional. | Choosing between tools by the layer of the problem. |
+
+## The nine steps
+
+<Diagram id="ts-method-flow" />
+
+1. **Symptom.** Write what the user sees, in their words. "Calls are choppy" is a symptom; "the MPLS link is lossy" is already a hypothesis.
+2. **Scope.** One user, one Edge, one pair of sites, or all. Ask what changed, and when it started. A wide scope points away from one branch's LAN.
+3. **Layer.** Choose the layer where the scope and the symptom most likely meet (Lesson 2).
+4. **Evidence.** Collect **read-only** evidence in a fixed order and write down what each piece says, with its time.
+5. **Hypothesis.** State one cause that the evidence supports, and say what observation would prove it wrong.
+6. **Test.** Try to refute it with one more read-only observation. A refuted hypothesis sends you back to the evidence.
+7. **Fix.** Make one change, in the VCO, and note where.
+8. **Verify.** Read the same evidence again. If it is not fixed, go back to the evidence.
+9. **Document.** Write what you saw, what you changed and why (Lesson 10).
+
+<Callout variant="info" title="Read-only first">
+  Some Remote Diagnostics tests change state on the Edge (flushing flows or NAT, clearing the ARP cache, restarting a service). The guide says, for example, that flushing the NAT table "immediately clears all active translation entries, which disrupts current traffic flows". This course teaches the read-only tests and marks the others as state-changing and out of scope.
+</Callout>
+
+## The one-page evidence checklist
+
+Copy this into every ticket. The full page is a [runbook](/troubleshooting/evidence-checklist).
+
+- Ticket text, time, who reported it, and what they expected.
+- Scope: who is affected, who is not, since when, what changed.
+- The Edge and its state, the Profile, the release.
+- The relevant **events** with their times.
+- The tab or test you read, its result, and the time you read it.
+- The hypothesis, and what would disprove it.
+- The change you made, where, and the result of the same evidence afterwards.
+
+<Predict
+  prompt="A user says 'the VPN to the Hub is down'. Which statement is a symptom in the sense of this method?"
+  choices={["The file server in the data center cannot be reached since 09:00", "The tunnel to the Hub is in the Unstable state", "The Internet link has packet loss", "The firewall is blocking the traffic"]}
+  answer={0}
+>
+  The first statement is what the user observes. The other three already name a cause or a tool reading, and each is a hypothesis or evidence to be checked.
+</Predict>
+
+<Callout variant="warning" title="What the sources do not give">
+  No public Arista page read for this course gives a stepwise method across layers, a support-case checklist beyond "collect a diagnostic bundle and a packet capture bundle", or a list of known issues with causes. Where this course gives an order, it says it is ours.
+</Callout>
+
+## What you would see in the VCO
+
+- **Diagnostics** tab: the list of tests for an Edge, each started with **Run**.
+- **Monitor > Events** for what changed and when, and **Monitor > Edges** for the current state.
+
+<Callout variant="tip" title="Check this in your own VCO">
+  - **[observation candidate]** Open: Diagnostics for a Connected Edge. Expect: a list of tests such as ARP Table Dump, List Paths, VPN Test and Route Table Dump. Docs may differ: the list changes with the release and the Edge model.
+  - **[observation candidate]** Open: Monitor > Events with a time filter around a known change. Expect: the change appears as an event with a time. Docs may differ: the filter controls and the retention of events.
+  - **[observation candidate]** Open: any one test, for example NTP Dump. Expect: a result with UTC timestamps. Docs may differ: the exact fields printed.
+</Callout>
+
+## Key takeaways
+
+- The vendor documents the tools and the questions each test answers; the nine steps are our method.
+- Write the symptom without a cause, fix the scope, then pick the layer.
+- Collect read-only evidence, one hypothesis at a time, and verify with the same evidence.
+- Change state only after the hypothesis survives a test.
+
+## What would you look for in the VCO
+
+- What does the ticket say happened, and which event in the VCO matches its time?
+- Who and what is in scope, and who is not?
+- Which read-only test answers the next question?

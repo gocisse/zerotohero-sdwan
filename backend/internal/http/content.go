@@ -192,3 +192,36 @@ func nonNil(s []string) []string {
 	}
 	return s
 }
+
+type runbookDTO struct {
+	ID               string `json:"id"`
+	Title            string `json:"title"`
+	Summary          string `json:"summary"`
+	Kind             string `json:"kind"`
+	EstimatedMinutes int    `json:"estimated_minutes"`
+	Source           string `json:"source,omitempty"`
+}
+
+// RunbooksHandler lists the runbooks (content/runbooks/), without their bodies.
+func RunbooksHandler(src ContentSource, log *slog.Logger) http.HandlerFunc {
+	return withCourse(src, log, func(w http.ResponseWriter, r *http.Request, c *content.Course) {
+		out := []runbookDTO{}
+		for _, rb := range c.Runbooks() {
+			out = append(out, runbookDTO{ID: rb.Meta.ID, Title: rb.Meta.Title, Summary: rb.Meta.Summary, Kind: rb.Meta.Kind, EstimatedMinutes: rb.Meta.EstimatedMinutes})
+		}
+		writeJSON(w, http.StatusOK, map[string]any{"runbooks": out})
+	})
+}
+
+// RunbookHandler returns one runbook with its raw MDX body.
+func RunbookHandler(src ContentSource, log *slog.Logger) http.HandlerFunc {
+	return withCourse(src, log, func(w http.ResponseWriter, r *http.Request, c *content.Course) {
+		id := chi.URLParam(r, "id")
+		rb, ok := c.Runbook(id)
+		if !ok {
+			notFound(w, "runbook", id)
+			return
+		}
+		writeJSON(w, http.StatusOK, runbookDTO{ID: rb.Meta.ID, Title: rb.Meta.Title, Summary: rb.Meta.Summary, Kind: rb.Meta.Kind, EstimatedMinutes: rb.Meta.EstimatedMinutes, Source: rb.Body})
+	})
+}

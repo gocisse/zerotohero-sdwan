@@ -101,7 +101,7 @@ test.describe('self-check', () => {
     await expect(page.locator('[data-self-check-note]')).toContainText('Nothing is scored')
     await expect(page.locator('[data-self-check-question]')).toHaveCount(12)
     await expect(page.locator('[data-self-check-screen]')).toHaveCount(3)
-    await expect(page.locator('[data-checklist-goal]')).toHaveCount(4)
+    await expect(page.locator('[data-checklist-goal]')).toHaveCount(5)
 
     // Answer the first single-choice or true/false question, then check: feedback comes back and no state changes.
     // (The page draws its own self-check, so pick from what it shows: the first question that has inputs.)
@@ -157,12 +157,12 @@ test.describe('self-check', () => {
     await other.close()
   })
 
-  test('the dashboard shows goal coverage for the four goals and it is informational only', async ({ page }) => {
+  test('the dashboard shows goal coverage for the five goals and it is informational only', async ({ page }) => {
     await page.goto('/progress')
     const view = page.locator('[data-goal-coverage]')
     await expect(view).toBeVisible()
     await expect(view).toContainText('Informational only')
-    for (const g of ['read-config', 'traffic-flow', 'tunnels', 'routes']) {
+    for (const g of ['read-config', 'traffic-flow', 'tunnels', 'routes', 'troubleshoot']) {
       const card = view.locator(`[data-goal=${g}]`)
       await expect(card).toBeVisible()
       for (const part of ['lessons', 'quiz', 'labs', 'self-check', 'checklist']) await expect(card.locator(`[data-goal-part=${part}]`)).toBeVisible()

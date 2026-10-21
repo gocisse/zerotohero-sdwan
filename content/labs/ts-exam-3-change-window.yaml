@@ -1,0 +1,107 @@
+# LAB, not a real network. Everything below happens on the teaching topology ts-exam-network (invented names and numbers).
+id: ts-exam-3-change-window
+title: "Troubleshooting exam, ticket 3: after the change window"
+summary: After a weekend change, York's new building cannot be reached, Leeds' routers learn nothing from the overlay, and large transfers from Cardiff stall. Find three separate causes, fix the two that are configuration, and say what the third needs.
+difficulty: 3
+estimated_minutes: 30
+topology: ts-exam-network
+goals: [trb-method, trb-scen-2, trb-scen-3]
+screens:
+  - { label: Flow tracer (start here), path: trace }
+  - { label: Reachability explainer, path: reachability }
+  - { label: Path explainer (MTU line), path: paths }
+  - { label: Remote Diagnostics > Route Table Dump (mock), path: routes }
+fault:
+  patches:
+    - op: set
+      path: profiles[branch]/routing/ospf/redistribute/overlay_prefixes
+      value: false
+flow:
+  source: cardiff-edge
+  destination: 10.30.8.0/24
+symptom: >-
+  Ticket A: "Since the weekend change, nobody (Cardiff, for example) can reach York's new building 10.30.8.0/24." Ticket B: "Leeds' own routers have
+  no routes to York or Cardiff." Ticket C: "Large file copies from Cardiff to Leeds hang; small ones work." Three tickets that may or may
+  not share a cause. This lab relies on assumption 23 (a BGP filter is evaluated first match, default permit), 64 (a link's MTU is its authored value) and 66 (flows between Edges are VPN traffic); the simulator shows each as a badge.
+relies_on_assumptions: [23, 64, 66]
+tasks:
+  - id: new-building
+    type: diagnose
+    prompt: Ticket A. From Cardiff, which stage of the route's life fails first for 10.30.8.0/24?
+    probe: { kind: reach_first_failing }
+    choices:
+      - { id: known, text: "The owning Edge never learned the prefix", value: known }
+      - { id: advertised, text: "The owning Edge does not advertise it into the overlay", value: advertised }
+      - { id: filtered, text: "A filter or the overlap rule holds it back", value: filtered }
+      - { id: redistributed, text: "Cardiff does not hand it to its LAN routers", value: redistributed }
+      - { id: winner, text: "No route reaches Cardiff, or another route wins", value: winner }
+      - { id: path, text: "The route exists but its path is not built", value: path }
+    explanation: York's LAN router offers the prefix, but York's inbound BGP filter denies it, so York never learns it.
+  - id: leeds-routers
+    type: diagnose
+    prompt: Ticket B. For the prefix 10.30.0.0/24 (York's main LAN, which works), which stage fails first when Leeds' routers should learn it?
+    probe:
+      kind: reach_first_failing
+      flow: { source: leeds-edge, destination: 10.30.0.0/24 }
+    choices:
+      - { id: known, text: "The owning Edge never learned the prefix", value: known }
+      - { id: advertised, text: "The owning Edge does not advertise it into the overlay", value: advertised }
+      - { id: filtered, text: "A filter or the overlap rule holds it back", value: filtered }
+      - { id: redistributed, text: "Leeds does not hand it to its LAN routers", value: redistributed }
+      - { id: winner, text: "No route reaches Leeds, or another route wins", value: winner }
+    explanation: York's main LAN is advertised and Leeds installs it, but the Branch Profile's OSPF settings no longer redistribute overlay prefixes, so Leeds' own routers never learn it.
+  - id: mtu-min
+    type: inspect
+    prompt: Ticket C. What is the smallest effective packet MTU, in bytes, of the first leg of a Cardiff to Leeds flow?
+    probe:
+      kind: trace_mtu_min
+      flow: { source: cardiff-edge, destination: "edge:leeds-edge", packet_size: 1350 }
+    choices:
+      - { id: a, text: "1388", value: "1388" }
+      - { id: b, text: "1288", value: "1288" }
+      - { id: c, text: "1341", value: "1341" }
+      - { id: d, text: "1400", value: "1400" }
+    explanation: Cardiff's Internet link has an MTU of 1400. VPN overhead is up to 112 bytes, so the smallest effective MTU is 1288. Nothing in the configuration of the Orchestrator can raise a provider's real path MTU, so this ticket needs the provider.
+  - id: fix-new-building
+    type: fix
+    prompt: Choose the change that makes 10.30.8.0/24 reachable from Cardiff, then check the result.
+    probe: { kind: reach_outcome }
+    equals: reachable
+    explanation: Removing the left-over deny rule lets York learn the new building and advertise it.
+  - id: fix-leeds
+    type: fix
+    prompt: Choose the change that lets Leeds' routers learn York's main LAN, then check the result.
+    probe:
+      kind: reach_outcome
+      flow: { source: leeds-edge, destination: 10.30.0.0/24 }
+    equals: reachable
+    explanation: Redistributing overlay prefixes into OSPF in the Branch Profile hands the remote prefixes to Leeds' routers.
+hints:
+  - { task: new-building, text: "York's LAN router announces the prefix. Ask whether York accepts everything it is offered." }
+  - { task: leeds-routers, text: "Leeds knows the route. Ask what Leeds tells its own LAN routers." }
+  - { task: mtu-min, text: "Subtract the larger overhead from the path MTU of the smaller link." }
+fixes:
+  - id: remove-deny
+    title: Remove the deny rule for 10.30.8.0/24 from York's inbound filter
+    description: Delete the left-over test rule so the prefix passes the filter.
+    patches:
+      - { op: remove, path: "edges[york-edge]/routing/bgp/filters[from-lan]/rules[deny-newlan]" }
+  - id: ospf-overlay
+    title: Redistribute overlay prefixes into OSPF in the Branch Profile
+    description: Tick the overlay prefixes redistribution in the Profile's OSPF settings.
+    patches:
+      - { op: set, path: "profiles[branch]/routing/ospf/redistribute/overlay_prefixes", value: true }
+  - id: york-connected
+    title: Tick Connected Routes in York's BGP settings
+    description: Redistribute York's own interface subnets to its BGP neighbors.
+    patches:
+      - { op: set, path: "edges[york-edge]/routing/bgp/redistribute/connected", value: true }
+debrief:
+  - finding: "A left-over deny rule in York's inbound BGP filter kept the new building out of the overlay."
+    where: "Route Table Dump"
+  - finding: "The change window switched off redistribution of overlay prefixes into OSPF in the Profile, so Leeds' routers learned nothing."
+    where: "Route Table Dump"
+  - finding: "Cardiff's link MTU of 1400 bytes limits the packets; the lab can read it but the real path MTU is a provider matter."
+    where: "Ping Test"
+  - finding: "A live engineer would also run Show BGP Neighbor Learned Routes and List OSPF Routes to see the filter and the missing redistribution, a Ping Test with Do not fragment across sizes, and read the events and the Cardiff link statistics; those need a real VCO."
+    where: "Show BGP Neighbor Learned Routes"

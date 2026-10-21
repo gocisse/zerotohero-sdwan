@@ -1,0 +1,62 @@
+# Section 10, lesson 7: scenario family 1, activation and underlay. Illustrative: no real output is shown.
+id: ts-scen-activation
+title: Scenario family 1, activation and underlay (illustrative)
+alt: >-
+  A branch Edge with an Internet link, the Internet, the Orchestrator and a Gateway. The steps show the order of evidence for a
+  new Edge that will not activate: the physical link first, then reachability of the Orchestrator, then the activation event on
+  the Orchestrator side.
+width: 900
+height: 460
+
+groups:
+  - { id: branch, label: Branch, nodes: [edge] }
+
+nodes:
+  - { id: edge, label: Branch Edge, kind: vce, x: 120, y: 230 }
+  - { id: inet, label: Internet, kind: internet, x: 400, y: 230 }
+  - { id: vco, label: Orchestrator, kind: vco, x: 720, y: 110 }
+  - { id: gw, label: Gateway, kind: vcg, x: 720, y: 350 }
+
+links:
+  - { id: wan, from: edge, to: inet, style: underlay-internet, label: "WAN link" }
+  - { id: ctl, from: inet, to: vco, style: control }
+  - { id: gw-l, from: inet, to: gw, style: underlay-internet }
+
+steps:
+  - title: The ticket
+    narration: >-
+      "The new Edge in Leeds will not come online." Nothing else is known. Scope: one new Edge. Layer candidates: the underlay
+      first, then activation and management.
+    highlight: [edge]
+
+  - title: Evidence 1, the WAN link
+    narration: >-
+      If you can reach the Edge's local interface or someone on site can read it, the first question is whether the link is
+      physically up and has an address. On a Connected Edge Interface Status shows "link detected"; for an Edge that never
+      came online, this is a question for the person on site.
+    highlight: [edge, wan, inet]
+    callouts:
+      - { target: wan, text: "Link up? Address? (site or console)" }
+
+  - title: Evidence 2, can it reach the Orchestrator?
+    narration: >-
+      Activation needs the Edge to reach the Orchestrator over the Internet. Remote Diagnostics needs the connection the Edge sets up
+      with the Orchestrator at activation, so it cannot test this; the VCO side shows only what the Edge reported.
+    highlight: [edge, wan, inet, ctl, vco]
+    packets:
+      - { path: [edge, wan, inet, ctl, vco], label: "activation request", color_style: control }
+
+  - title: Evidence 3, the activation events
+    narration: >-
+      On the Orchestrator side, Monitor > Events can show an activation result for this Edge: "Activated", "Activation
+      failed" (activation link incorrect, or configuration did not download) or "Activation incomplete" (a software update
+      failed). Read which one, with its time.
+    highlight: [vco]
+    callouts:
+      - { target: vco, text: "Activation failed / incomplete / Activated" }
+
+  - title: Hypothesis, test, fix
+    narration: >-
+      State one hypothesis the evidence supports, for example "the activation link used was not the one for this Edge". Test it by
+      comparing the link in the event or ticket with the Edge's activation key in the VCO, then correct only that.
+    highlight: [edge, vco]

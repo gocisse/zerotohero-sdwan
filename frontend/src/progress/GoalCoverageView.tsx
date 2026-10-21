@@ -5,7 +5,7 @@ import { GOALS, goalCoverage, loadChecklist, loadSelfCheck } from './goals'
 const pct = (n: number | null) => (n == null ? '—' : `${Math.round(n)}%`)
 
 /**
- * Goal coverage: how far each of the four goals of the course is covered, from lesson progress, quiz scores, weak topics,
+ * Goal coverage: how far each of the goals of the course is covered, from lesson progress, quiz scores, weak topics,
  * labs and the last self-check (kept in this browser only). Informational: nothing reads it to restrict anything, and it is
  * not a grade.
  */
@@ -24,7 +24,7 @@ export default function GoalCoverageView({ progress, topics }: { progress: Progr
         </Link>
       </div>
       <p className="mt-1 text-sm text-slate-600 dark:text-slate-400">
-        How far the course's four goals are covered, from your lesson progress, quiz results, labs and last self-check.
+        How far the course's goals are covered, from your lesson progress, quiz results, labs and last self-check.
         Informational only: it is not a grade and nothing is locked by it.
         {memory
           ? ` Last self-check: ${new Date(memory.at).toLocaleDateString()} (kept in this browser only).`

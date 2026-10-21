@@ -10,3 +10,4 @@ sections:
   - topologies
   - network-services-config
   - profile-policy-config
+  - troubleshooting

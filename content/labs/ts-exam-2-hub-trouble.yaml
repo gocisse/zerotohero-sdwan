@@ -1,0 +1,101 @@
+# LAB, not a real network. Everything below happens on the teaching topology ts-exam-network (invented names and numbers).
+id: ts-exam-2-hub-trouble
+title: "Troubleshooting exam, ticket 2: Hub trouble"
+summary: The Primary Hub stops answering and York's MPLS link is degraded in the same hour, and Leeds and Cardiff never get a direct tunnel. Separate what changed from what was already wrong.
+difficulty: 3
+estimated_minutes: 25
+topology: ts-exam-network
+goals: [trb-method, trb-scen-2, trb-gw-orch]
+screens:
+  - { label: Map (the Hub tunnels), path: map }
+  - { label: Path explainer, path: paths }
+  - { label: Monitor > Edges > Links of York Edge (mock), path: "monitor?edge=york-edge&tab=links" }
+fault:
+  conditions:
+    hubs_unreachable: [hub-a]
+    links_degraded: [y-mpls]
+    traffic:
+      - { a: leeds-edge, b: cardiff-edge, first_packet_ago_s: 60, last_packet_ago_s: 2 }
+  patches:
+    - op: set
+      path: edges[cardiff-edge]/overrides/cloud_vpn
+      value:
+        segments: [global]
+        branch_to_hub: { enabled: true, hubs: [hub-a, hub-b] }
+        branch_to_branch: { enabled: true, via: hubs_for_vpn, dynamic: false }
+flow:
+  source: leeds-edge
+  destination: "edge:york-edge"
+symptom: >-
+  Ticket A: "At 09:10 the Primary Hub stopped answering and the data center says everything is slow." Ticket B: "Leeds and
+  Cardiff talk all day but it always goes through a Hub; it used to be direct." Branch to Branch VPN goes through the Hubs
+  (Hubs for VPN), Primary first. Part of this has no configuration fix: the Hub incident. Part has: the missing direct tunnel.
+  This lab relies on assumptions 59 (Hub order decides between Hubs), 61 (with Hubs for VPN the standing path uses only Hubs),
+  46 (a tunnel's paths are the pairs of same-type links, and a tunnel stays up while one of its paths is up), 54 (a direct tunnel
+  needs Dynamic Branch to Branch on for both Edges) and 9 (direct tunnels appear after the first flow), plus 32 and 81 if you
+  trace; the simulator shows each as a badge. What a degraded link triggers (remediation, steering away) is not documented in
+  enough detail to be asked about here.
+relies_on_assumptions: [9, 46, 54, 59, 61]
+tasks:
+  - id: which-hub
+    type: predict
+    prompt: Before you look, decide which Hub Leeds' flow to York uses now.
+    probe: { kind: trace_path_via }
+    choices:
+      - { id: primary, text: "The Primary Hub", value: hub-a }
+      - { id: secondary, text: "The Secondary Hub", value: hub-b }
+      - { id: direct, text: "A direct tunnel, without a Hub", value: none }
+    explanation: The Primary Hub does not answer, so the flow uses the Secondary Hub.
+  - id: primary-tunnel
+    type: inspect
+    prompt: What is the state of York's Hub tunnel to the Primary Hub?
+    probe: { kind: tunnel_state, tunnel: "hub:york-edge:hub-a" }
+    choices:
+      - { id: up, text: "up", value: up }
+      - { id: degraded, text: "degraded", value: degraded }
+      - { id: down, text: "down", value: down }
+      - { id: not-established, text: "not established", value: not-established }
+    explanation: The Hub tunnel is configured and permanent, so it exists, but the peer does not answer, so every path of it is down.
+  - id: no-direct
+    type: diagnose
+    prompt: Why is there no direct tunnel between Leeds and Cardiff?
+    probe: { kind: tunnel_reason, tunnel: "dynamic:cardiff-edge:leeds-edge" }
+    choices:
+      - { id: off, text: "Dynamic Branch to Branch is off for one of the two Edges", value: dynamic_disabled }
+      - { id: quiet, text: "No traffic has flowed between them yet", value: no_traffic_yet }
+      - { id: silence, text: "180 seconds of silence tore the tunnel down", value: torn_down_after_silence }
+      - { id: nat, text: "A NAT blocks incoming UDP 2426 at the peer", value: nat_blocks_direct }
+    explanation: Traffic is flowing and no NAT is involved. Cardiff carries a Cloud VPN override that switches Dynamic Branch to Branch off. This is unrelated to the Hub incident.
+  - id: fix-direct
+    type: fix
+    prompt: Choose the change that brings the direct tunnel back, then check the result.
+    probe: { kind: tunnel_reason, tunnel: "dynamic:cardiff-edge:leeds-edge" }
+    equals: ok
+    explanation: Removing Cardiff's override lets it inherit the Profile again, where Dynamic Branch to Branch is on.
+hints:
+  - { task: which-hub, text: "The Hub list in the Profile is ordered. The order matters when the first one is not usable." }
+  - { task: no-direct, text: "Compare the Cloud VPN settings the two Edges end up with. One of them is not like the Profile." }
+  - { task: fix-direct, text: "An Edge override replaces a whole sub-section of the Profile. Changing the Profile does not help an Edge that overrides it." }
+fixes:
+  - id: remove-override
+    title: Remove Cardiff's Cloud VPN override
+    description: Delete the Edge-level Cloud VPN settings so the Edge inherits the Profile again.
+    patches:
+      - { op: remove, path: "edges[cardiff-edge]/overrides/cloud_vpn" }
+  - id: profile-dynamic
+    title: Turn Dynamic Branch to Branch on in the Branch Profile
+    description: Set Dynamic Branch to Branch explicitly on in the Profile's Branch to Branch settings.
+    patches:
+      - { op: set, path: "profiles[branch]/cloud_vpn/branch_to_branch/dynamic", value: true }
+  - id: swap-hubs
+    title: Put the Secondary Hub first in the Branch Profile
+    description: Reorder the Hub list so the Secondary Hub is first.
+    patches:
+      - { op: set, path: "profiles[branch]/cloud_vpn/branch_to_hub/hubs", value: [hub-b, hub-a] }
+debrief:
+  - finding: "The Primary Hub did not answer: the Hub tunnels to it were down and the Secondary Hub carried the flows. Nothing in the configuration needed changing for that."
+    where: "List Paths"
+  - finding: "The missing direct tunnel was a Cloud VPN override on Cardiff that switched Dynamic Branch to Branch off."
+    where: "Dynamic Branch To Branch"
+  - finding: "A live engineer would read the events around 09:10 (an Edge Down for the Hub Edge if it lost the Orchestrator), run List Paths and VPN Test on a branch, check the Gateway and Hub status screens and open a case with a diagnostic bundle if the Hub site cannot be explained; the events and the bundles are not simulated here."
+    where: "Diagnostics tab > Diagnostic Bundles"

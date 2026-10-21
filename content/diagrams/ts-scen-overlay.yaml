@@ -1,0 +1,62 @@
+# Section 10, lesson 8: scenario family 2, overlay and routing. Illustrative: no real output is shown.
+id: ts-scen-overlay
+title: Scenario family 2, overlay and routing (illustrative)
+alt: >-
+  Two branch Edges, a Hub and a Gateway, joined by overlay tunnels. The steps show the order of evidence when branch A cannot
+  reach branch B: List Paths for tunnels to the Hub and Gateway, VPN Test between the Edges, then Route Table Dump on the
+  Edge that should hold the prefix.
+width: 900
+height: 520
+
+nodes:
+  - { id: a, label: Branch A Edge, kind: vce, x: 110, y: 130 }
+  - { id: b, label: Branch B Edge, kind: vce, x: 110, y: 400 }
+  - { id: hub, label: Hub, kind: vce, x: 460, y: 130 }
+  - { id: gw, label: Gateway, kind: vcg, x: 460, y: 400 }
+  - { id: dc, label: Data center, kind: datacenter, x: 790, y: 130 }
+
+links:
+  - { id: a-hub, from: a, to: hub, style: overlay-tunnel }
+  - { id: b-gw, from: b, to: gw, style: overlay-tunnel }
+  - { id: a-gw, from: a, to: gw, style: overlay-tunnel }
+  - { id: b-hub, from: b, to: hub, style: overlay-tunnel }
+  - { id: hub-dc, from: hub, to: dc, style: lan }
+  - { id: a-b, from: a, to: b, style: overlay-tunnel, label: "direct (dynamic)" }
+
+steps:
+  - title: The ticket
+    narration: >-
+      "Branch A cannot reach the file server at branch B since this morning." Scope: one pair of sites. Layer candidates:
+      tunnels, then routing.
+    highlight: [a, b]
+    show: [a-b]
+
+  - title: Evidence 1, the tunnels of each Edge
+    narration: >-
+      Run List Paths on branch A and read the state of each tunnel: Stable, Unstable, BW_Measurement or Quiet, and the VPN
+      state. Anything other than Stable is described as an issue with the WAN link.
+    highlight: [a, a-hub, hub, a-gw, gw]
+    packets:
+      - { path: [a, a-hub, hub], label: "List Paths", color_style: overlay-tunnel }
+
+  - title: Evidence 2, the pair
+    narration: >-
+      VPN Test shows the branch-to-branch result between the Edges, Pass or Fail, with latency. A Fail says the tunnels and
+      traffic between the Edges are down; a Pass with no reachability points toward routes or policy.
+    highlight: [a, a-b, b]
+    callouts:
+      - { target: a-b, text: "VPN Test: Pass or Fail." }
+
+  - title: Evidence 3, the route
+    narration: >-
+      Route Table Dump on branch A, for the prefix of branch B: is there a route, which one is preferred, and what reason code
+      did the others lose with?
+    highlight: [a, hub, hub-dc, dc]
+    callouts:
+      - { target: a, text: "Prefix present? Which route is preferred?" }
+
+  - title: Hypothesis, test, fix
+    narration: >-
+      One hypothesis, for example "the route to branch B is learned from a different Hub than expected". Check it with a second
+      read-only test, change one routing setting in the VCO, and read the same evidence again.
+    highlight: [a, b, hub, gw]

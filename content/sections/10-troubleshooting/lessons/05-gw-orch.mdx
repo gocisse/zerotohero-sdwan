@@ -1,0 +1,81 @@
+---
+id: trb-gw-orch
+title: Gateway and Orchestrator side checks
+summary: "What to look at when many Edges are affected: the Gateway's status and capacity screens, the documented thresholds, Orchestrator health, disaster recovery states, time and certificates, and what the sources do and do not document."
+estimated_minutes: 10
+topics: [ts-gw-orch]
+prerequisites: [trb-edge-cli]
+---
+
+**By the end of this lesson you will be able to:**
+
+- recognise the symptoms that point to a shared component instead of one branch;
+- read the Gateway's status, service state and usage screens;
+- use the documented Gateway and Orchestrator thresholds as reference points;
+- say what the sources document about Orchestrator health, disaster recovery, time and certificates, and what they leave out.
+
+## When many Edges are affected
+
+If many Edges lose the same service at the same time, look at the shared component first: a <Term id="hub">Hub</Term>, a Gateway (<Term id="vcg">VCG</Term>) or the Orchestrator (<Term id="vco">VCO</Term>). This is our method; the screens below are documented.
+
+## The Gateway in the VCO
+
+In the Operator portal, **Gateway Management > Gateways** lists each Gateway. A Gateway's status is one of Connected, Degraded, Never Activated, Not in Use, Offline, Out of Service or Quiesced, and its service state is Historical, In Service, Out of Service, Pending Service or Quiesced. The list also shows CPU, memory and the number of connected Edges. Selecting a Gateway opens an **Overview** tab and a **Monitor** tab with CPU percentage, memory usage, flow counts, over-capacity drops and tunnel count. The guide says occasional drops are expected, but "a consistent increase in drops usually indicates a Gateway capacity issue".
+
+## Settings reference
+
+| Check | Warning | Critical |
+|---|---|---|
+| CPU load | 60 | 80 |
+| Memory | 70 | 80 |
+| Tunnels | 60 percent of max scale | 80 percent of max scale |
+| Disk | 40 percent free | 20 percent free |
+| Controller NTP offset | 5 seconds | 10 seconds |
+| Stale NAT | 10 percent | 25 percent |
+
+The Orchestrator Guide adds that a sudden loss of all tunnels, or an abnormally low quantity, is also a concern. At a warning, review the scale and add resources; at a critical, contact Support. For stale NAT or flow entries the documented actions are to collect a diagnostic bundle, check whether a small set of Edges contributes, and at critical open a high-priority case with the bundle.
+
+## The Orchestrator
+
+- **Diagnostics** (in the Orchestrator itself) has a **Diagnostic Bundles** tab and a **Database Statistics** tab with read-only database information.
+- An on-premises Orchestrator has a built-in metrics stack (Telegraf and Prometheus); enabling it runs a script on the host, which is a state-changing step and out of scope here.
+- **Disaster recovery.** After setup the standby runs in a limited mode. The failure states shown in the UI include recoverable ones such as FAILURE_SYNCING_FILES and FAILURE_GET_STANDBY_STATUS, and unrecoverable ones such as FAILURE_COPYING_DB. Failover is manual.
+- **Time and <Term id="heartbeat">heartbeats</Term>.** The Orchestrator and Gateway time zone must be Etc/UTC and the NTP offset 15 milliseconds or less; the two Orchestrators of a DR pair need the same time.
+- **Certificates.** Certificate renewal and revocation are recorded as events; Lesson 6 lists them.
+
+<Callout variant="warning" title="What is not documented">
+  The sources read do not list the Orchestrator's services and log files for troubleshooting, and the Gateway Monitoring Guide says some commands may apply only to Release 5.0.0. A single health number for "how many Edges are connected" was not found; read the Edge list and the events.
+</Callout>
+
+<Predict
+  prompt="Twenty Edges attached to one Gateway lose their tunnels at the same minute. What is the first check?"
+  choices={["The Gateway's status and its Monitor tab", "Each branch's LAN switch", "The business policy of one Edge", "The MTU of one WAN link"]}
+  answer={0}
+>
+  A shared component is the common factor. The Gateway's status, service state, connected Edges and usage graphs are the first evidence.
+</Predict>
+
+## What you would see in the VCO
+
+- **Gateway Management > Gateways** in the Operator portal, and each Gateway's **Overview** and **Monitor** tabs.
+- The Orchestrator's **Diagnostics** screen.
+
+<Callout variant="tip" title="Check this in your own VCO">
+  - **[observation candidate]** Open: Gateway Management > Gateways (Operator or Partner portal). Expect: status, service state, CPU, memory and Edges per Gateway. Docs may differ: you may not have this portal.
+  - **[observation candidate]** Open: a Gateway's Monitor tab. Expect: graphs of CPU, memory, flow counts, over-capacity drops and tunnel count. Docs may differ: the time ranges offered.
+  - **[observation candidate]** Open: the Orchestrator's Diagnostics screen (operator). Expect: a Diagnostic Bundles tab with Request Status and Cleanup Date. Docs may differ: it exists only for an Operator.
+  - **[observation candidate]** Open: Monitor > Events around a known Gateway change. Expect: events from the Gateway or Orchestrator. Docs may differ: which events exist.
+</Callout>
+
+## Key takeaways
+
+- Many Edges at once: check the shared component first.
+- The Gateway screens give status, service state, usage and drops; thresholds are documented reference points.
+- Orchestrator health, DR states, time (UTC, 15 ms) and certificates are documented; a full log and service list is not.
+- Restarting services is state-changing; collect a bundle and ask Support.
+
+## What would you look for in the VCO
+
+- Which Gateway or Hub do the affected Edges share?
+- Is its status Connected and its service state In Service?
+- Are drops, tunnels or CPU past a documented threshold?

@@ -1,0 +1,85 @@
+---
+id: trb-edge-cli
+title: The Edge command line and the debug.py script
+summary: "What the public documentation says about the Edge command line and debug.py (little), what it says about the Gateway's debug.py (more), what is state-changing and out of scope, and how to prepare to capture output from your own Edge."
+estimated_minutes: 10
+topics: [ts-edge-cli]
+prerequisites: [trb-tools]
+---
+
+**By the end of this lesson you will be able to:**
+
+- say which <Term id="debug-py">debug.py</Term> options the public documentation names for an Edge, and which it does not;
+- tell Edge command-line facts from Gateway command-line facts;
+- name the commands this course does not teach, and why;
+- prepare a short, safe list of things to capture from your own Edge.
+
+## What is documented
+
+This is the lesson where the documentation is thinnest, so it is blunt about it.
+
+<Callout variant="warning" title="Documentation gap">
+  The public documents read for this course do not describe how to get a shell on an Edge, do not give a full option list for the debug.py script on an Edge, and do not say where the script lives on an Edge. Everything below that is not in the table is **unconfirmed** and is listed under "fill from your observation" in the [debug script reference](/troubleshooting/debug-script-reference).
+</Callout>
+
+## Settings reference
+
+The options below are the ones named in the official PDFs read. The first three are described; the fourth is only referred to.
+
+| Option | What the documentation says |
+|---|---|
+| --pki | from the Edge or Gateway command line, shows PKI settings, the trusted CA list and the certificate |
+| --ike_sa | shows the details of current security associations |
+| --ike_spd | shows details of the security protocols and encryption methods used per peer |
+| --routes | named in the Troubleshooting Guide as the source of route flags; its syntax and output are not documented |
+
+The outputs are shown as figures in the Orchestrator Guide, so no output format is quoted here. A certificate mismatch between the Edge and the Orchestrator is described as visible in the log with `sudo tail -f /var/log/mgd.log`, and certificates and keys are stored in the folders /etc/vc_private and /etc/vc_public.
+
+## The Gateway is different
+
+The Gateway (<Term id="vcg">VCG</Term>) Monitoring Guide uses the script at /opt/vc/bin/debug.py as the user vcadmin with options such as --icmp_monitor, --bgp_view_summary, --handoff, --list_edges, --vrf, --stale_nat_dump and --path. Those are **Gateway** commands, and the same guide warns that some commands and example outputs may only be relevant to Release 5.0.0. Do not assume that an option that exists on the Gateway exists on an Edge.
+
+## What this course does not teach
+
+<Callout variant="warning" title="State-changing, out of scope for this course">
+  Activating a device from its command line (activate.py), restarting services, rebooting, clearing or flushing tables, or forcing a failover are state-changing. Run them only under a documented procedure or Support's direction, never to explore.
+</Callout>
+
+## Safe preparation, from the VCO side
+
+Many things you might want from an <Term id="vce">Edge</Term>'s shell has a read-only counterpart in <Term id="remote-diagnostics">Remote Diagnostics</Term> (Lesson 3): a route dump, flow list, NAT table, ARP table, NTP dump, system information and interface status. Use those first. Whether the Remote Diagnostics tests and debug.py share an implementation is not documented.
+
+When Support asks for output from the Edge shell, the safe habit is: note the Edge release and the time, run only what Support asked for, copy the output unedited and hand it over (Lesson 10).
+
+<Predict
+  prompt="Which statement is documented?"
+  choices={["debug.py with --pki shows PKI settings, the trusted CA list and the certificate from the Edge or Gateway command line", "debug.py on an Edge accepts a --flows option that dumps all flows", "debug.py lives in /opt/vc/bin on every Edge", "debug.py --ike_sa restarts the IPsec service"]}
+  answer={0}
+>
+  Only the first is in the Orchestrator Guide. The other two are not documented for an Edge, and --ike_sa shows security associations; it does not restart anything.
+</Predict>
+
+## What you would see in the VCO
+
+- Nothing: the command line is not in the VCO. The VCO side is **Diagnostics** and **Monitor > Events**, where certificate and activation events appear.
+- The Edge's software release is on the Edge's page in **Monitor > Edges**; note it when you capture output.
+
+<Callout variant="tip" title="Check this in your own VCO">
+  - **[observation candidate]** Open: your Edge's usage text for debug.py from the shell, if you have authorised access (capture the first lines and the Edge release). Expect: a list of options. Docs may differ: the whole option list is not in the public documentation.
+  - **[observation candidate]** Open: debug.py --pki on your Edge, read-only. Expect: PKI settings, the trusted CA list and the certificate. Docs may differ: the layout of the output.
+  - **[observation candidate]** Open: the shell prompt and user of your Edge. Expect: the way you log in. Docs may differ: how shell access is documented, which is not in the sources read.
+  - **[observation candidate]** Open: Diagnostics, Route Table Dump on the same Edge. Expect: the same routes you would see from a route command. Docs may differ: how the two compare.
+</Callout>
+
+## Key takeaways
+
+- For an Edge, the public documents name only --pki, --ike_sa, --ike_spd and a reference to --routes.
+- The long option list in the Gateway Monitoring Guide is for the Gateway.
+- Do not run what you cannot source; prefer the read-only Remote Diagnostics tests.
+- Capture the release and the unedited output when Support asks.
+
+## What would you look for in the VCO
+
+- Is there a Remote Diagnostics test that answers this without a shell?
+- Is the command I am about to run read-only and documented for this device?
+- Which release is the Edge running, so the output can be matched?

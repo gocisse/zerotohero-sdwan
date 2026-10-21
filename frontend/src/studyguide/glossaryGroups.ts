@@ -12,6 +12,8 @@ export interface GlossarySectionGroup {
   /** Guide section id (G1..) or "beyond". */
   key: string
   title: string
+  /** True for a section the course added beyond the original outline. */
+  added?: boolean
   groups: GlossaryGroup[]
 }
 
@@ -33,6 +35,7 @@ export function groupGlossary(guide: StudyGuide, terms: GlossaryTerm[]): Glossar
   const out: GlossarySectionGroup[] = guide.sections.map((s) => ({
     key: s.id,
     title: s.title,
+    added: s.added_by_course,
     groups: s.topics.map((tp) => ({ key: tp.id, title: tp.title, terms: [...(byTopic.get(tp.id) ?? [])].sort(alpha) })),
   }))
   out.push({

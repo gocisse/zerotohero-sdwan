@@ -1,0 +1,81 @@
+# LAB, not a real network. Everything below happens on the teaching topology hub-and-spoke-demo (invented names and numbers).
+id: ts-backup-wrong-link
+title: "Ticket: the backup job saturates the Internet link"
+summary: Spoke Edge 1's nightly backup is pinned to the Internet link by an Edge rule, and the Internet link is the one you want to protect. Find which rule decides, then change that rule.
+difficulty: 2
+estimated_minutes: 15
+topology: hub-and-spoke-demo
+goals: [trb-scen-3, cfg-business-policy, cfg-overrides]
+screens:
+  - { label: Flow tracer (start here), path: trace }
+  - { label: Configure > Edges > Spoke Edge 1 > Business Policy, path: "edges/spoke-1-edge?tab=business-policy" }
+fault: {}
+flow:
+  source: spoke-1-edge
+  destination: "edge:hub-p-edge"
+  application: backup
+symptom: >-
+  Ticket: "The nightly backup from Spoke 1 eats the Internet link and the office cannot browse until it finishes. We want
+  it on MPLS." One Edge, one application. This lab relies on assumptions 1 and 3 (first match wins, Edge rules above Profile
+  rules), 62 (link steering applies to the first leg), 67 (the current link states are used) and 90 (how a rule matches a flow); the simulator shows each as a badge.
+relies_on_assumptions: [1, 3, 62, 67, 90]
+tasks:
+  - id: link
+    type: inspect
+    prompt: Trace the backup traffic to the Primary Hub. Which WAN link does the first leg use?
+    probe: { kind: trace_steered_link }
+    choices:
+      - { id: inet, text: "s1-inet (public, wired)", value: s1-inet }
+      - { id: mpls, text: "s1-mpls (private, wired)", value: s1-mpls }
+      - { id: none, text: "No link, the flow is dropped", value: none }
+    explanation: The matching rule asks for the Internet link as Mandatory.
+  - id: owner
+    type: diagnose
+    prompt: Where does the rule that decides for backup traffic come from?
+    probe: { kind: trace_matched_owner }
+    choices:
+      - { id: edge, text: "An override on Spoke Edge 1", value: Spoke Edge 1 }
+      - { id: profile, text: "The Spoke Profile", value: Spoke Profile (primary and secondary Hub) }
+      - { id: customer, text: "A customer-wide setting", value: customer }
+    explanation: The Spoke Profile has no rule for backup. The Edge carries its own rule that pins backup traffic to the Internet link.
+  - id: fix-it
+    type: fix
+    prompt: Choose the change that sends the backup over the MPLS link, then check the result.
+    probe: { kind: trace_steered_link }
+    equals: s1-mpls
+    explanation: Change the link of the Edge's own rule. The rule belongs to the Edge, so that is where it is edited.
+hints:
+  - { task: link, text: "The flow tracer's business policy stage names the rule that matched." }
+  - { task: owner, text: "Open the Business Policy tab of Spoke Edge 1 and read Rules From Profile and Edge Overrides." }
+  - { task: fix-it, text: "Adding a Profile rule will not help while an Edge rule with the same match supersedes it." }
+fixes:
+  - id: edge-link-mpls
+    title: Change the link of Spoke Edge 1's backup rule to the MPLS link
+    description: Edit the Edge rule so that backup traffic uses s1-mpls (Mandatory).
+    patches:
+      - { op: set, path: "edges[spoke-1-edge]/overrides/business_rules[spoke-1-backup]/action/steering/link", value: s1-mpls }
+  - id: edge-available
+    title: Change the Edge rule's strictness to Available
+    description: Keep the Internet link but make it Available instead of Mandatory.
+    patches:
+      - { op: set, path: "edges[spoke-1-edge]/overrides/business_rules[spoke-1-backup]/action/steering/strictness", value: available }
+  - id: profile-backup
+    title: Add a Profile rule that sends backup to the private wired group
+    description: Add a rule for backup to the Spoke Profile with the private wired transport group.
+    patches:
+      - op: append
+        path: "profiles[spoke]/business_rules"
+        value:
+          id: spoke-backup
+          name: Backup on the private wired group
+          segment: global
+          match: { application: backup }
+          action:
+            priority: low
+            network_service: multipath
+            steering: { mode: transport_group, group: private_wired, strictness: mandatory }
+debrief:
+  - finding: "Backup traffic was pinned to the Internet link by a rule on the Edge, not by the Profile."
+    where: "Edge Business Policy tab: sections \"Rules From Profile\" and \"Edge Overrides\""
+  - finding: "A live engineer would also read List Active Flows for the backup server to see the rule and link the flow really got."
+    where: "List Active Flows"

@@ -46,7 +46,7 @@ func main() {
 		lessons += len(s.Lessons)
 		questions += len(s.Quiz)
 	}
-	fmt.Printf("content OK: %d section(s), %d lesson(s), %d quiz question(s), %d diagram(s), %d glossary term(s), %d topology file(s), %d lab(s)\n", len(c.Sections), lessons, questions, c.DiagramCount(), len(c.Glossary), len(c.Topologies()), len(c.Labs()))
+	fmt.Printf("content OK: %d section(s), %d lesson(s), %d quiz question(s), %d diagram(s), %d glossary term(s), %d topology file(s), %d lab(s), %d runbook(s)\n", len(c.Sections), lessons, questions, c.DiagramCount(), len(c.Glossary), len(c.Topologies()), len(c.Labs()), len(c.Runbooks()))
 	for _, w := range c.GuideWarnings() {
 		fmt.Printf("warning: %s: %s\n", w.File, w.Message)
 	}

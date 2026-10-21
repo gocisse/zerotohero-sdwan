@@ -14,7 +14,7 @@ import (
 
 // allowedRootDirs are the top-level directories permitted next to course.yaml.
 // "labs" is reserved for the future simulator scenarios; "topologies" holds the simulator's teaching topologies.
-var allowedRootDirs = map[string]bool{"sections": true, "labs": true, "diagrams": true, "reference": true, "topologies": true}
+var allowedRootDirs = map[string]bool{"sections": true, "labs": true, "diagrams": true, "reference": true, "topologies": true, "runbooks": true}
 
 // Load reads, validates and builds the course from fsys (rooted at the content dir).
 // On failure the returned error is an ErrorList containing every problem found.
@@ -93,6 +93,7 @@ func ReadBundle(fsys fs.FS) (*Bundle, ErrorList) {
 	readGuide(fsys, b, &errs)
 	readTopologies(fsys, b, &errs)
 	readLabs(fsys, b, &errs)
+	readRunbooks(fsys, b, &errs)
 
 	b.References = readReferences(fsys, b, &errs)
 
@@ -250,6 +251,7 @@ func Build(b *Bundle) *Course {
 		diagrams:   map[string]*Diagram{},
 		topologies: buildTopologies(b.Topologies),
 		labs:       buildLabs(b.Labs),
+		runbooks:   buildRunbooks(b.Runbooks),
 	}
 	if b.HasGuide && !b.GuideBroken {
 		g := b.Guide
@@ -330,8 +332,8 @@ func readReferences(fsys fs.FS, b *Bundle, errs *ErrorList) []ReferenceDoc {
 			}
 			continue
 		}
-		if e.IsDir() && e.Name() == "config" {
-			// Settings-level fact sheets, one per network service (step 18): same claims-table rule as the sheets above.
+		if e.IsDir() && (e.Name() == "config" || e.Name() == "troubleshooting") {
+			// Settings-level fact sheets (config, step 18) and troubleshooting fact sheets (step 20): same claims-table rule as the sheets above.
 			cfg, _ := fs.ReadDir(fsys, p)
 			for _, c := range cfg {
 				cp := path.Join(p, c.Name())

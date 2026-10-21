@@ -1,0 +1,99 @@
+---
+id: trb-tools
+title: VCO investigation tools
+summary: "The Monitor tabs, the events, and the Remote Diagnostics tests that answer a troubleshooting question, how to read List Paths, VPN Test, MTR and the route and flow dumps, which tests change state, and the order we suggest."
+estimated_minutes: 12
+topics: [ts-vco-tools]
+prerequisites: [trb-layers]
+---
+
+**By the end of this lesson you will be able to:**
+
+- run a <Term id="remote-diagnostics">Remote Diagnostics</Term> test on an Edge and say what it answers;
+- read the fields of List Paths, VPN Test and the Route Table Dump options;
+- tell which tests are read-only and which change state;
+- choose a first tool for a given question.
+
+## Where the tools are
+
+Remote Diagnostics uses a bidirectional WebSocket connection between the Orchestrator and the Edge, so the Edge must be able to reach the Orchestrator (Remote Actions are documented as available only for Edges in the Connected state). To run a test, open the **Diagnostics** tab, choose an Edge (or use **Shortcuts** on Configure > Edges or Monitor > Edges), choose the test and select **Run**. The Monitor tabs of an Edge (**Overview**, **QoE**, **Links**, **Paths**, **Flows**, **Applications**, **Sources**, **Destinations**, **Business Priority**, **System** and, for a pair, **HA Standby**) show the Edge's measured state.
+
+<Diagram id="ts-which-tool" />
+
+## Settings reference
+
+The tests below are the read-only ones this course uses. Each row is one documented test and what it is for. The output limits are the documented ones.
+
+| Test | What it answers |
+|---|---|
+| ARP Table Dump | whether IP to MAC bindings exist on the interfaces; statuses Alive, Dead, Refresh; at most 1000 entries |
+| Interface Status | link detected, RX and TX errors, negotiation |
+| Ping Test | reachability from the Edge, with a packet size, a count and Do not fragment |
+| Traceroute | the path to a destination via the Gateway or a WAN interface |
+| MY Traceroute | <Term id="mtr">MTR</Term>: path plus loss and latency per hop, with a protocol and a path choice |
+| DNS Test | whether the Edge resolves a name (not LAN clients) |
+| List Active Firewall Sessions | up to 1000 sessions, with filters |
+| NAT Table Dump | whether NAT is happening as expected; at most 1000 entries |
+| List Active Flows | how the Edge routes and egresses a flow, with Source and Destination filters; at most 1000 entries |
+| List Paths | the tunnel paths between local WAN links and peers, and the Gateway status |
+| VPN Test | branch-to-branch connectivity, Pass or Fail per peer Edge |
+| Route Table Dump | the IPv4 forwarding table, with Segment, Prefix and Routes options; at most 16000 routes |
+| NTP Dump | the date, time and NTP server details the Edge uses |
+| System Information | system load, recent WAN stability statistics and monitoring service details |
+
+## Reading List Paths
+
+<Term id="list-paths">List Paths</Term> is the test for "is the <Term id="tunnel">tunnel</Term> up to the destination". For each path it shows the WAN link, local IP, remote IP, **State** (Stable, Unstable, BW_Measurement or Quiet), **VPN** state (should be UP), bandwidth, latency, jitter, loss, bytes, uptime and **Mode** (Static, or Dynamic for branch-to-branch tunnels built on demand). The guide says anything other than Stable indicates an issue with the WAN link, and that Unstable means loss, jitter or latency are present.
+
+## Reading VPN Test and the route dump
+
+- **VPN Test** shows per peer Edge: Edge Name, Destination (the logical ID), Result (Pass or Fail) and Latency. The guide says to run it when traffic between branches, or between a Hub and a spoke, is not bi-directional.
+- **Route Table Dump** lets you choose a Segment (or all), a Prefix, and whether to show all routes or only the preferred one (the route used for forwarding). Its reason codes explain why a route lost; Section 6 explains them.
+- **List Active Flows**: the guide's checks are whether the traffic hits the correct business policy, whether the link policy and route are applied as configured and whether the application map identifies the traffic correctly.
+
+## Tests that change state
+
+<Callout variant="warning" title="State-changing: out of scope for this course">
+  Clear ARP Cache, DNS/DHCP Service Restart, Flush Firewall Sessions, IPv6 Clear ND Cache, Flush DNS Cache, Flush Flows, Flush NAT, Enable or Disable Context Logging, Gateway (it changes the path of cloud traffic) and Reset USB Modem change state on the Edge. The <Term id="remote-actions">Remote Actions</Term> Restart Service, Reboot, Shutdown, Deactivate and Force HA Failover do too. Do not run them while learning; this course does not teach them.
+</Callout>
+
+## The order we suggest (our method)
+
+1. Status and events: is the Edge Connected, and what changed?
+2. The Monitor tab for the layer (Links, Paths, QoE or Flows).
+3. The one read-only test that answers the question left over.
+4. If the problem stays unexplained, bundles for Support (Lesson 10).
+
+<Predict
+  prompt="Traffic between a Hub and a spoke works only in one direction. Which documented test is meant for this?"
+  choices={["VPN Test", "Flush NAT", "Reset USB Modem", "DNS Test"]}
+  answer={0}
+>
+  The guide says to run VPN Test when the data traffic between branches or between the Hub and spoke is not bi-directional. Flush NAT and Reset USB Modem change state, and DNS Test checks name resolution.
+</Predict>
+
+## What you would see in the VCO
+
+- **Diagnostics** > the test list, and the result table of each test.
+- **Monitor > Edges** tabs for the measured state.
+
+<Callout variant="tip" title="Check this in your own VCO">
+  - **[observation candidate]** Open: Diagnostics for a Connected Edge, List Paths. Expect: one row per tunnel path with State and VPN columns. Docs may differ: extra columns.
+  - **[observation candidate]** Open: Diagnostics, VPN Test on a branch. Expect: one row per peer Edge with Pass or Fail and latency. Docs may differ: Hubs may or may not be listed.
+  - **[observation candidate]** Open: Diagnostics, MY Traceroute with a destination. Expect: hops with loss and latency. Docs may differ: the test may be missing on a 6.4 VCO.
+  - **[observation candidate]** Open: Diagnostics, Route Table Dump with Routes set to preferred. Expect: one route per prefix. Docs may differ: the output limit message.
+  - **[observation candidate]** Open: Diagnostics, List Active Flows with a source filter. Expect: your flow with its rule and link. Docs may differ: the flow may be missing if it ended.
+</Callout>
+
+## Key takeaways
+
+- Remote Diagnostics runs on a connected Edge, from the Diagnostics tab.
+- List Paths answers tunnels, VPN Test answers pairs, Route Table Dump answers routes, List Active Flows answers one flow.
+- Many tests are read-only; the flush, clear, restart and reset tests are not and are out of scope.
+- MTR is documented from 7.0 in the pages read; confirm it on your release.
+
+## What would you look for in the VCO
+
+- Is the Edge Connected, so that tests can run?
+- Which test answers the question left after the Monitor tab?
+- Is the test I am about to run read-only?

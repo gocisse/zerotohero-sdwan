@@ -1,0 +1,52 @@
+---
+id: debug-script-reference
+title: debug.py reference
+summary: Every debug.py option found in an official PDF read for this course, with its source, plus the list of things that are unconfirmed and what to capture from your own device.
+kind: reference
+estimated_minutes: 4
+---
+
+<Term id="debug-py">debug.py</Term> is named in Arista documents, but only a few options are described for the **Edge**. This page lists what is documented, labelled by device, and keeps everything else in a separate list that you fill in from your own observation. No output format is shown here: the documents print the outputs as figures or JSON for the Gateway only.
+
+<Callout variant="warning" title="Read-only only">
+  Run only what a document or Support asked for. Activating a device from its command line (activate.py), restarting services, rebooting and clearing tables are state-changing and out of scope for this course.
+</Callout>
+
+## Documented for the Edge or the Gateway command line
+
+| Option | Device | What the documentation says | Source | Status |
+|---|---|---|---|---|
+| `--pki` | Edge or Gateway | shows PKI settings, the trusted CA list and the certificate | Orchestrator Guide 7.0, page 142 | VERIFIED |
+| `--ike_sa` | Edge or Gateway | shows the details of current security associations | Orchestrator Guide 7.0, page 142 | VERIFIED |
+| `--ike_spd` | Edge or Gateway | shows details of the security protocols and encryption methods used per peer | Orchestrator Guide 7.0, pages 142 and 143 | VERIFIED |
+| `--routes` | named only | the Troubleshooting Guide refers to "the debug.py--routes output" for route flags; syntax and output are not documented | Troubleshooting Guide 7.0, page 88 | VERIFIED |
+
+## Documented for the Gateway only
+
+These run on the Gateway as the user vcadmin, from /opt/vc/bin/debug.py. The Gateway Monitoring Guide warns that some commands and example outputs may only be relevant to Release 5.0.0. They are **not** documented for an Edge.
+
+| Option | Device | Used in the guide for | Source | Status |
+|---|---|---|---|---|
+| `--icmp_monitor` | Gateway | ICMP probe state, UP or DOWN | Gateway Monitoring Guide 7.0, page 20 | VERIFIED |
+| `--bgp_view_summary` | Gateway | counting established BGP sessions | Gateway Monitoring Guide 7.0, page 21 | VERIFIED |
+| `--handoff` | Gateway | the handoff queue (with -v; omit -v for a table) | Gateway Monitoring Guide 7.0, page 24 | VERIFIED |
+| `--list_edges` | Gateway | the number of connected Edges | Gateway Monitoring Guide 7.0, page 27 | VERIFIED |
+| `--vrf` | Gateway | counting BGP VRFs | Gateway Monitoring Guide 7.0, page 29 | VERIFIED |
+| `--stale_nat_dump` | Gateway | stale NAT entries, collected with a diagnostic bundle for support | Gateway Monitoring Guide 7.0, page 32 | VERIFIED |
+| `--path` | Gateway | path details such as the latency thresholds (with -v) | Gateway Monitoring Guide 7.0, page 34 | VERIFIED |
+| `--dpdk_ports_dump` | Gateway | used inside a script in the guide | Gateway Monitoring Guide 7.0, page 17 | VERIFIED |
+
+## Unconfirmed, fill from observation
+
+None of these has a documented option on an Edge in the sources read. For each, the last column says what to capture on a real Edge, read-only, with the Edge release and the time.
+
+| Question | Why it is unconfirmed | What to capture on your Edge |
+|---|---|---|
+| How do I get a shell on an Edge? | no document read describes the access method | the way you log in and the prompt |
+| What is the full option list of debug.py on an Edge? | only four options are named | the first lines of the script's usage text |
+| Where does debug.py live on an Edge? | only the Gateway path is documented | the output of the command that locates it |
+| Is there an option for flows, paths, ARP or ND tables, VPN state, bandwidth or link statistics? | none is documented for an Edge | whether the usage text lists one, and its first lines of output |
+| Which Edge log files exist besides mgd.log? | only /var/log/mgd.log is named for the Edge | the folder listing of the log directory |
+| Do Remote Diagnostics tests and debug.py share an implementation? | not documented | compare one test's output with the matching option |
+
+See the fact sheet `ts-edge-cli` and the observation workflow in `docs/HOW-TO-ADD-AN-OBSERVATION.md`.

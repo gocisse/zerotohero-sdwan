@@ -23,7 +23,7 @@ func labCtx(t *testing.T) testLabCtx {
 	for _, tp := range loadContentTopologies(t) {
 		c.topos[tp.Meta.ID] = tp
 	}
-	for _, id := range []string{"ov-dynamic", "ov-cloud-vpn", "ov-hubs", "ov-diagnosis", "rt-diagnosis", "rt-redistribution", "rt-bgp", "rt-ofc", "cfg-business-policy", "cfg-overrides", "dmpo-steering", "arch-mtu-overhead", "cfg-profiles", "cfg-model", "cfg-diagnosis"} {
+	for _, id := range []string{"ov-dynamic", "ov-cloud-vpn", "ov-hubs", "ov-diagnosis", "rt-diagnosis", "rt-redistribution", "rt-bgp", "rt-ofc", "cfg-business-policy", "cfg-overrides", "dmpo-steering", "arch-mtu-overhead", "cfg-profiles", "cfg-model", "cfg-diagnosis", "rt-static", "rt-filters", "arch-underlay-overlay", "trb-method", "trb-layers", "trb-tools", "trb-edge-cli", "trb-gw-orch", "trb-events", "trb-scen-1", "trb-scen-2", "trb-scen-3", "trb-escalate"} {
 		c.lessons[id] = true
 	}
 	return c

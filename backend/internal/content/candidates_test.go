@@ -20,14 +20,14 @@ func TestParseCandidates(t *testing.T) {
 	}
 }
 
-// Every lesson of Sections 7, 8 and 9 ends with a "Check this in your own VCO" box listing 3 to 5 candidates, each with a screen, a
+// Every lesson of Sections 7, 8, 9 and 10 ends with a "Check this in your own VCO" box listing 3 to 5 candidates, each with a screen, a
 // documented expectation and where the documentation may differ.
 func TestLessonsListObservationCandidates(t *testing.T) {
 	c, err := Load(os.DirFS("../../../content"))
 	if err != nil {
 		t.Fatal(err)
 	}
-	want := map[string]int{"topologies": 7, "network-services-config": 8, "profile-policy-config": 7}
+	want := map[string]int{"topologies": 7, "network-services-config": 8, "profile-policy-config": 7, "troubleshooting": 10}
 	got := map[string]int{}
 	for _, s := range c.Sections {
 		if want[s.Meta.ID] == 0 {

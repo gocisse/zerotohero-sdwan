@@ -12,6 +12,8 @@ import ReviewPage from './pages/ReviewPage'
 import LessonPage from './pages/LessonPage'
 import NotFound from './pages/NotFound'
 import SectionPage from './pages/SectionPage'
+import TroubleshootingPage from './pages/TroubleshootingPage'
+import RunbookPage from './pages/RunbookPage'
 import ChallengePage from './sim/ChallengePage'
 import EdgePage from './sim/EdgePage'
 import EdgesPage from './sim/EdgesPage'
@@ -49,6 +51,8 @@ export default function App() {
                   <Route path="progress" element={<ProgressPage />} />
                   <Route path="glossary" element={<GlossaryPage />} />
                   <Route path="review" element={<ReviewPage />} />
+                  <Route path="troubleshooting" element={<TroubleshootingPage />} />
+                  <Route path="troubleshooting/:runbookId" element={<RunbookPage />} />
                   <Route path="sim" element={<SimLayout />}>
                     <Route index element={<TopologyPicker />} />
                     <Route path="labs" element={<LabsPage />} />
